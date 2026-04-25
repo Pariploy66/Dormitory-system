@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "159495711038",
+    "project_id": "lotto-51cf9",
+    "storage_bucket": "lotto-51cf9.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:159495711038:android:29bd59abb61e0f5092e46f",
+        "android_client_info": {
+          "package_name": "com.example.student_access_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC5GVJbSKp5DFSWepZPEBAf7u-5b78-Rhw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
