@@ -137,7 +137,7 @@ class _LogsScreenState extends ConsumerState<LogsScreen> {
                         color: MfuTheme.primary))
                 : logsAsync.hasError
                     ? Center(
-                        child: Text('ไม่สามารถโหลดข้อมูลได้',
+                        child: Text('Failed to load data',
                             style: const TextStyle(
                                 color: MfuTheme.textSub)))
                     : RefreshIndicator(
