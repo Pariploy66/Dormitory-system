@@ -1,20 +1,32 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/api_repository.dart';
 
-/// Top-level handler required by Firebase for background messages
+/// 1. Top-level handler สำหรับ Background (ห้ามลบ @pragma)
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  // No need to re-init Firebase — it's already init'd by the OS
-  _showLocalNotification(message);
+  await Firebase.initializeApp();
+
+  final FlutterLocalNotificationsPlugin localNotifications =
+      FlutterLocalNotificationsPlugin();
+  const AndroidInitializationSettings androidSettings =
+      AndroidInitializationSettings('@mipmap/ic_launcher');
+  const InitializationSettings initSettings =
+      InitializationSettings(android: androidSettings);
+
+  await localNotifications.initialize(initSettings);
+  _showNotification(localNotifications, message);
 }
 
-void _showLocalNotification(RemoteMessage message) {
+/// 2. ฟังก์ชันกลางสำหรับแสดง Notification (แชร์ใช้ทั้ง Foreground/Background)
+void _showNotification(
+    FlutterLocalNotificationsPlugin plugin, RemoteMessage message) {
   final notification = message.notification;
   if (notification == null) return;
 
-  FlutterLocalNotificationsPlugin().show(
+  plugin.show(
     notification.hashCode,
     notification.title,
     notification.body,
@@ -50,7 +62,7 @@ class FcmService {
       sound: true,
     );
 
-    // Set up local notifications channel (Android 8+)
+    // Initialize Local Notifications สำหรับ Foreground
     await _localNotifications.initialize(
       const InitializationSettings(
         android: AndroidInitializationSettings('@mipmap/ic_launcher'),
@@ -58,24 +70,23 @@ class FcmService {
       ),
     );
 
-    // Register background handler
+    // ลงทะเบียน Background Handler
     FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 
-    // Foreground messages
+    // 3. แก้ไขจุดนี้: เรียกใช้ _showNotification แทนชื่อเดิมที่หาไม่เจอ
     FirebaseMessaging.onMessage.listen((message) {
-      _showLocalNotification(message);
+      _showNotification(_localNotifications, message);
     });
 
-    // Register FCM token with backend
+    // Register FCM token
     final token = await _messaging.getToken();
     if (token != null) {
       await _ref
           .read(apiRepositoryProvider)
           .registerFcmToken(token)
-          .catchError((_) {}); // Non-fatal if this fails
+          .catchError((_) {});
     }
 
-    // Handle token refresh
     _messaging.onTokenRefresh.listen((newToken) async {
       await _ref
           .read(apiRepositoryProvider)

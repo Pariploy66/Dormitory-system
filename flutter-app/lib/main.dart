@@ -7,13 +7,29 @@ import 'package:timeago/timeago.dart' as timeago;
 import 'core/router.dart';
 import 'services/fcm_service.dart';
 import 'ui/theme/mfu_theme.dart';
+import 'package:firebase_messaging/firebase_messaging.dart'; // เติม ; เข้าไปท้ายบรรทัดครับ
+
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  // สำคัญ: ต้องเรียก Firebase.initializeApp() ภายในนี้ด้วย
+  await Firebase.initializeApp();
+  print("Handling a background message: ${message.messageId}");
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // 2. ตั้งค่า Locale
   await initializeDateFormatting('th', null);
   Intl.defaultLocale = 'th';
   timeago.setLocaleMessages('th', timeago.ThMessages());
+
+  // 3. Initialize Firebase
   await Firebase.initializeApp();
+
+  // 4. ลงทะเบียน Background Handler ตรงนี้เลย!
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
   runApp(const ProviderScope(child: StudentAccessApp()));
 }
 

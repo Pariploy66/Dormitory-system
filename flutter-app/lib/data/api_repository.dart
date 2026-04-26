@@ -37,20 +37,13 @@ class ApiRepository {
     required String email,
     required String password,
   }) async {
-    final resp = await _dio.post('/auth/register', data: {
+    await _dio.post('/auth/register', data: {
       'name': name,
       'phone': phone,
       'email': email,
       'password': password,
     });
-    await _storage.write(
-      key: AppConstants.jwtStorageKey,
-      value: resp.data['accessToken'] as String,
-    );
-    await _storage.write(
-      key: AppConstants.parentIdStorageKey,
-      value: resp.data['parentId'] as String,
-    );
+    await login(email, password);
   }
 
   Future<void> logout() async {

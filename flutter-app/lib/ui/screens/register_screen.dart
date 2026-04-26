@@ -14,27 +14,32 @@ class RegisterScreen extends ConsumerStatefulWidget {
 
 class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   // ── Logic unchanged ───────────────────────────────────────────
-  final _formKey   = GlobalKey<FormState>();
-  final _nameCtrl  = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+  final _nameCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
-  final _passCtrl  = TextEditingController();
-  bool   _loading  = false;
+  final _passCtrl = TextEditingController();
+  bool _loading = false;
   String? _error;
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
-    setState(() { _loading = true; _error = null; });
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     try {
       await ref.read(apiRepositoryProvider).register(
-        name:     _nameCtrl.text.trim(),
-        phone:    _phoneCtrl.text.trim(),
-        email:    _emailCtrl.text.trim(),
-        password: _passCtrl.text,
-      );
+            name: _nameCtrl.text.trim(),
+            phone: _phoneCtrl.text.trim(),
+            email: _emailCtrl.text.trim(),
+            password: _passCtrl.text,
+          );
       ref.invalidate(authStateProvider);
       if (mounted) context.go('/home');
-    } catch (_) {
+    } catch (e) {
+      // เปลี่ยนจาก _ เป็น e ตรงนี้
+      debugPrint('Registration Error: $e'); // ตอนนี้จะใช้ $e ได้แล้ว
       setState(() => _error = 'สมัครสมาชิกไม่สำเร็จ อาจมีบัญชีนี้แล้ว');
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -43,8 +48,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
   @override
   void dispose() {
-    _nameCtrl.dispose();  _phoneCtrl.dispose();
-    _emailCtrl.dispose(); _passCtrl.dispose();
+    _nameCtrl.dispose();
+    _phoneCtrl.dispose();
+    _emailCtrl.dispose();
+    _passCtrl.dispose();
     super.dispose();
   }
 
@@ -75,13 +82,17 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _field(_nameCtrl,  'ชื่อ-นามสกุล',    Icons.person_outline_rounded,  TextInputType.name),
+                _field(_nameCtrl, 'ชื่อ-นามสกุล', Icons.person_outline_rounded,
+                    TextInputType.name),
                 const SizedBox(height: 14),
-                _field(_phoneCtrl, 'เบอร์โทรศัพท์',   Icons.phone_outlined,           TextInputType.phone),
+                _field(_phoneCtrl, 'เบอร์โทรศัพท์', Icons.phone_outlined,
+                    TextInputType.phone),
                 const SizedBox(height: 14),
-                _field(_emailCtrl, 'อีเมล',             Icons.email_outlined,           TextInputType.emailAddress),
+                _field(_emailCtrl, 'อีเมล', Icons.email_outlined,
+                    TextInputType.emailAddress),
                 const SizedBox(height: 14),
-                _field(_passCtrl,  'รหัสผ่าน (≥ 8 ตัว)', Icons.lock_outline_rounded, TextInputType.visiblePassword,
+                _field(_passCtrl, 'รหัสผ่าน (≥ 8 ตัว)',
+                    Icons.lock_outline_rounded, TextInputType.visiblePassword,
                     obscure: true),
                 if (_error != null) ...[
                   const SizedBox(height: 10),
@@ -104,21 +115,20 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     ),
                     child: _loading
                         ? const SizedBox(
-                            width: 20, height: 20,
+                            width: 20,
+                            height: 20,
                             child: CircularProgressIndicator(
                                 strokeWidth: 2, color: Colors.white))
                         : const Text('สมัครสมาชิก',
                             style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w600)),
+                                fontSize: 15, fontWeight: FontWeight.w600)),
                   ),
                 ),
                 const SizedBox(height: 12),
                 TextButton(
                   onPressed: () => context.pop(),
                   child: const Text('มีบัญชีแล้ว? เข้าสู่ระบบ',
-                      style: TextStyle(
-                          fontSize: 12, color: MfuTheme.primary)),
+                      style: TextStyle(fontSize: 12, color: MfuTheme.primary)),
                 ),
               ],
             ),
