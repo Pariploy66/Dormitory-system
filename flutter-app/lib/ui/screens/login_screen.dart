@@ -34,7 +34,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       ref.invalidate(authStateProvider);
       if (mounted) context.go('/home');
     } catch (_) {
-      setState(() => _error = 'อีเมลหรือรหัสผ่านไม่ถูกต้อง');
+      setState(() => _error = 'email or password is incorrect');
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -120,13 +120,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           keyboardType: TextInputType.emailAddress,
                           textInputAction: TextInputAction.next,
                           decoration: const InputDecoration(
-                            hintText: 'อีเมล',
+                            hintText: 'Email',
                             prefixIcon: Icon(Icons.email_outlined,
                                 size: 18, color: MfuTheme.textHint),
                           ),
                           validator: (v) => v != null && v.contains('@')
                               ? null
-                              : 'กรุณากรอกอีเมลที่ถูกต้อง',
+                              : 'Enter email',
                         ),
                         const SizedBox(height: 12),
                         TextFormField(
@@ -135,7 +135,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           textInputAction: TextInputAction.done,
                           onFieldSubmitted: (_) => _submit(),
                           decoration: InputDecoration(
-                            hintText: 'รหัสผ่าน',
+                            hintText: 'password',
                             prefixIcon: const Icon(Icons.lock_outline_rounded,
                                 size: 18, color: MfuTheme.textHint),
                             suffixIcon: IconButton(
@@ -151,7 +151,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ),
                           validator: (v) => v != null && v.length >= 8
                               ? null
-                              : 'รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร',
+                              : 'password must be at least 8 characters',
                         ),
                         if (_error != null) ...[
                           const SizedBox(height: 8),
@@ -203,7 +203,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       padding: EdgeInsets.zero,
                       minimumSize: Size.zero,
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap),
-                  child: const Text('ยังไม่มีบัญชี? สมัครสมาชิก',
+                  child: const Text('Register',
                       style: TextStyle(fontSize: 12, color: MfuTheme.primary)),
                 ),
                 const SizedBox(height: 8),

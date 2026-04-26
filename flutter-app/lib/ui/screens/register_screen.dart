@@ -37,10 +37,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           );
       ref.invalidate(authStateProvider);
       if (mounted) context.go('/home');
-    } catch (e) {
-      // เปลี่ยนจาก _ เป็น e ตรงนี้
-      debugPrint('Registration Error: $e'); // ตอนนี้จะใช้ $e ได้แล้ว
-      setState(() => _error = 'สมัครสมาชิกไม่สำเร็จ อาจมีบัญชีนี้แล้ว');
+    } catch (_) {
+      setState(() => _error = 'This email/phone is already registered');
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -68,7 +66,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
           onPressed: () => context.pop(),
         ),
-        title: const Text('สมัครสมาชิก',
+        title: const Text('Register',
             style: TextStyle(
                 color: Colors.white,
                 fontSize: 16,
@@ -82,16 +80,16 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _field(_nameCtrl, 'ชื่อ-นามสกุล', Icons.person_outline_rounded,
+                _field(_nameCtrl, 'Name', Icons.person_outline_rounded,
                     TextInputType.name),
                 const SizedBox(height: 14),
-                _field(_phoneCtrl, 'เบอร์โทรศัพท์', Icons.phone_outlined,
+                _field(_phoneCtrl, 'Phone', Icons.phone_outlined,
                     TextInputType.phone),
                 const SizedBox(height: 14),
-                _field(_emailCtrl, 'อีเมล', Icons.email_outlined,
+                _field(_emailCtrl, 'Email', Icons.email_outlined,
                     TextInputType.emailAddress),
                 const SizedBox(height: 14),
-                _field(_passCtrl, 'รหัสผ่าน (≥ 8 ตัว)',
+                _field(_passCtrl, 'Password (≥ 8 ตัว)',
                     Icons.lock_outline_rounded, TextInputType.visiblePassword,
                     obscure: true),
                 if (_error != null) ...[
@@ -119,7 +117,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                             height: 20,
                             child: CircularProgressIndicator(
                                 strokeWidth: 2, color: Colors.white))
-                        : const Text('สมัครสมาชิก',
+                        : const Text('Register',
                             style: TextStyle(
                                 fontSize: 15, fontWeight: FontWeight.w600)),
                   ),
@@ -127,7 +125,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 const SizedBox(height: 12),
                 TextButton(
                   onPressed: () => context.pop(),
-                  child: const Text('มีบัญชีแล้ว? เข้าสู่ระบบ',
+                  child: const Text('Login',
                       style: TextStyle(fontSize: 12, color: MfuTheme.primary)),
                 ),
               ],
@@ -154,7 +152,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         hintText: hint,
         prefixIcon: Icon(icon, size: 18, color: MfuTheme.textHint),
       ),
-      validator: (v) => v != null && v.length >= 2 ? null : 'กรุณากรอก$hint',
+      validator: (v) => v != null && v.length >= 2 ? null : 'Please enter$hint',
     );
   }
 }
