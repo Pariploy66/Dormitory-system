@@ -36,7 +36,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             password: _passCtrl.text,
           );
       ref.invalidate(authStateProvider);
-      if (mounted) context.go('/home');
+      //if (mounted) context.go('/home');
     } catch (_) {
       setState(() => _error = 'This email/phone is already registered');
     } finally {
