@@ -36,21 +36,36 @@ class ApiRepository {
     required String phone,
     required String email,
     required String password,
-  }) aasync {
-  final resp = await _dio.post('/auth/register', data: {
-    'name': name, 'phone': phone,
-    'email': email, 'password': password,
-  });
-  // ✅ save token ตรงๆ ไม่ต้องเรียก login()
-  await _storage.write(
-    key: AppConstants.jwtStorageKey,
-    value: resp.data['accessToken'] as String,
-  );
-  await _storage.write(
-    key: AppConstants.parentIdStorageKey,
-    value: resp.data['parentId'] as String,
-  );
-}
+  }) async {
+    print("CALL REGISTER API START");
+
+    try {
+      final res = await _dio.post(
+        '/auth/register',
+        data: {
+          'name': name,
+          'phone': phone,
+          'email': email,
+          'password': password,
+        },
+      );
+
+      print("STATUS: ${res.statusCode}");
+      print("RESPONSE: ${res.data}");
+
+      await _storage.write(
+        key: AppConstants.jwtStorageKey,
+        value: res.data['accessToken'] as String,
+      );
+
+      await _storage.write(
+        key: AppConstants.parentIdStorageKey,
+        value: res.data['parentId'] as String,
+      );
+    } catch (e) {
+      print("REGISTER ERROR: $e");
+    }
+  }
 
   Future<void> logout() async {
     await _storage.deleteAll();
