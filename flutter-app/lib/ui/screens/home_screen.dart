@@ -100,7 +100,7 @@ class _DashboardPage extends ConsumerWidget {
         loading: () => const Center(
             child: CircularProgressIndicator(color: MfuTheme.primary)),
         error: (e, _) => _ErrorView(
-          message: 'ไม่สามารถโหลดข้อมูลได้',
+          message: 'Unable to load data.',
           onRetry: () => ref.invalidate(studentsProvider),
         ),
         data: (students) => students.isEmpty
@@ -236,7 +236,7 @@ class _HistoryPageState extends ConsumerState<_HistoryPage> {
           Expanded(
             child: logsAsync == null
                 ? const Center(
-                    child: Text('ไม่พบข้อมูลนักศึกษา',
+                    child: Text('No student data found',
                         style: TextStyle(color: MfuTheme.textSub)))
                 : logsAsync.isLoading
                     ? const Center(
@@ -359,15 +359,15 @@ class _SettingPage extends ConsumerWidget {
       builder: (_) => AlertDialog(
         shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16)),
-        title: const Text('ออกจากระบบ',
+        title: const Text('Logout',
             style:
                 TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-        content: const Text('ต้องการออกจากระบบใช่หรือไม่?',
+        content: const Text('Are you sure you want to logout?',
             style: TextStyle(fontSize: 13)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('ยกเลิก',
+            child: const Text('Cancel',
                 style: TextStyle(color: MfuTheme.textSub)),
           ),
           ElevatedButton(
@@ -383,7 +383,7 @@ class _SettingPage extends ConsumerWidget {
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8)),
             ),
-            child: const Text('ออกจากระบบ'),
+            child: const Text('Logout'),
           ),
         ],
       ),
@@ -537,7 +537,7 @@ class _DashboardBody extends StatelessWidget {
                     style: const TextStyle(
                         fontSize: 10, color: MfuTheme.textHint)),
               ] else
-                const Text('ยังไม่มีข้อมูลวันนี้',
+                const Text('No data available for today',
                     style: TextStyle(
                         fontSize: 12, color: MfuTheme.textSub)),
               const SizedBox(height: 12),
@@ -578,7 +578,7 @@ class _DashboardBody extends StatelessWidget {
           const Padding(
             padding: EdgeInsets.all(20),
             child: Center(
-              child: Text('ยังไม่มีกิจกรรม',
+              child: Text('No recent activities',
                   style:
                       TextStyle(fontSize: 12, color: MfuTheme.textSub)),
             ),
@@ -878,10 +878,10 @@ class _EmptyView extends StatelessWidget {
             Icon(Icons.person_search_rounded,
                 size: 64, color: Colors.grey.shade300),
             const SizedBox(height: 16),
-            const Text('ยังไม่มีนักศึกษาที่เชื่อมกับบัญชีนี้',
+            const Text('No students are linked to this account yet.',
                 style: TextStyle(color: MfuTheme.textSub)),
             const SizedBox(height: 6),
-            const Text('กรุณาติดต่อเจ้าหน้าที่หอพัก',
+            const Text('Please contact the dormitory staff.',
                 style: TextStyle(
                     color: MfuTheme.textHint, fontSize: 12)),
           ],
@@ -916,7 +916,7 @@ class _ErrorView extends StatelessWidget {
                     foregroundColor: Colors.white,
                     elevation: 0),
                 icon: const Icon(Icons.refresh_rounded, size: 16),
-                label: const Text('ลองใหม่'),
+                label: const Text('Try Again'),
               ),
             ],
           ),
