@@ -6,7 +6,6 @@ import '../../data/api_repository.dart';
 import '../../data/models.dart';
 import '../../providers/app_providers.dart';
 import '../theme/mfu_theme.dart';
-import '../widgets/mfu_app_bar.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // HomeScreen — Shell with working IndexedStack bottom navigation
@@ -97,6 +96,83 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// Custom AppBar แบบมี Logo ตามดีไซน์ (ใช้สำหรับ Dashboard และ History)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+class _MfuCustomAppBar extends StatelessWidget implements PreferredSizeWidget {
+  final List<Widget>? actions;
+
+  const _MfuCustomAppBar({this.actions});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.only(
+        top: MediaQuery.of(context).padding.top + 10, // เผื่อพื้นที่ SafeArea ด้านบน
+        bottom: 15,
+        left: 20,
+        right: 10,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: const BorderRadius.vertical(
+          bottom: Radius.circular(24), // ขอบมนด้านล่างตามรูป
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Image.asset(
+            'assets/images/mfu_logo.png',
+            height: 50,
+            width: 44,
+            fit: BoxFit.contain,
+            errorBuilder: (ctx, err, stack) => const Icon(Icons.image_not_supported, size: 40, color: Colors.grey),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'MFU Dormitory',
+                  style: TextStyle(
+                    color: Color(0xFFC00000), // สีแดงเข้ม MFU
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.2,
+                  ),
+                ),
+                Text(
+                  'Dormitory Management System',
+                  style: TextStyle(
+                    color: Colors.grey.shade500, // สีเทา
+                    fontSize: 12,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (actions != null) ...actions!,
+        ],
+      ),
+    );
+  }
+
+  @override
+  Size get preferredSize => const Size.fromHeight(85);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // Page 1 — Dashboard
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -109,10 +185,10 @@ class _DashboardPage extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: const Color(0xFFFDFBF7), // Soft background from reference
-      appBar: MfuAppBar(
+      appBar: _MfuCustomAppBar(
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh_rounded, color: Colors.white, size: 20),
+            icon: const Icon(Icons.refresh_rounded, color: Colors.black54, size: 24),
             onPressed: () => ref.invalidate(studentsProvider),
           ),
         ],
@@ -189,11 +265,11 @@ class _HistoryPageState extends ConsumerState<_HistoryPage> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFFDFBF7),
-      appBar: MfuAppBar(
+      appBar: _MfuCustomAppBar(
         actions: [
           if (studentId.isNotEmpty)
             IconButton(
-              icon: const Icon(Icons.refresh_rounded, color: Colors.white, size: 20),
+              icon: const Icon(Icons.refresh_rounded, color: Colors.black54, size: 24),
               onPressed: () => ref.invalidate(accessLogsProvider(studentId)),
             ),
         ],
@@ -318,7 +394,6 @@ class _SettingPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       backgroundColor: const Color(0xFFFDFBF7),
-      // Optionally keeping or removing AppBar based on preference, but we'll stick to a clean top
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(0), 
         child: AppBar(backgroundColor: Colors.transparent, elevation: 0),
@@ -346,19 +421,6 @@ class _SettingPage extends ConsumerWidget {
               ],
             ),
             
-            // ── MFU Logo (Added per requirements) ───────────────────
-            const SizedBox(height: 20),
-            Center(
-              child: Image.asset(
-                'assets/images/mfu_logo.png',
-                height: 100,
-                errorBuilder: (context, error, stackTrace) => const Icon(
-                  Icons.image_not_supported_outlined,
-                  size: 60,
-                  color: Colors.grey,
-                ),
-              ),
-            ),
             const SizedBox(height: 30),
 
             // ── Section header ────────────────────────────────────
