@@ -6,7 +6,6 @@ import '../../data/api_repository.dart';
 import '../../data/models.dart';
 import '../../providers/app_providers.dart';
 import '../theme/mfu_theme.dart';
-import '../widgets/mfu_app_bar.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // HomeScreen — Shell with working IndexedStack bottom navigation
@@ -38,40 +37,139 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         index: _currentIndex,
         children: _pages,
       ),
-      // ── Bottom Navigation Bar ────────────────────────────────
+      // ── Bottom Navigation Bar (UI Redesign: Gradient & Icons) ─
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
-          border: Border(
-            top: BorderSide(color: MfuTheme.border, width: 0.5),
+          gradient: LinearGradient(
+            colors: [Color(0xFFD61A22), Color(0xFFA31219)], // MFU Red gradient
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
           ),
-        ),
-        child: BottomNavigationBar(
-          currentIndex: _currentIndex,
-          onTap: (index) => setState(() => _currentIndex = index),
-          selectedItemColor: MfuTheme.primary,
-          unselectedItemColor: MfuTheme.textHint,
-          backgroundColor: MfuTheme.bgCard,
-          type: BottomNavigationBarType.fixed,
-          selectedFontSize: 11,
-          unselectedFontSize: 11,
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.grid_view_rounded),
-              label: 'Dashboard',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.history_rounded),
-              label: 'History',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.person_outline_rounded),
-              label: 'Setting',
-            ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black26,
+              blurRadius: 10,
+              offset: Offset(0, -2),
+            )
           ],
+        ),
+        child: SafeArea(
+          child: BottomNavigationBar(
+            currentIndex: _currentIndex,
+            onTap: (index) => setState(() => _currentIndex = index),
+            selectedItemColor: Colors.white,
+            unselectedItemColor: Colors.white54,
+            backgroundColor: Colors.transparent, // Transparent to show gradient
+            type: BottomNavigationBarType.fixed,
+            elevation: 0,
+            selectedFontSize: 12,
+            unselectedFontSize: 12,
+            selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600),
+            items: const [
+              BottomNavigationBarItem(
+                icon: Padding(
+                  padding: EdgeInsets.only(bottom: 4.0),
+                  child: Icon(Icons.home_rounded), // Matched UI reference
+                ),
+                label: 'Dashboard',
+              ),
+              BottomNavigationBarItem(
+                icon: Padding(
+                  padding: EdgeInsets.only(bottom: 4.0),
+                  child: Icon(Icons.access_time_rounded), // Matched UI reference
+                ),
+                label: 'History',
+              ),
+              BottomNavigationBarItem(
+                icon: Padding(
+                  padding: EdgeInsets.only(bottom: 4.0),
+                  child: Icon(Icons.settings_outlined), // Matched UI reference
+                ),
+                label: 'Setting',
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Custom AppBar แบบมี Logo ตามดีไซน์ (ใช้สำหรับ Dashboard และ History)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+class _MfuCustomAppBar extends StatelessWidget implements PreferredSizeWidget {
+  final List<Widget>? actions;
+
+  const _MfuCustomAppBar({this.actions});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.only(
+        top: MediaQuery.of(context).padding.top + 10, // เผื่อพื้นที่ SafeArea ด้านบน
+        bottom: 15,
+        left: 20,
+        right: 10,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: const BorderRadius.vertical(
+          bottom: Radius.circular(24), // ขอบมนด้านล่างตามรูป
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Image.asset(
+            'assets/images/mfu_logo.png',
+            height: 50,
+            width: 44,
+            fit: BoxFit.contain,
+            errorBuilder: (ctx, err, stack) => const Icon(Icons.image_not_supported, size: 40, color: Colors.grey),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'MFU Dormitory',
+                  style: TextStyle(
+                    color: Color(0xFFC00000), // สีแดงเข้ม MFU
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.2,
+                  ),
+                ),
+                Text(
+                  'Dormitory Management System',
+                  style: TextStyle(
+                    color: Colors.grey.shade500, // สีเทา
+                    fontSize: 12,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (actions != null) ...actions!,
+        ],
+      ),
+    );
+  }
+
+  @override
+  Size get preferredSize => const Size.fromHeight(85);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -86,21 +184,19 @@ class _DashboardPage extends ConsumerWidget {
     final studentsAsync = ref.watch(studentsProvider);
 
     return Scaffold(
-      backgroundColor: MfuTheme.bgPage,
-      appBar: MfuAppBar(
+      backgroundColor: const Color(0xFFFDFBF7), // Soft background from reference
+      appBar: _MfuCustomAppBar(
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh_rounded,
-                color: Colors.white, size: 20),
+            icon: const Icon(Icons.refresh_rounded, color: Colors.black54, size: 24),
             onPressed: () => ref.invalidate(studentsProvider),
           ),
         ],
       ),
       body: studentsAsync.when(
-        loading: () => const Center(
-            child: CircularProgressIndicator(color: MfuTheme.primary)),
+        loading: () => const Center(child: CircularProgressIndicator(color: MfuTheme.primary)),
         error: (e, _) => _ErrorView(
-          message: 'Unable to load data.',
+          message: 'Failed to load data\n${e.toString()}',
           onRetry: () => ref.invalidate(studentsProvider),
         ),
         data: (students) => students.isEmpty
@@ -143,8 +239,7 @@ class _HistoryPageState extends ConsumerState<_HistoryPage> {
     final student = students.isNotEmpty ? students.first : null;
     final studentId = student?.id ?? '';
 
-    final logsAsync =
-        studentId.isNotEmpty ? ref.watch(accessLogsProvider(studentId)) : null;
+    final logsAsync = studentId.isNotEmpty ? ref.watch(accessLogsProvider(studentId)) : null;
 
     final allLogs = logsAsync?.valueOrNull ?? [];
     final now = DateTime.now();
@@ -161,27 +256,21 @@ class _HistoryPageState extends ConsumerState<_HistoryPage> {
     }).toList();
 
     final todayLogs = filtered
-        .where((l) =>
-            l.accessTime.day == now.day &&
-            l.accessTime.month == now.month)
+        .where((l) => l.accessTime.day == now.day && l.accessTime.month == now.month)
         .toList();
 
     final yesterdayLogs = filtered
-        .where((l) =>
-            l.accessTime.day == yesterday.day &&
-            l.accessTime.month == yesterday.month)
+        .where((l) => l.accessTime.day == yesterday.day && l.accessTime.month == yesterday.month)
         .toList();
 
     return Scaffold(
-      backgroundColor: MfuTheme.bgPage,
-      appBar: MfuAppBar(
+      backgroundColor: const Color(0xFFFDFBF7),
+      appBar: _MfuCustomAppBar(
         actions: [
           if (studentId.isNotEmpty)
             IconButton(
-              icon: const Icon(Icons.refresh_rounded,
-                  color: Colors.white, size: 20),
-              onPressed: () =>
-                  ref.invalidate(accessLogsProvider(studentId)),
+              icon: const Icon(Icons.refresh_rounded, color: Colors.black54, size: 24),
+              onPressed: () => ref.invalidate(accessLogsProvider(studentId)),
             ),
         ],
       ),
@@ -189,45 +278,61 @@ class _HistoryPageState extends ConsumerState<_HistoryPage> {
         children: [
           // ── White header: title + search + filters ────────────
           Container(
-            color: MfuTheme.bgCard,
-            padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
+            color: const Color(0xFFFDFBF7),
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 10),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
                   'History',
                   style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                      color: MfuTheme.textPrimary),
-                ),
-                const SizedBox(height: 10),
-                TextField(
-                  controller: _searchCtrl,
-                  onChanged: (v) => setState(() => _searchQuery = v),
-                  decoration: const InputDecoration(
-                    hintText: 'Search by gate / time',
-                    prefixIcon: Icon(Icons.search_rounded,
-                        color: MfuTheme.textHint, size: 18),
-                    contentPadding: EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 8),
+                    fontSize: 24,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.black87,
                   ),
                 ),
-                const SizedBox(height: 10),
-                Row(children: [
-                  _FilterChip(
-                    label: 'Today',
-                    isActive: true,
-                    onTap: () {},
+                const SizedBox(height: 16),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      )
+                    ],
                   ),
-                  const SizedBox(width: 8),
-                  _FilterChip(
-                    label: _filterType,
-                    isActive: false,
-                    hasArrow: true,
-                    onTap: () => _showTypeSheet(context),
+                  child: TextField(
+                    controller: _searchCtrl,
+                    onChanged: (v) => setState(() => _searchQuery = v),
+                    decoration: const InputDecoration(
+                      hintText: 'Search by gate /time',
+                      hintStyle: TextStyle(color: Colors.black38, fontSize: 14),
+                      prefixIcon: Icon(Icons.search_rounded, color: Colors.black38, size: 20),
+                      border: InputBorder.none,
+                      contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                    ),
                   ),
-                ]),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    _FilterChip(
+                      label: 'Today',
+                      isActive: true, // Based on UI, today is typically active initially
+                      onTap: () {}, // Modify logic if needed, left unchanged per rules
+                    ),
+                    const SizedBox(width: 10),
+                    _FilterChip(
+                      label: _filterType,
+                      isActive: false,
+                      hasArrow: true,
+                      onTap: () => _showTypeSheet(context),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
@@ -235,22 +340,14 @@ class _HistoryPageState extends ConsumerState<_HistoryPage> {
           // ── Log list ──────────────────────────────────────────
           Expanded(
             child: logsAsync == null
-                ? const Center(
-                    child: Text('No student data found',
-                        style: TextStyle(color: MfuTheme.textSub)))
+                ? const Center(child: Text('No student data found', style: TextStyle(color: Colors.grey)))
                 : logsAsync.isLoading
-                    ? const Center(
-                        child: CircularProgressIndicator(
-                            color: MfuTheme.primary))
+                    ? const Center(child: CircularProgressIndicator(color: MfuTheme.primary))
                     : logsAsync.hasError
-                        ? const Center(
-                            child: Text('Failed to load data',
-                                style:
-                                    TextStyle(color: MfuTheme.textSub)))
+                        ? const Center(child: Text('Failed to load data', style: TextStyle(color: Colors.grey)))
                         : RefreshIndicator(
                             color: MfuTheme.primary,
-                            onRefresh: () async =>
-                                ref.invalidate(accessLogsProvider(studentId)),
+                            onRefresh: () async => ref.invalidate(accessLogsProvider(studentId)),
                             child: _LogList(
                               todayLogs: todayLogs,
                               yesterdayLogs: yesterdayLogs,
@@ -266,17 +363,14 @@ class _HistoryPageState extends ConsumerState<_HistoryPage> {
   void _showTypeSheet(BuildContext ctx) {
     showModalBottomSheet(
       context: ctx,
-      shape: const RoundedRectangleBorder(
-          borderRadius:
-              BorderRadius.vertical(top: Radius.circular(16))),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
       builder: (_) => Column(
         mainAxisSize: MainAxisSize.min,
         children: ['All Status', 'Entry', 'Exit']
             .map((o) => ListTile(
                   title: Text(o),
                   trailing: _filterType == o
-                      ? const Icon(Icons.check_rounded,
-                          color: MfuTheme.primary)
+                      ? const Icon(Icons.check_rounded, color: MfuTheme.primary)
                       : null,
                   onTap: () {
                     setState(() => _filterType = o);
@@ -299,56 +393,83 @@ class _SettingPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
-      backgroundColor: MfuTheme.bgPage,
-      appBar: MfuAppBar(),
-      body: ListView(
-        children: [
-          // ── Title ─────────────────────────────────────────────
-          const Padding(
-            padding: EdgeInsets.fromLTRB(16, 20, 16, 12),
-            child: Text(
-              'Setting',
-              style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w700,
-                  color: MfuTheme.textPrimary),
+      backgroundColor: const Color(0xFFFDFBF7),
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(0), 
+        child: AppBar(backgroundColor: Colors.transparent, elevation: 0),
+      ),
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          children: [
+            // ── Top Bar (Setting Title + Settings Icon) ─────────────
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Setting',
+                  style: TextStyle(
+                    fontSize: 26,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.black87,
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.settings_outlined, color: Colors.black87),
+                  onPressed: () {},
+                )
+              ],
             ),
-          ),
+            
+            const SizedBox(height: 30),
 
-          // ── Section header ────────────────────────────────────
-          const Padding(
-            padding: EdgeInsets.fromLTRB(16, 4, 16, 6),
-            child: Text(
-              'Account & Security',
-              style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500,
-                  color: MfuTheme.textSub,
-                  letterSpacing: .4),
+            // ── Section header ────────────────────────────────────
+            const Padding(
+              padding: EdgeInsets.only(bottom: 12),
+              child: Text(
+                'Account & Security',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black54,
+                ),
+              ),
             ),
-          ),
 
-          // ── Change Password ───────────────────────────────────
-          _SettingTile(
-            icon: Icons.lock_outline_rounded,
-            label: 'Change Password',
-            onTap: () => context.push('/home/change-password'),
-          ),
-
-          const SizedBox(height: 8),
-          const Divider(height: 1, indent: 16, endIndent: 16),
-          const SizedBox(height: 8),
-
-          // ── Logout — standalone action, NOT a nav tap ─────────
-          _SettingTile(
-            icon: Icons.logout_rounded,
-            label: 'Logout',
-            labelColor: MfuTheme.primary,
-            iconColor: MfuTheme.primary,
-            showChevron: false,
-            onTap: () => _confirmLogout(context, ref),
-          ),
-        ],
+            // ── Settings Cards ────────────────────────────────────
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.03),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  )
+                ],
+              ),
+              child: Column(
+                children: [
+                  _SettingTile(
+                    icon: Icons.lock_outline_rounded,
+                    label: 'Change Password',
+                    onTap: () => context.push('/home/change-password'),
+                  ),
+                  const Divider(height: 1, indent: 50, endIndent: 20, color: Colors.black12),
+                  _SettingTile(
+                    icon: Icons.logout_rounded,
+                    label: 'Logout',
+                    labelColor: const Color(0xFFD61A22), // Matching red color
+                    iconColor: const Color(0xFFD61A22),
+                    showChevron: false,
+                    onTap: () => _confirmLogout(context, ref),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -357,18 +478,13 @@ class _SettingPage extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16)),
-        title: const Text('Logout',
-            style:
-                TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-        content: const Text('Are you sure you want to logout?',
-            style: TextStyle(fontSize: 13)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Logout', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+        content: const Text('Are you sure you want to logout?', style: TextStyle(fontSize: 14)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel',
-                style: TextStyle(color: MfuTheme.textSub)),
+            child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -377,11 +493,10 @@ class _SettingPage extends ConsumerWidget {
               ref.invalidate(authStateProvider);
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: MfuTheme.primary,
+              backgroundColor: const Color(0xFFD61A22),
               foregroundColor: Colors.white,
               elevation: 0,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
             child: const Text('Logout'),
           ),
@@ -412,28 +527,34 @@ class _SettingTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: MfuTheme.bgCard,
-      child: ListTile(
-        leading: Icon(icon,
-            size: 20, color: iconColor ?? MfuTheme.textSub),
-        title: Text(label,
-            style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-                color: labelColor ?? MfuTheme.textPrimary)),
-        trailing: showChevron
-            ? const Icon(Icons.chevron_right_rounded,
-                size: 18, color: MfuTheme.textHint)
-            : null,
-        onTap: onTap,
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+      leading: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: (iconColor ?? Colors.black54).withOpacity(0.1),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Icon(icon, size: 20, color: iconColor ?? Colors.black87),
       ),
+      title: Text(
+        label,
+        style: TextStyle(
+          fontSize: 15,
+          fontWeight: FontWeight.w600,
+          color: labelColor ?? Colors.black87,
+        ),
+      ),
+      trailing: showChevron
+          ? const Icon(Icons.chevron_right_rounded, size: 20, color: Colors.black38)
+          : null,
+      onTap: onTap,
     );
   }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// Dashboard body (unchanged logic, extracted from old HomeScreen)
+// Dashboard body (unchanged logic, UI redesigned to match images)
 // ═══════════════════════════════════════════════════════════════════════════════
 
 class _DashboardBody extends StatelessWidget {
@@ -448,160 +569,193 @@ class _DashboardBody extends StatelessWidget {
     final logs = logsAsync.valueOrNull ?? [];
     final now = DateTime.now();
     final todayCount = logs
-        .where((l) =>
-            l.accessTime.day == now.day &&
-            l.accessTime.month == now.month)
+        .where((l) => l.accessTime.day == now.day && l.accessTime.month == now.month)
         .length;
     final latest = logs.isNotEmpty ? logs.first : null;
 
     return ListView(
-      padding: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       children: [
-        // ── Profile card ────────────────────────────────────────
+        // ── Profile card (UI redesigned) ────────────────────────────────────────
         _buildCard(
-          margin: const EdgeInsets.fromLTRB(12, 12, 12, 0),
-          child: Row(children: [
-            CircleAvatar(
-              radius: 22,
-              backgroundColor: MfuTheme.bgChip,
-              child: const Icon(Icons.person_outline_rounded,
-                  color: MfuTheme.textSub, size: 22),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(student.name,
-                      style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: MfuTheme.textPrimary)),
-                  const SizedBox(height: 2),
-                  Text(student.studentCode,
-                      style: const TextStyle(
-                          fontSize: 11, color: MfuTheme.textSub)),
-                  const Text('Dorm F1 room 229',
-                      style: TextStyle(
-                          fontSize: 11, color: MfuTheme.textSub)),
-                ],
-              ),
-            ),
-            const Icon(Icons.more_horiz_rounded,
-                color: MfuTheme.textHint),
-          ]),
-        ),
-
-        // ── Current status card ─────────────────────────────────
-        _buildCard(
-          margin: const EdgeInsets.fromLTRB(12, 10, 12, 0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: Row(
             children: [
-              Row(children: [
-                const Text('Current status',
-                    style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: MfuTheme.textPrimary)),
-                const Spacer(),
-                const Icon(Icons.more_horiz_rounded,
-                    color: MfuTheme.textHint, size: 18),
-              ]),
-              const SizedBox(height: 10),
-              if (latest != null) ...[
-                Row(children: [
-                  Container(
-                      width: 8,
-                      height: 8,
-                      decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: MfuTheme.green)),
-                  const SizedBox(width: 6),
-                  const Text('Status : on time',
-                      style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: MfuTheme.green)),
-                  const Spacer(),
-                  Text(
-                      latest.type == AccessType.IN
-                          ? 'Entry - ${latest.gateName}'
-                          : 'Exit - ${latest.gateName}',
+              CircleAvatar(
+                radius: 28,
+                backgroundColor: Colors.black87,
+                child: const Icon(Icons.person_rounded, color: Colors.white, size: 36),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      student.name,
                       style: const TextStyle(
-                          fontSize: 10, color: MfuTheme.textSub)),
-                ]),
-                const SizedBox(height: 3),
-                Text(
-                    'update: ${DateFormat('HH:mm').format(latest.accessTime)} m',
-                    style: const TextStyle(
-                        fontSize: 10, color: MfuTheme.textHint)),
-              ] else
-                const Text('No data available for today',
-                    style: TextStyle(
-                        fontSize: 12, color: MfuTheme.textSub)),
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                height: 40,
-                child: ElevatedButton(
-                  onPressed: () =>
-                      context.push('/home/logs/${student.id}'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: MfuTheme.primary,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8)),
-                  ),
-                  child: Text('Today     $todayCount entry',
-                      style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600)),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFFA31219), // Dark red Name color
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      student.studentCode,
+                      style: const TextStyle(fontSize: 12, color: Colors.black54),
+                    ),
+                    const Text(
+                      'Dorm F1 room 229',
+                      style: TextStyle(fontSize: 12, color: Colors.black54),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
         ),
+        const SizedBox(height: 16),
+
+        // ── Current status card (UI redesigned) ─────────────────────────────────
+        _buildCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Current status',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const Icon(Icons.more_horiz_rounded, color: Colors.black38, size: 20),
+                ],
+              ),
+              const SizedBox(height: 20),
+              if (latest != null) ...[
+                Row(
+                  children: [
+                    const Text(
+                      'Status : ',
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.black54),
+                    ),
+                    const Text(
+                      'on time',
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Colors.green),
+                    ),
+                    const SizedBox(width: 12),
+                    Container(height: 30, width: 1, color: Colors.black12), // Divider
+                    const SizedBox(width: 12),
+                    Text(
+                      latest.type == AccessType.IN
+                          ? 'Entry : ${latest.gateName}'
+                          : 'Exit : ${latest.gateName}',
+                      style: const TextStyle(fontSize: 12, color: Colors.black54),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'update : ${DateFormat('HH.mm').format(latest.accessTime)} m',
+                  style: const TextStyle(fontSize: 12, color: Colors.black38),
+                ),
+              ] else
+                const Text(
+                  'No data for today',
+                  style: TextStyle(fontSize: 13, color: Colors.black54),
+                ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        // ── Red Action Button ──────────────────────────────────────────────
+        Container(
+          width: double.infinity,
+          height: 50,
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFFD61A22), Color(0xFFA31219)], // Matches Image Red gradient
+            ),
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFFD61A22).withOpacity(0.3),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
+              )
+            ],
+          ),
+          child: ElevatedButton(
+            onPressed: () => context.push('/home/logs/${student.id}'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.transparent,
+              shadowColor: Colors.transparent,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Today',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white),
+                ),
+                Text(
+                  '$todayCount entry',
+                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 24),
 
         // ── Recent Activity ─────────────────────────────────────
-        const Padding(
-          padding: EdgeInsets.fromLTRB(14, 14, 14, 6),
-          child: Text('Recent Activity',
-              style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: MfuTheme.textSub)),
+        const Text(
+          'Recent Activity',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w800,
+            color: Colors.black87,
+          ),
         ),
+        const SizedBox(height: 12),
 
         if (logs.isEmpty)
           const Padding(
             padding: EdgeInsets.all(20),
             child: Center(
-              child: Text('No recent activities',
-                  style:
-                      TextStyle(fontSize: 12, color: MfuTheme.textSub)),
+              child: Text(
+                'No recent activity',
+                style: TextStyle(fontSize: 14, color: Colors.black54),
+              ),
             ),
           )
         else
           ...logs.take(5).map((log) => _ActivityTile(
                 log: log,
-                onTap: () =>
-                    context.push('/home/logs/${student.id}'),
+                onTap: () => context.push('/home/logs/${student.id}'),
               )),
       ],
     );
   }
 
-  Widget _buildCard(
-      {required Widget child, EdgeInsetsGeometry? margin}) {
+  Widget _buildCard({required Widget child}) {
     return Container(
-      margin: margin,
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: MfuTheme.bgCard,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: MfuTheme.border, width: 0.5),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          )
+        ],
       ),
       child: child,
     );
@@ -621,38 +775,53 @@ class _ActivityTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final isIn = log.type == AccessType.IN;
     final timeStr = DateFormat('HH:mm').format(log.accessTime);
+    
+    // Logic for borders matching image: Green for Entry, Red for Exit, Orange/Yellow for Late Entry
+    final isLateEntry = _isLate(log.accessTime) && isIn;
+    final borderColor = isLateEntry ? Colors.orange : (isIn ? Colors.green : Colors.red);
+
     return InkWell(
       onTap: onTap,
       child: Container(
-        color: MfuTheme.bgCard,
-        padding:
-            const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        child: Row(children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '$timeStr ${isIn ? "Entry" : "Exit"}'
-                  '${isIn && _isLate(log.accessTime) ? " (late)" : ""}',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: _isLate(log.accessTime) && isIn
-                        ? MfuTheme.primary
-                        : MfuTheme.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(log.gateName,
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: borderColor, width: 1.5), // Colored outline box
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.02),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            )
+          ],
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '$timeStr ${isIn ? "Entry" : "Exit"}${isLateEntry ? " (Late)" : ""}',
                     style: const TextStyle(
-                        fontSize: 10, color: MfuTheme.textSub)),
-              ],
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    log.gateName,
+                    style: const TextStyle(fontSize: 12, color: Colors.black54),
+                  ),
+                ],
+              ),
             ),
-          ),
-          const Icon(Icons.chevron_right_rounded,
-              color: MfuTheme.textHint, size: 18),
-        ]),
+            const Icon(Icons.chevron_right_rounded, color: Colors.black38, size: 24),
+          ],
+        ),
       ),
     );
   }
@@ -680,45 +849,48 @@ class _LogList extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            // Placeholder visual graphic to match "No data for today"
             Container(
-              width: 56,
-              height: 56,
-              decoration: const BoxDecoration(
-                  shape: BoxShape.circle, color: MfuTheme.bgChip),
-              child: const Icon(Icons.search_off_rounded,
-                  color: MfuTheme.textHint, size: 26),
+              width: 120,
+              height: 80,
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFF5F5), // Light pinkish red
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: const Icon(Icons.search_rounded, color: Colors.orangeAccent, size: 40),
             ),
-            const SizedBox(height: 12),
-            const Text('No data for today',
-                style:
-                    TextStyle(fontSize: 13, color: MfuTheme.textSub)),
+            const SizedBox(height: 16),
+            const Text(
+              'No data for today',
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.black87),
+            ),
           ],
         ),
       );
     }
 
     return ListView(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
       children: [
         if (todayLogs.isNotEmpty) ...[
-          _DayHeader(label: 'Today'),
+          const _DayHeader(label: 'Today'),
           ...todayLogs.map((l) => _HistoryTile(log: l)),
         ],
         if (yesterdayLogs.isNotEmpty) ...[
-          _DayHeader(label: 'Yesterday'),
+          const _DayHeader(label: 'Yesterday'),
           ...yesterdayLogs.map((l) => _HistoryTile(log: l)),
         ],
         if (todayLogs.isEmpty)
           const Padding(
-            padding: EdgeInsets.symmetric(vertical: 24),
+            padding: EdgeInsets.symmetric(vertical: 40),
             child: Center(
-              child: Column(children: [
-                Icon(Icons.search_off_rounded,
-                    size: 36, color: MfuTheme.textHint),
-                SizedBox(height: 8),
-                Text('No data for today',
-                    style: TextStyle(
-                        fontSize: 12, color: MfuTheme.textSub)),
-              ]),
+              child: Column(
+                children: [
+                  Icon(Icons.search_off_rounded, size: 40, color: Colors.black26),
+                  SizedBox(height: 12),
+                  Text('No data for today', style: TextStyle(fontSize: 14, color: Colors.black54)),
+                ],
+              ),
             ),
           ),
       ],
@@ -732,17 +904,21 @@ class _DayHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.fromLTRB(14, 10, 14, 4),
-        child: Row(children: [
-          Text(label.toUpperCase(),
+        padding: const EdgeInsets.only(top: 16, bottom: 8),
+        child: Row(
+          children: [
+            Text(
+              label,
               style: const TextStyle(
-                  fontSize: 10,
-                  color: MfuTheme.textHint,
-                  fontWeight: FontWeight.w500,
-                  letterSpacing: .5)),
-          const SizedBox(width: 8),
-          const Expanded(child: Divider()),
-        ]),
+                fontSize: 14,
+                color: Colors.black87,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(width: 8),
+            const Expanded(child: Divider(color: Colors.black12)),
+          ],
+        ),
       );
 }
 
@@ -753,56 +929,63 @@ class _HistoryTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isIn = log.type == AccessType.IN;
-    final timeStr = DateFormat('HH:mm').format(log.accessTime);
+    final timeStr = DateFormat('HH.mm').format(log.accessTime);
+    
+    // Bottom border color based on status
+    final bottomBorderColor = isIn ? Colors.green : const Color(0xFFD61A22);
 
     return Container(
-      color: MfuTheme.bgCard,
-      child: ListTile(
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-        leading: CircleAvatar(
-          radius: 18,
-          backgroundColor:
-              isIn ? MfuTheme.statusInBg : MfuTheme.statusOutBg,
-          child: Icon(
-            isIn ? Icons.login_rounded : Icons.logout_rounded,
-            size: 16,
-            color: isIn ? MfuTheme.statusIn : MfuTheme.statusOut,
-          ),
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        // subtle shadow and explicit colored bottom border matching image design
+        border: Border(
+          bottom: BorderSide(color: bottomBorderColor, width: 3),
+          top: const BorderSide(color: Colors.black12, width: 0.5),
+          left: const BorderSide(color: Colors.black12, width: 0.5),
+          right: const BorderSide(color: Colors.black12, width: 0.5),
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 5,
+            offset: const Offset(0, 2),
+          )
+        ],
+      ),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         title: Text(
           '$timeStr ${isIn ? "Entry" : "Exit"}',
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: isIn ? MfuTheme.textPrimary : MfuTheme.primary,
+          style: const TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w800,
+            color: Colors.black87,
           ),
         ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(log.gateName,
-                style: const TextStyle(
-                    fontSize: 10, color: MfuTheme.textSub)),
-            if (isIn)
-              const Text('Face Scan ✓',
-                  style: TextStyle(
-                      fontSize: 10, color: MfuTheme.statusIn)),
-          ],
+        subtitle: Padding(
+          padding: const EdgeInsets.only(top: 4.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                log.gateName,
+                style: const TextStyle(fontSize: 12, color: Colors.black54),
+              ),
+              const SizedBox(height: 4),
+              if (isIn)
+                const Text(
+                  'Face Scan ✓',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.green),
+                ),
+            ],
+          ),
         ),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            CircleAvatar(
-              radius: 13,
-              backgroundColor: MfuTheme.bgChip,
-              child: const Icon(Icons.person_outline_rounded,
-                  size: 13, color: MfuTheme.textSub),
-            ),
-            const SizedBox(width: 4),
-            const Icon(Icons.chevron_right_rounded,
-                size: 18, color: MfuTheme.textHint),
-          ],
+        trailing: const CircleAvatar(
+          radius: 18,
+          backgroundColor: Colors.black87,
+          child: Icon(Icons.person_rounded, size: 24, color: Colors.white),
         ),
       ),
     );
@@ -829,32 +1012,48 @@ class _FilterChip extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding:
-            const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: isActive ? MfuTheme.primary : MfuTheme.bgCard,
+          // Match red gradient active state or clean outline state
+          gradient: isActive
+              ? const LinearGradient(
+                  colors: [Color(0xFFD61A22), Color(0xFFA31219)],
+                )
+              : null,
+          color: isActive ? null : Colors.white,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isActive ? MfuTheme.primary : MfuTheme.border,
-            width: 0.5,
+            color: isActive ? Colors.transparent : Colors.black12,
+            width: 1,
           ),
+          boxShadow: isActive
+              ? [
+                  BoxShadow(
+                    color: const Color(0xFFD61A22).withOpacity(0.3),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  )
+                ]
+              : null,
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(label,
-                style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w500,
-                    color: isActive
-                        ? Colors.white
-                        : MfuTheme.textSub)),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: isActive ? Colors.white : Colors.black87,
+              ),
+            ),
             if (hasArrow) ...[
-              const SizedBox(width: 2),
-              Icon(Icons.expand_more_rounded,
-                  size: 14,
-                  color:
-                      isActive ? Colors.white : MfuTheme.textSub),
+              const SizedBox(width: 4),
+              Icon(
+                Icons.keyboard_arrow_down_rounded,
+                size: 16,
+                color: isActive ? Colors.white : Colors.black87,
+              ),
             ],
           ],
         ),
@@ -875,15 +1074,11 @@ class _EmptyView extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.person_search_rounded,
-                size: 64, color: Colors.grey.shade300),
+            Icon(Icons.person_search_rounded, size: 64, color: Colors.grey.shade300),
             const SizedBox(height: 16),
-            const Text('No students are linked to this account yet.',
-                style: TextStyle(color: MfuTheme.textSub)),
+            const Text('No student data found', style: TextStyle(color: Colors.black54)),
             const SizedBox(height: 6),
-            const Text('Please contact the dormitory staff.',
-                style: TextStyle(
-                    color: MfuTheme.textHint, fontSize: 12)),
+            const Text('Please contact staff for support', style: TextStyle(color: Colors.black38, fontSize: 12)),
           ],
         ),
       );
@@ -901,23 +1096,20 @@ class _ErrorView extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.error_outline_rounded,
-                  size: 52, color: MfuTheme.primary),
+              const Icon(Icons.error_outline_rounded, size: 52, color: Color(0xFFD61A22)),
               const SizedBox(height: 12),
-              Text(message,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                      fontSize: 13, color: MfuTheme.textSub)),
-              const SizedBox(height: 16),
-              ElevatedButton.icon(
-                onPressed: onRetry,
-                style: ElevatedButton.styleFrom(
-                    backgroundColor: MfuTheme.primary,
-                    foregroundColor: Colors.white,
-                    elevation: 0),
-                icon: const Icon(Icons.refresh_rounded, size: 16),
-                label: const Text('Try Again'),
+              Text(
+                message,
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Colors.black54),
               ),
+              const SizedBox(height: 16),
+              TextButton.icon(
+                onPressed: onRetry,
+                icon: const Icon(Icons.refresh_rounded),
+                label: const Text('Retry'),
+                style: TextButton.styleFrom(foregroundColor: const Color(0xFFD61A22)),
+              )
             ],
           ),
         ),
