@@ -44,17 +44,20 @@ let AccessLogsService = class AccessLogsService {
         await this.notifications.notifyParentsOfStudent(student, log);
         return { ok: true, logId: log.id };
     }
-    async getLogsForStudent(parentId, studentId, limit = 50) {
+    async getLogsForStudent(parentId, studentId, days = 7) {
         const mapping = await this.prisma.parentStudentMapping.findFirst({
             where: { parentId, studentId },
         });
         if (!mapping) {
             throw new common_1.ForbiddenException('You do not have access to this student\'s records');
         }
+        const since = new Date();
+        since.setDate(since.getDate() - (days - 1));
+        since.setHours(0, 0, 0, 0);
         return this.prisma.accessLog.findMany({
-            where: { studentId },
+            where: { studentId, accessTime: { gte: since } },
             orderBy: { accessTime: 'desc' },
-            take: limit,
+            take: 500,
             select: {
                 id: true,
                 accessTime: true,

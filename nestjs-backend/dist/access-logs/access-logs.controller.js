@@ -46,8 +46,8 @@ let AccessLogsController = class AccessLogsController {
     myStudents(req) {
         return this.service.getMyStudents(req.user.sub);
     }
-    logs(req, studentId, limit) {
-        return this.service.getLogsForStudent(req.user.sub, studentId, limit ? parseInt(limit, 10) : 50);
+    logs(req, studentId, days) {
+        return this.service.getLogsForStudent(req.user.sub, studentId, days ? parseInt(days, 10) : 7);
     }
 };
 exports.AccessLogsController = AccessLogsController;
@@ -72,7 +72,7 @@ __decorate([
     (0, common_1.Get)('me/students/:studentId/logs'),
     __param(0, (0, common_1.Request)()),
     __param(1, (0, common_1.Param)('studentId')),
-    __param(2, (0, common_1.Query)('limit')),
+    __param(2, (0, common_1.Query)('days')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object, String, String]),
     __metadata("design:returntype", void 0)
