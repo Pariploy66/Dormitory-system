@@ -43,12 +43,12 @@ export class AccessLogsController {
   logs(
     @Request() req,
     @Param('studentId') studentId: string,
-    @Query('limit') limit?: string,
+    @Query('days') days?: string,
   ) {
     return this.service.getLogsForStudent(
       req.user.sub,
       studentId,
-      limit ? parseInt(limit, 10) : 50,
+      days ? parseInt(days, 10) : 7,
     );
   }
 }

@@ -32,9 +32,10 @@ class _JwtInterceptor extends Interceptor {
 
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
-    // 401 → clear token, router will redirect to login
     if (err.response?.statusCode == 401) {
+      // Clear both tokens so isLoggedIn() returns false on next check
       _storage.delete(key: AppConstants.jwtStorageKey);
+      _storage.delete(key: AppConstants.parentIdStorageKey);
     }
     handler.next(err);
   }

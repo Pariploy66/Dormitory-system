@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import '../../core/l10n.dart';
 import '../../data/models.dart';
 import '../../providers/app_providers.dart';
 import '../theme/mfu_theme.dart';
@@ -15,9 +16,9 @@ class LogsScreen extends ConsumerStatefulWidget {
 }
 
 class _LogsScreenState extends ConsumerState<LogsScreen> {
-  // ── Logic unchanged ───────────────────────────────────────────
   String _searchQuery = '';
   String _filterType  = 'All Status';
+  int _daysBack       = 1; // default: Today only — user can tap chip to widen range
   final _searchCtrl   = TextEditingController();
 
   @override
@@ -26,34 +27,98 @@ class _LogsScreenState extends ConsumerState<LogsScreen> {
     super.dispose();
   }
 
+  String _periodLabel(AppStrings s) {
+    if (_daysBack == 1) return s.today;
+    if (_daysBack == 3) return s.last3Days;
+    return s.last7Days;
+  }
+
+  void _showPeriodSheet(BuildContext ctx, AppStrings s) {
+    showModalBottomSheet(
+      context: ctx,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (_) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
+              child: Row(children: [
+                Text(s.history,
+                    style: const TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.w700)),
+              ]),
+            ),
+            const Divider(height: 1),
+            ...[
+              (1, s.today),
+              (3, s.last3Days),
+              (7, s.last7Days),
+            ].map((pair) => ListTile(
+                  leading: Icon(
+                    pair.$1 == 1
+                        ? Icons.today_rounded
+                        : Icons.date_range_rounded,
+                    color: _daysBack == pair.$1
+                        ? MfuTheme.primary
+                        : MfuTheme.textSub,
+                    size: 22,
+                  ),
+                  title: Text(pair.$2,
+                      style: TextStyle(
+                          fontWeight: _daysBack == pair.$1
+                              ? FontWeight.w700
+                              : FontWeight.w500,
+                          color: _daysBack == pair.$1
+                              ? MfuTheme.primary
+                              : MfuTheme.textPrimary)),
+                  trailing: _daysBack == pair.$1
+                      ? const Icon(Icons.check_circle_rounded,
+                          color: MfuTheme.primary, size: 20)
+                      : null,
+                  onTap: () {
+                    setState(() => _daysBack = pair.$1);
+                    Navigator.pop(ctx);
+                  },
+                )),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
   // ── UI — MFU style ────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
+    final s = ref.watch(stringsProvider);
     final logsAsync = ref.watch(accessLogsProvider(widget.studentId));
-    final students  = ref.watch(studentsProvider).valueOrNull ?? [];
-    final student   = students.where((s) => s.id == widget.studentId).firstOrNull;
+    final students = ref.watch(studentsProvider).valueOrNull ?? [];
+    final student =
+        students.where((st) => st.id == widget.studentId).firstOrNull;
 
     final allLogs = logsAsync.valueOrNull ?? [];
+    final now = DateTime.now();
+
+    // Cutoff based on selected period (_daysBack):
+    // _daysBack=1 → today only, _daysBack=3 → last 3 calendar days, etc.
+    final cutoff = DateTime(now.year, now.month, now.day)
+        .subtract(Duration(days: _daysBack - 1));
+
     final filtered = allLogs.where((l) {
+      final inRange = !l.accessTime.isBefore(cutoff);
       final matchQ = _searchQuery.isEmpty ||
           l.gateName.toLowerCase().contains(_searchQuery.toLowerCase()) ||
           DateFormat('HH:mm').format(l.accessTime).contains(_searchQuery);
       final matchT = _filterType == 'All Status' ||
           (_filterType == 'Entry' && l.type == AccessType.IN) ||
-          (_filterType == 'Exit'  && l.type == AccessType.OUT);
-      return matchQ && matchT;
+          (_filterType == 'Exit' && l.type == AccessType.OUT);
+      return inRange && matchQ && matchT;
     }).toList();
 
-    final now       = DateTime.now();
-    final yesterday = now.subtract(const Duration(days: 1));
-
-    final todayLogs = filtered.where((l) =>
-        l.accessTime.day   == now.day &&
-        l.accessTime.month == now.month).toList();
-
-    final yesterdayLogs = filtered.where((l) =>
-        l.accessTime.day   == yesterday.day &&
-        l.accessTime.month == yesterday.month).toList();
+    final sections = _buildLogSections(filtered, now, s, daysBack: _daysBack);
 
     return Scaffold(
       backgroundColor: MfuTheme.bgPage,
@@ -70,17 +135,19 @@ class _LogsScreenState extends ConsumerState<LogsScreen> {
       ),
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
-          border: Border(
-              top: BorderSide(color: MfuTheme.border, width: 0.5))),
+            border: Border(
+                top: BorderSide(color: MfuTheme.border, width: 0.5))),
         child: BottomNavigationBar(
           currentIndex: 1,
-          items: const [
+          items: [
             BottomNavigationBarItem(
-                icon: Icon(Icons.grid_view_rounded), label: 'Dashboard'),
+                icon: const Icon(Icons.grid_view_rounded),
+                label: s.dashboard),
             BottomNavigationBarItem(
-                icon: Icon(Icons.history_rounded), label: 'History'),
+                icon: const Icon(Icons.history_rounded), label: s.history),
             BottomNavigationBarItem(
-                icon: Icon(Icons.person_outline_rounded), label: 'Setting'),
+                icon: const Icon(Icons.person_outline_rounded),
+                label: s.setting),
           ],
         ),
       ),
@@ -93,7 +160,7 @@ class _LogsScreenState extends ConsumerState<LogsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(student?.name ?? 'History',
+                Text(student?.name ?? s.history,
                     style: const TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w700,
@@ -102,27 +169,29 @@ class _LogsScreenState extends ConsumerState<LogsScreen> {
                 TextField(
                   controller: _searchCtrl,
                   onChanged: (v) => setState(() => _searchQuery = v),
-                  decoration: const InputDecoration(
-                    hintText: 'Search by gate /time',
-                    prefixIcon: Icon(Icons.search_rounded,
+                  decoration: InputDecoration(
+                    hintText: s.searchHint,
+                    prefixIcon: const Icon(Icons.search_rounded,
                         color: MfuTheme.textHint, size: 18),
-                    contentPadding: EdgeInsets.symmetric(
+                    contentPadding: const EdgeInsets.symmetric(
                         horizontal: 16, vertical: 8),
                   ),
                 ),
                 const SizedBox(height: 10),
                 Row(children: [
+                  // Tappable period selector — Today / Last 3 Days / Last 7 Days
                   _FilterChip(
-                    label: 'Today',
+                    label: _periodLabel(s),
                     isActive: true,
-                    onTap: () {},
+                    hasArrow: true,
+                    onTap: () => _showPeriodSheet(context, s),
                   ),
                   const SizedBox(width: 8),
                   _FilterChip(
                     label: _filterType,
                     isActive: false,
                     hasArrow: true,
-                    onTap: () => _showTypeSheet(context),
+                    onTap: () => _showTypeSheet(context, s),
                   ),
                 ]),
               ],
@@ -133,21 +202,20 @@ class _LogsScreenState extends ConsumerState<LogsScreen> {
           Expanded(
             child: logsAsync.isLoading
                 ? const Center(
-                    child: CircularProgressIndicator(
-                        color: MfuTheme.primary))
+                    child:
+                        CircularProgressIndicator(color: MfuTheme.primary))
                 : logsAsync.hasError
                     ? Center(
-                        child: Text('Failed to load data',
-                            style: const TextStyle(
-                                color: MfuTheme.textSub)))
+                        child: Text(s.failedToLoad,
+                            style:
+                                const TextStyle(color: MfuTheme.textSub)))
                     : RefreshIndicator(
                         color: MfuTheme.primary,
                         onRefresh: () async => ref
                             .invalidate(accessLogsProvider(widget.studentId)),
                         child: _LogList(
-                          todayLogs: todayLogs,
-                          yesterdayLogs: yesterdayLogs,
-                          allLogs: filtered,
+                          sections: sections,
+                          noDataLabel: s.noData,
                         ),
                       ),
           ),
@@ -156,22 +224,26 @@ class _LogsScreenState extends ConsumerState<LogsScreen> {
     );
   }
 
-  void _showTypeSheet(BuildContext ctx) {
+  void _showTypeSheet(BuildContext ctx, AppStrings s) {
     showModalBottomSheet(
       context: ctx,
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
       builder: (_) => Column(
         mainAxisSize: MainAxisSize.min,
-        children: ['All Status', 'Entry', 'Exit']
-            .map((o) => ListTile(
-                  title: Text(o),
-                  trailing: _filterType == o
+        children: [
+          ('All Status', s.allStatus),
+          ('Entry', s.entry),
+          ('Exit', s.exit),
+        ]
+            .map((pair) => ListTile(
+                  title: Text(pair.$2),
+                  trailing: _filterType == pair.$1
                       ? const Icon(Icons.check_rounded,
                           color: MfuTheme.primary)
                       : null,
                   onTap: () {
-                    setState(() => _filterType = o);
+                    setState(() => _filterType = pair.$1);
                     Navigator.pop(ctx);
                   },
                 ))
@@ -179,6 +251,33 @@ class _LogsScreenState extends ConsumerState<LogsScreen> {
       ),
     );
   }
+}
+
+// [daysBack] controls how many calendar days are included (1 = today only).
+List<MapEntry<String, List<AccessLog>>> _buildLogSections(
+  List<AccessLog> logs,
+  DateTime now,
+  AppStrings s, {
+  int daysBack = 7,
+}) {
+  final sections = <MapEntry<String, List<AccessLog>>>[];
+  for (var i = 0; i < daysBack; i++) {
+    final day =
+        DateTime(now.year, now.month, now.day).subtract(Duration(days: i));
+    final label = i == 0
+        ? s.today
+        : i == 1
+            ? s.yesterday
+            : DateFormat('EEE, d MMM').format(day);
+    final dayLogs = logs
+        .where((l) =>
+            l.accessTime.year == day.year &&
+            l.accessTime.month == day.month &&
+            l.accessTime.day == day.day)
+        .toList();
+    if (dayLogs.isNotEmpty) sections.add(MapEntry(label, dayLogs));
+  }
+  return sections;
 }
 
 // ── Filter chip ────────────────────────────────────────────────────────────────
@@ -235,36 +334,32 @@ class _FilterChip extends StatelessWidget {
   }
 }
 
-// ── Log list ───────────────────────────────────────────────────────────────────
+// ── Log list (7-day grouped view) ─────────────────────────────────────────────
 
 class _LogList extends StatelessWidget {
-  final List<AccessLog> todayLogs;
-  final List<AccessLog> yesterdayLogs;
-  final List<AccessLog> allLogs;
+  final List<MapEntry<String, List<AccessLog>>> sections;
+  final String noDataLabel;
 
-  const _LogList({
-    required this.todayLogs,
-    required this.yesterdayLogs,
-    required this.allLogs,
-  });
+  const _LogList({required this.sections, required this.noDataLabel});
 
   @override
   Widget build(BuildContext context) {
-    if (allLogs.isEmpty) {
+    if (sections.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              width: 56, height: 56,
+              width: 56,
+              height: 56,
               decoration: const BoxDecoration(
                   shape: BoxShape.circle, color: MfuTheme.bgChip),
               child: const Icon(Icons.search_off_rounded,
                   color: MfuTheme.textHint, size: 26),
             ),
             const SizedBox(height: 12),
-            const Text('No data for today',
-                style: TextStyle(
+            Text(noDataLabel,
+                style: const TextStyle(
                     fontSize: 13, color: MfuTheme.textSub)),
           ],
         ),
@@ -273,28 +368,10 @@ class _LogList extends StatelessWidget {
 
     return ListView(
       children: [
-        if (todayLogs.isNotEmpty) ...[
-          _DayHeader(label: 'Today'),
-          ...todayLogs.map((l) => _HistoryTile(log: l)),
+        for (final section in sections) ...[
+          _DayHeader(label: section.key),
+          ...section.value.map((l) => _HistoryTile(log: l)),
         ],
-        if (yesterdayLogs.isNotEmpty) ...[
-          _DayHeader(label: 'Yesterday'),
-          ...yesterdayLogs.map((l) => _HistoryTile(log: l)),
-        ],
-        if (todayLogs.isEmpty)
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 24),
-            child: Center(
-              child: Column(children: [
-                Icon(Icons.search_off_rounded,
-                    size: 36, color: MfuTheme.textHint),
-                SizedBox(height: 8),
-                Text('No data for today',
-                    style: TextStyle(
-                        fontSize: 12, color: MfuTheme.textSub)),
-              ]),
-            ),
-          ),
       ],
     );
   }
