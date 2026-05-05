@@ -56,10 +56,10 @@ export class AccessLogsService {
   }
 
   /**
-   * Fetch access logs for a student, enforcing that the requesting parent
-   * actually has a mapping to that student.
+   * Fetch access logs for a student within the last `days` days (default 7),
+   * enforcing that the requesting parent has a mapping to that student.
    */
-  async getLogsForStudent(parentId: string, studentId: string, limit = 50) {
+  async getLogsForStudent(parentId: string, studentId: string, days = 7) {
     // Security: verify parent owns this student
     const mapping = await this.prisma.parentStudentMapping.findFirst({
       where: { parentId, studentId },
@@ -70,10 +70,17 @@ export class AccessLogsService {
       );
     }
 
+    // "days=7" means the 7 calendar days that include today.
+    // Subtract (days - 1) so the window is: [today-6 days at 00:00, now].
+    // Example with days=7 on May 5 → since = April 29 00:00 → 7 days total.
+    const since = new Date();
+    since.setDate(since.getDate() - (days - 1));
+    since.setHours(0, 0, 0, 0);
+
     return this.prisma.accessLog.findMany({
-      where: { studentId },
+      where: { studentId, accessTime: { gte: since } },
       orderBy: { accessTime: 'desc' },
-      take: limit,
+      take: 500, // safety cap — 7 days rarely exceeds this
       select: {
         id: true,
         accessTime: true,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../core/l10n.dart';
 import '../../data/api_repository.dart';
 import '../../providers/app_providers.dart';
 import '../theme/mfu_theme.dart';
@@ -35,10 +36,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             email: _emailCtrl.text.trim(),
             password: _passCtrl.text,
           );
-      ref.invalidate(authStateProvider);
-      //if (mounted) context.go('/home');
+      // Redirect to login — do NOT auto-login to avoid stale-state bugs
+      if (mounted) context.go('/login');
     } catch (_) {
-      setState(() => _error = 'This email/phone is already registered');
+      final s = ref.read(stringsProvider);
+      setState(() => _error = s.alreadyRegistered);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -56,6 +58,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   // ── UI — MFU style ────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
+    final s = ref.watch(stringsProvider);
     return Scaffold(
       backgroundColor: MfuTheme.bgPage,
       appBar: AppBar(
@@ -66,8 +69,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
           onPressed: () => context.pop(),
         ),
-        title: const Text('Register',
-            style: TextStyle(
+        title: Text(s.registerTitle,
+            style: const TextStyle(
                 color: Colors.white,
                 fontSize: 16,
                 fontWeight: FontWeight.w600)),
@@ -80,16 +83,16 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _field(_nameCtrl, 'Name', Icons.person_outline_rounded,
+                _field(_nameCtrl, s.name, Icons.person_outline_rounded,
                     TextInputType.name),
                 const SizedBox(height: 14),
-                _field(_phoneCtrl, 'Phone', Icons.phone_outlined,
+                _field(_phoneCtrl, s.phone, Icons.phone_outlined,
                     TextInputType.phone),
                 const SizedBox(height: 14),
-                _field(_emailCtrl, 'Email', Icons.email_outlined,
+                _field(_emailCtrl, s.email, Icons.email_outlined,
                     TextInputType.emailAddress),
                 const SizedBox(height: 14),
-                _field(_passCtrl, 'Password (≥ 8 ตัว)',
+                _field(_passCtrl, s.passwordHint,
                     Icons.lock_outline_rounded, TextInputType.visiblePassword,
                     obscure: true),
                 if (_error != null) ...[
@@ -117,16 +120,16 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                             height: 20,
                             child: CircularProgressIndicator(
                                 strokeWidth: 2, color: Colors.white))
-                        : const Text('Register',
-                            style: TextStyle(
+                        : Text(s.registerButton,
+                            style: const TextStyle(
                                 fontSize: 15, fontWeight: FontWeight.w600)),
                   ),
                 ),
                 const SizedBox(height: 12),
                 TextButton(
                   onPressed: () => context.pop(),
-                  child: const Text('Login',
-                      style: TextStyle(fontSize: 12, color: MfuTheme.primary)),
+                  child: Text(s.loginLink,
+                      style: const TextStyle(fontSize: 12, color: MfuTheme.primary)),
                 ),
               ],
             ),
@@ -152,7 +155,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         hintText: hint,
         prefixIcon: Icon(icon, size: 18, color: MfuTheme.textHint),
       ),
-      validator: (v) => v != null && v.length >= 2 ? null : 'Please enter$hint',
+      validator: (v) => v != null && v.length >= 2 ? null : 'Please enter $hint',
     );
   }
 }

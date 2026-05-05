@@ -31,40 +31,24 @@ class ApiRepository {
     );
   }
 
+  /// Creates the account but does NOT store the JWT.
+  /// The caller is responsible for redirecting to /login so the user
+  /// authenticates explicitly — this prevents stale-state bugs.
   Future<void> register({
     required String name,
     required String phone,
     required String email,
     required String password,
   }) async {
-    print("CALL REGISTER API START");
-
-    try {
-      final res = await _dio.post(
-        '/auth/register',
-        data: {
-          'name': name,
-          'phone': phone,
-          'email': email,
-          'password': password,
-        },
-      );
-
-      print("STATUS: ${res.statusCode}");
-      print("RESPONSE: ${res.data}");
-
-      await _storage.write(
-        key: AppConstants.jwtStorageKey,
-        value: res.data['accessToken'] as String,
-      );
-
-      await _storage.write(
-        key: AppConstants.parentIdStorageKey,
-        value: res.data['parentId'] as String,
-      );
-    } catch (e) {
-      print("REGISTER ERROR: $e");
-    }
+    await _dio.post(
+      '/auth/register',
+      data: {
+        'name': name,
+        'phone': phone,
+        'email': email,
+        'password': password,
+      },
+    );
   }
 
   Future<void> logout() async {
@@ -90,10 +74,10 @@ class ApiRepository {
   }
 
   Future<List<AccessLog>> getAccessLogs(String studentId,
-      {int limit = 50}) async {
+      {int days = 7}) async {
     final resp = await _dio.get(
       '/me/students/$studentId/logs',
-      queryParameters: {'limit': limit},
+      queryParameters: {'days': days},
     );
     return (resp.data as List)
         .map((e) => AccessLog.fromJson(e as Map<String, dynamic>))

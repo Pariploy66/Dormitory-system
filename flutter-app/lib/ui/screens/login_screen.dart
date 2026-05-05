@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../core/l10n.dart';
 import '../../data/api_repository.dart';
 import '../../providers/app_providers.dart';
 import '../theme/mfu_theme.dart';
@@ -13,7 +14,7 @@ class LoginScreen extends ConsumerStatefulWidget {
 }
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
-  // ── Logic unchanged ───────────────────────────────────────────
+  // ── Logic ─────────────────────────────────────────────────────
   final _formKey = GlobalKey<FormState>();
   final _emailCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
@@ -31,13 +32,28 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       await ref
           .read(apiRepositoryProvider)
           .login(_emailCtrl.text.trim(), _passCtrl.text);
+
+      // Clear all cached provider state so the new session starts fresh.
+      // This prevents a previously logged-in parent's student data from
+      // appearing briefly when a different parent logs in.
       ref.invalidate(authStateProvider);
+      ref.invalidate(studentsProvider);
+      ref.invalidate(accessLogsProvider);
+      ref.invalidate(selectedStudentProvider);
+
       if (mounted) context.go('/home');
     } catch (_) {
-      setState(() => _error = 'email or password is incorrect');
+      final s = ref.read(stringsProvider);
+      setState(() => _error = s.wrongCredentials);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
+  }
+
+  void _toggleLocale() {
+    final current = ref.read(localeProvider);
+    ref.read(localeProvider.notifier).state =
+        current.languageCode == 'en' ? const Locale('th') : const Locale('en');
   }
 
   @override
@@ -47,9 +63,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     super.dispose();
   }
 
-  // ── UI — MFU style ────────────────────────────────────────────
+  // ── UI ────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
+    final s = ref.watch(stringsProvider);
+    final locale = ref.watch(localeProvider);
+    final isThai = locale.languageCode == 'th';
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: Stack(
@@ -68,35 +88,77 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           SafeArea(
             child: Column(
               children: [
-                // TH/EN top-left
+                // Language toggle — top-left
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
                   child: Align(
                     alignment: Alignment.topLeft,
-                    child: Text('TH/EN',
-                        style: TextStyle(
-                            color: MfuTheme.primary,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600)),
+                    child: GestureDetector(
+                      onTap: _toggleLocale,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                              color: MfuTheme.primary, width: 1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'TH',
+                              style: TextStyle(
+                                color: isThai
+                                    ? MfuTheme.primary
+                                    : MfuTheme.textHint,
+                                fontSize: 12,
+                                fontWeight: isThai
+                                    ? FontWeight.w700
+                                    : FontWeight.w400,
+                              ),
+                            ),
+                            const Text(' / ',
+                                style: TextStyle(
+                                    color: MfuTheme.textHint, fontSize: 12)),
+                            Text(
+                              'EN',
+                              style: TextStyle(
+                                color: !isThai
+                                    ? MfuTheme.primary
+                                    : MfuTheme.textHint,
+                                fontSize: 12,
+                                fontWeight: !isThai
+                                    ? FontWeight.w700
+                                    : FontWeight.w400,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
                 ),
 
                 const Spacer(),
 
-                // โลโก้อย่างเดียว (ไม่มีวงกลมพื้นหลัง)
                 Image.asset(
-                  'assets/images/mfu_logo.png', // เปลี่ยนเป็น path ไฟล์โลโก้
-                  width: 300, // กำหนดความกว้างตามต้องการ
-                  height: 300, // กำหนดความสูงตามต้องการ
-                  fit: BoxFit.contain, // ปรับรูปให้พอดี โดยยังรักษาอัตราส่วนไว้
+                  'assets/images/mfu_logo.png',
+                  width: 300,
+                  height: 300,
+                  fit: BoxFit.contain,
+                  errorBuilder: (ctx, err, stack) => const Icon(
+                      Icons.image_not_supported,
+                      size: 60,
+                      color: Colors.grey),
                 ),
                 const SizedBox(height: 12),
 
                 const Text('Mae Fah Luang University',
                     style: TextStyle(fontSize: 11, color: MfuTheme.textSub)),
                 const SizedBox(height: 6),
-                Text('MFU Dormitory',
-                    style: TextStyle(
+                Text(s.loginTitle,
+                    style: const TextStyle(
                         fontSize: 26,
                         fontWeight: FontWeight.w800,
                         color: MfuTheme.primary)),
@@ -119,14 +181,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           controller: _emailCtrl,
                           keyboardType: TextInputType.emailAddress,
                           textInputAction: TextInputAction.next,
-                          decoration: const InputDecoration(
-                            hintText: 'Email',
-                            prefixIcon: Icon(Icons.email_outlined,
+                          decoration: InputDecoration(
+                            hintText: s.email,
+                            prefixIcon: const Icon(Icons.email_outlined,
                                 size: 18, color: MfuTheme.textHint),
                           ),
                           validator: (v) => v != null && v.contains('@')
                               ? null
-                              : 'Enter email',
+                              : s.email,
                         ),
                         const SizedBox(height: 12),
                         TextFormField(
@@ -135,7 +197,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           textInputAction: TextInputAction.done,
                           onFieldSubmitted: (_) => _submit(),
                           decoration: InputDecoration(
-                            hintText: 'password',
+                            hintText: s.password,
                             prefixIcon: const Icon(Icons.lock_outline_rounded,
                                 size: 18, color: MfuTheme.textHint),
                             suffixIcon: IconButton(
@@ -151,7 +213,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ),
                           validator: (v) => v != null && v.length >= 8
                               ? null
-                              : 'password must be at least 8 characters',
+                              : s.passwordHint,
                         ),
                         if (_error != null) ...[
                           const SizedBox(height: 8),
@@ -162,7 +224,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ],
                         const SizedBox(height: 16),
 
-                        // Login with ThaiID button (main CTA)
                         SizedBox(
                           width: double.infinity,
                           height: 48,
@@ -183,9 +244,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                         strokeWidth: 2, color: Colors.white))
                                 : const Icon(Icons.credit_card_rounded,
                                     size: 18),
-                            label: const Text('Login with Thai Id',
-                                style: TextStyle(
-                                    fontSize: 15, fontWeight: FontWeight.w600)),
+                            label: Text(s.loginButton,
+                                style: const TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600)),
                           ),
                         ),
                       ],
@@ -203,8 +265,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       padding: EdgeInsets.zero,
                       minimumSize: Size.zero,
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap),
-                  child: const Text('Register',
-                      style: TextStyle(fontSize: 12, color: MfuTheme.primary)),
+                  child: Text(s.registerLink,
+                      style: const TextStyle(
+                          fontSize: 12, color: MfuTheme.primary)),
                 ),
                 const SizedBox(height: 8),
                 const Text('For parents only - secure access system',
@@ -219,30 +282,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       ),
     );
   }
-}
-
-class _BigSealPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size s) {
-    final p = Paint()..style = PaintingStyle.fill;
-    final cx = s.width / 2;
-    final cy = s.height / 2;
-    canvas.drawCircle(Offset(cx, cy), s.width * .42,
-        p..color = MfuTheme.primary.withOpacity(.12));
-    canvas.drawCircle(Offset(cx, cy), s.width * .28,
-        p..color = MfuTheme.primary.withOpacity(.22));
-    final path = Path()
-      ..moveTo(cx, cy - s.height * .36)
-      ..lineTo(cx + s.width * .18, cy - s.height * .04)
-      ..lineTo(cx - s.width * .18, cy - s.height * .04)
-      ..close();
-    canvas.drawPath(path, p..color = MfuTheme.primary);
-    canvas.drawCircle(Offset(cx, cy + s.height * .10), s.width * .10,
-        p..color = MfuTheme.primary);
-  }
-
-  @override
-  bool shouldRepaint(_) => false;
 }
 
 class _WavePainter extends CustomPainter {

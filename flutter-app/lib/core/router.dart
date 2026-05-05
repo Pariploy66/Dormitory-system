@@ -8,19 +8,11 @@ import '../ui/screens/home_screen.dart';
 import '../ui/screens/logs_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
-  final authAsync = ref.watch(authStateProvider);
-
-  return GoRouter(
-    initialLocation: '/home',
-    redirect: (context, state) {
-      final isLoggedIn = authAsync.valueOrNull ?? false;
-      final onAuthPage = state.matchedLocation == '/login' ||
-          state.matchedLocation == '/register';
-
-      if (!isLoggedIn && !onAuthPage) return '/login';
-      if (isLoggedIn && onAuthPage) return '/home';
-      return null;
-    },
+  final notifier = _RouterNotifier(ref);
+  final router = GoRouter(
+    initialLocation: '/login',
+    refreshListenable: notifier,
+    redirect: notifier._redirect,
     routes: [
       GoRoute(path: '/login', builder: (_, __) => const LoginScreen()),
       GoRoute(path: '/register', builder: (_, __) => const RegisterScreen()),
@@ -37,4 +29,27 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
     ],
   );
+  ref.onDispose(notifier.dispose);
+  return router;
 });
+
+class _RouterNotifier extends ChangeNotifier {
+  _RouterNotifier(this._ref) {
+    _ref.listen<AsyncValue<bool>>(authStateProvider, (_, __) => notifyListeners());
+  }
+
+  final Ref _ref;
+
+  String? _redirect(BuildContext context, GoRouterState state) {
+    final authAsync = _ref.read(authStateProvider);
+    if (authAsync.isLoading) return null;
+
+    final isLoggedIn = authAsync.valueOrNull ?? false;
+    final onAuthPage = state.matchedLocation == '/login' ||
+        state.matchedLocation == '/register';
+
+    if (!isLoggedIn && !onAuthPage) return '/login';
+    if (isLoggedIn && onAuthPage) return '/home';
+    return null;
+  }
+}

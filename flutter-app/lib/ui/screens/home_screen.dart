@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import '../../core/l10n.dart';
 import '../../data/api_repository.dart';
 import '../../data/models.dart';
 import '../../providers/app_providers.dart';
@@ -30,6 +31,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final s = ref.watch(stringsProvider);
     return Scaffold(
       backgroundColor: MfuTheme.bgPage,
       // ── IndexedStack preserves each page's scroll/state ──────
@@ -41,7 +43,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [Color(0xFFD61A22), Color(0xFFA31219)], // MFU Red gradient
+            colors: [Color(0xFFD61A22), Color(0xFFA31219)],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
@@ -59,33 +61,33 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             onTap: (index) => setState(() => _currentIndex = index),
             selectedItemColor: Colors.white,
             unselectedItemColor: Colors.white54,
-            backgroundColor: Colors.transparent, // Transparent to show gradient
+            backgroundColor: Colors.transparent,
             type: BottomNavigationBarType.fixed,
             elevation: 0,
             selectedFontSize: 12,
             unselectedFontSize: 12,
             selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600),
-            items: const [
+            items: [
               BottomNavigationBarItem(
-                icon: Padding(
+                icon: const Padding(
                   padding: EdgeInsets.only(bottom: 4.0),
-                  child: Icon(Icons.home_rounded), // Matched UI reference
+                  child: Icon(Icons.home_rounded),
                 ),
-                label: 'Dashboard',
+                label: s.dashboard,
               ),
               BottomNavigationBarItem(
-                icon: Padding(
+                icon: const Padding(
                   padding: EdgeInsets.only(bottom: 4.0),
-                  child: Icon(Icons.access_time_rounded), // Matched UI reference
+                  child: Icon(Icons.access_time_rounded),
                 ),
-                label: 'History',
+                label: s.history,
               ),
               BottomNavigationBarItem(
-                icon: Padding(
+                icon: const Padding(
                   padding: EdgeInsets.only(bottom: 4.0),
-                  child: Icon(Icons.settings_outlined), // Matched UI reference
+                  child: Icon(Icons.settings_outlined),
                 ),
-                label: 'Setting',
+                label: s.setting,
               ),
             ],
           ),
@@ -225,6 +227,7 @@ class _HistoryPage extends ConsumerStatefulWidget {
 class _HistoryPageState extends ConsumerState<_HistoryPage> {
   String _searchQuery = '';
   String _filterType = 'All Status';
+  int _daysBack = 1; // default: Today only — user can tap chip to widen range
   final _searchCtrl = TextEditingController();
 
   @override
@@ -233,35 +236,99 @@ class _HistoryPageState extends ConsumerState<_HistoryPage> {
     super.dispose();
   }
 
+  String _periodLabel(AppStrings s) {
+    if (_daysBack == 1) return s.today;
+    if (_daysBack == 3) return s.last3Days;
+    return s.last7Days;
+  }
+
+  void _showPeriodSheet(BuildContext ctx, AppStrings s) {
+    showModalBottomSheet(
+      context: ctx,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (_) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
+              child: Row(children: [
+                Text(s.history,
+                    style: const TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.w700)),
+              ]),
+            ),
+            const Divider(height: 1),
+            ...[
+              (1, s.today),
+              (3, s.last3Days),
+              (7, s.last7Days),
+            ].map((pair) => ListTile(
+                  leading: Icon(
+                    pair.$1 == 1
+                        ? Icons.today_rounded
+                        : Icons.date_range_rounded,
+                    color: _daysBack == pair.$1
+                        ? const Color(0xFFD61A22)
+                        : Colors.black54,
+                    size: 22,
+                  ),
+                  title: Text(pair.$2,
+                      style: TextStyle(
+                          fontWeight: _daysBack == pair.$1
+                              ? FontWeight.w700
+                              : FontWeight.w500,
+                          color: _daysBack == pair.$1
+                              ? const Color(0xFFD61A22)
+                              : Colors.black87)),
+                  trailing: _daysBack == pair.$1
+                      ? const Icon(Icons.check_circle_rounded,
+                          color: Color(0xFFD61A22), size: 20)
+                      : null,
+                  onTap: () {
+                    setState(() => _daysBack = pair.$1);
+                    Navigator.pop(ctx);
+                  },
+                )),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final s = ref.watch(stringsProvider);
     final students = ref.watch(studentsProvider).valueOrNull ?? [];
     final student = students.isNotEmpty ? students.first : null;
     final studentId = student?.id ?? '';
 
-    final logsAsync = studentId.isNotEmpty ? ref.watch(accessLogsProvider(studentId)) : null;
+    final logsAsync =
+        studentId.isNotEmpty ? ref.watch(accessLogsProvider(studentId)) : null;
 
     final allLogs = logsAsync?.valueOrNull ?? [];
     final now = DateTime.now();
-    final yesterday = now.subtract(const Duration(days: 1));
+
+    // Cutoff based on selected period (_daysBack):
+    // _daysBack=1 → today only, _daysBack=3 → last 3 calendar days, etc.
+    final cutoff = DateTime(now.year, now.month, now.day)
+        .subtract(Duration(days: _daysBack - 1));
 
     final filtered = allLogs.where((l) {
+      final inRange = !l.accessTime.isBefore(cutoff);
       final matchQ = _searchQuery.isEmpty ||
           l.gateName.toLowerCase().contains(_searchQuery.toLowerCase()) ||
           DateFormat('HH:mm').format(l.accessTime).contains(_searchQuery);
       final matchT = _filterType == 'All Status' ||
           (_filterType == 'Entry' && l.type == AccessType.IN) ||
           (_filterType == 'Exit' && l.type == AccessType.OUT);
-      return matchQ && matchT;
+      return inRange && matchQ && matchT;
     }).toList();
 
-    final todayLogs = filtered
-        .where((l) => l.accessTime.day == now.day && l.accessTime.month == now.month)
-        .toList();
-
-    final yesterdayLogs = filtered
-        .where((l) => l.accessTime.day == yesterday.day && l.accessTime.month == yesterday.month)
-        .toList();
+    final sections = _buildDaySections(filtered, now, s, daysBack: _daysBack);
 
     return Scaffold(
       backgroundColor: const Color(0xFFFDFBF7),
@@ -269,7 +336,8 @@ class _HistoryPageState extends ConsumerState<_HistoryPage> {
         actions: [
           if (studentId.isNotEmpty)
             IconButton(
-              icon: const Icon(Icons.refresh_rounded, color: Colors.black54, size: 24),
+              icon: const Icon(Icons.refresh_rounded,
+                  color: Colors.black54, size: 24),
               onPressed: () => ref.invalidate(accessLogsProvider(studentId)),
             ),
         ],
@@ -283,9 +351,9 @@ class _HistoryPageState extends ConsumerState<_HistoryPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'History',
-                  style: TextStyle(
+                Text(
+                  s.history,
+                  style: const TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.w800,
                     color: Colors.black87,
@@ -307,29 +375,34 @@ class _HistoryPageState extends ConsumerState<_HistoryPage> {
                   child: TextField(
                     controller: _searchCtrl,
                     onChanged: (v) => setState(() => _searchQuery = v),
-                    decoration: const InputDecoration(
-                      hintText: 'Search by gate /time',
-                      hintStyle: TextStyle(color: Colors.black38, fontSize: 14),
-                      prefixIcon: Icon(Icons.search_rounded, color: Colors.black38, size: 20),
+                    decoration: InputDecoration(
+                      hintText: s.searchHint,
+                      hintStyle:
+                          const TextStyle(color: Colors.black38, fontSize: 14),
+                      prefixIcon: const Icon(Icons.search_rounded,
+                          color: Colors.black38, size: 20),
                       border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 14),
                     ),
                   ),
                 ),
                 const SizedBox(height: 16),
                 Row(
                   children: [
+                    // Tappable period selector — Today / Last 3 Days / Last 7 Days
                     _FilterChip(
-                      label: 'Today',
-                      isActive: true, // Based on UI, today is typically active initially
-                      onTap: () {}, // Modify logic if needed, left unchanged per rules
+                      label: _periodLabel(s),
+                      isActive: true,
+                      hasArrow: true,
+                      onTap: () => _showPeriodSheet(context, s),
                     ),
                     const SizedBox(width: 10),
                     _FilterChip(
                       label: _filterType,
                       isActive: false,
                       hasArrow: true,
-                      onTap: () => _showTypeSheet(context),
+                      onTap: () => _showTypeSheet(context, s),
                     ),
                   ],
                 ),
@@ -340,19 +413,22 @@ class _HistoryPageState extends ConsumerState<_HistoryPage> {
           // ── Log list ──────────────────────────────────────────
           Expanded(
             child: logsAsync == null
-                ? const Center(child: Text('No student data found', style: TextStyle(color: Colors.grey)))
+                ? Center(
+                    child: Text(s.noStudentLinked,
+                        style: const TextStyle(color: Colors.grey)))
                 : logsAsync.isLoading
-                    ? const Center(child: CircularProgressIndicator(color: MfuTheme.primary))
+                    ? const Center(
+                        child: CircularProgressIndicator(
+                            color: MfuTheme.primary))
                     : logsAsync.hasError
-                        ? const Center(child: Text('Failed to load data', style: TextStyle(color: Colors.grey)))
+                        ? Center(
+                            child: Text(s.failedToLoad,
+                                style: const TextStyle(color: Colors.grey)))
                         : RefreshIndicator(
                             color: MfuTheme.primary,
-                            onRefresh: () async => ref.invalidate(accessLogsProvider(studentId)),
-                            child: _LogList(
-                              todayLogs: todayLogs,
-                              yesterdayLogs: yesterdayLogs,
-                              allLogs: filtered,
-                            ),
+                            onRefresh: () async =>
+                                ref.invalidate(accessLogsProvider(studentId)),
+                            child: _LogList(sections: sections, noDataLabel: s.noData),
                           ),
           ),
         ],
@@ -360,20 +436,25 @@ class _HistoryPageState extends ConsumerState<_HistoryPage> {
     );
   }
 
-  void _showTypeSheet(BuildContext ctx) {
+  void _showTypeSheet(BuildContext ctx, AppStrings s) {
     showModalBottomSheet(
       context: ctx,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
       builder: (_) => Column(
         mainAxisSize: MainAxisSize.min,
-        children: ['All Status', 'Entry', 'Exit']
-            .map((o) => ListTile(
-                  title: Text(o),
-                  trailing: _filterType == o
+        children: [
+          ('All Status', s.allStatus),
+          ('Entry', s.entry),
+          ('Exit', s.exit),
+        ]
+            .map((pair) => ListTile(
+                  title: Text(pair.$2),
+                  trailing: _filterType == pair.$1
                       ? const Icon(Icons.check_rounded, color: MfuTheme.primary)
                       : null,
                   onTap: () {
-                    setState(() => _filterType = o);
+                    setState(() => _filterType = pair.$1);
                     Navigator.pop(ctx);
                   },
                 ))
@@ -381,6 +462,34 @@ class _HistoryPageState extends ConsumerState<_HistoryPage> {
       ),
     );
   }
+}
+
+// Builds a list of (label, logs) pairs, newest first.
+// [daysBack] controls how many calendar days are included (1 = today only).
+List<MapEntry<String, List<AccessLog>>> _buildDaySections(
+  List<AccessLog> logs,
+  DateTime now,
+  AppStrings s, {
+  int daysBack = 7,
+}) {
+  final sections = <MapEntry<String, List<AccessLog>>>[];
+  for (var i = 0; i < daysBack; i++) {
+    final day = DateTime(now.year, now.month, now.day)
+        .subtract(Duration(days: i));
+    final label = i == 0
+        ? s.today
+        : i == 1
+            ? s.yesterday
+            : DateFormat('EEE, d MMM').format(day);
+    final dayLogs = logs
+        .where((l) =>
+            l.accessTime.year == day.year &&
+            l.accessTime.month == day.month &&
+            l.accessTime.day == day.day)
+        .toList();
+    if (dayLogs.isNotEmpty) sections.add(MapEntry(label, dayLogs));
+  }
+  return sections;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -392,38 +501,33 @@ class _SettingPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final s = ref.watch(stringsProvider);
+    final locale = ref.watch(localeProvider);
+    final isThai = locale.languageCode == 'th';
+
     return Scaffold(
       backgroundColor: const Color(0xFFFDFBF7),
       appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(0), 
+        preferredSize: const Size.fromHeight(0),
         child: AppBar(backgroundColor: Colors.transparent, elevation: 0),
       ),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
           children: [
-            // ── Top Bar (Setting Title + Settings Icon) ─────────────
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Setting',
-                  style: TextStyle(
-                    fontSize: 26,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.black87,
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.settings_outlined, color: Colors.black87),
-                  onPressed: () {},
-                )
-              ],
+            // ── Top Bar ───────────────────────────────────────────
+            Text(
+              s.setting,
+              style: const TextStyle(
+                fontSize: 26,
+                fontWeight: FontWeight.w800,
+                color: Colors.black87,
+              ),
             ),
-            
+
             const SizedBox(height: 30),
 
-            // ── Section header ────────────────────────────────────
+            // ── Account & Security section ────────────────────────
             const Padding(
               padding: EdgeInsets.only(bottom: 12),
               child: Text(
@@ -436,7 +540,6 @@ class _SettingPage extends ConsumerWidget {
               ),
             ),
 
-            // ── Settings Cards ────────────────────────────────────
             Container(
               decoration: BoxDecoration(
                 color: Colors.white,
@@ -451,19 +554,25 @@ class _SettingPage extends ConsumerWidget {
               ),
               child: Column(
                 children: [
+                  // Language tile — replaces Change Password
                   _SettingTile(
-                    icon: Icons.lock_outline_rounded,
-                    label: 'Change Password',
-                    onTap: () => context.push('/home/change-password'),
+                    icon: Icons.language_rounded,
+                    label: s.language,
+                    subtitle: isThai ? 'ภาษาไทย' : 'English',
+                    onTap: () => _showLangSheet(context, ref, s, isThai),
                   ),
-                  const Divider(height: 1, indent: 50, endIndent: 20, color: Colors.black12),
+                  const Divider(
+                      height: 1,
+                      indent: 50,
+                      endIndent: 20,
+                      color: Colors.black12),
                   _SettingTile(
                     icon: Icons.logout_rounded,
-                    label: 'Logout',
-                    labelColor: const Color(0xFFD61A22), // Matching red color
+                    label: s.logout,
+                    labelColor: const Color(0xFFD61A22),
                     iconColor: const Color(0xFFD61A22),
                     showChevron: false,
-                    onTap: () => _confirmLogout(context, ref),
+                    onTap: () => _confirmLogout(context, ref, s),
                   ),
                 ],
               ),
@@ -474,31 +583,94 @@ class _SettingPage extends ConsumerWidget {
     );
   }
 
-  void _confirmLogout(BuildContext context, WidgetRef ref) {
+  void _showLangSheet(
+      BuildContext context, WidgetRef ref, AppStrings s, bool isThai) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (sheetCtx) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
+              child: Text(s.language,
+                  style: const TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.w700)),
+            ),
+            ListTile(
+              leading: const Text('🇺🇸',
+                  style: TextStyle(fontSize: 24)),
+              title: const Text('English',
+                  style: TextStyle(fontWeight: FontWeight.w500)),
+              trailing: !isThai
+                  ? const Icon(Icons.check_circle_rounded,
+                      color: Color(0xFFD61A22))
+                  : null,
+              onTap: () {
+                ref.read(localeProvider.notifier).state =
+                    const Locale('en');
+                Navigator.pop(sheetCtx);
+              },
+            ),
+            ListTile(
+              leading: const Text('🇹🇭',
+                  style: TextStyle(fontSize: 24)),
+              title: const Text('ภาษาไทย',
+                  style: TextStyle(fontWeight: FontWeight.w500)),
+              trailing: isThai
+                  ? const Icon(Icons.check_circle_rounded,
+                      color: Color(0xFFD61A22))
+                  : null,
+              onTap: () {
+                ref.read(localeProvider.notifier).state =
+                    const Locale('th');
+                Navigator.pop(sheetCtx);
+              },
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _confirmLogout(BuildContext context, WidgetRef ref, AppStrings s) {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Logout', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
-        content: const Text('Are you sure you want to logout?', style: TextStyle(fontSize: 14)),
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(s.logoutTitle,
+            style: const TextStyle(
+                fontSize: 18, fontWeight: FontWeight.w700)),
+        content: Text(s.logoutConfirm,
+            style: const TextStyle(fontSize: 14)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+            child: Text(s.cancel,
+                style: const TextStyle(color: Colors.grey)),
           ),
           ElevatedButton(
             onPressed: () async {
               Navigator.pop(context);
               await ref.read(apiRepositoryProvider).logout();
               ref.invalidate(authStateProvider);
+              ref.invalidate(studentsProvider);
+              ref.invalidate(accessLogsProvider);
+              ref.invalidate(selectedStudentProvider);
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFD61A22),
               foregroundColor: Colors.white,
               elevation: 0,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8)),
             ),
-            child: const Text('Logout'),
+            child: Text(s.logout),
           ),
         ],
       ),
@@ -511,6 +683,7 @@ class _SettingPage extends ConsumerWidget {
 class _SettingTile extends StatelessWidget {
   final IconData icon;
   final String label;
+  final String? subtitle;
   final Color? labelColor;
   final Color? iconColor;
   final bool showChevron;
@@ -520,6 +693,7 @@ class _SettingTile extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.onTap,
+    this.subtitle,
     this.labelColor,
     this.iconColor,
     this.showChevron = true,
@@ -528,7 +702,7 @@ class _SettingTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
       leading: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
@@ -545,8 +719,13 @@ class _SettingTile extends StatelessWidget {
           color: labelColor ?? Colors.black87,
         ),
       ),
+      subtitle: subtitle != null
+          ? Text(subtitle!,
+              style: const TextStyle(fontSize: 12, color: Colors.black45))
+          : null,
       trailing: showChevron
-          ? const Icon(Icons.chevron_right_rounded, size: 20, color: Colors.black38)
+          ? const Icon(Icons.chevron_right_rounded,
+              size: 20, color: Colors.black38)
           : null,
       onTap: onTap,
     );
@@ -568,8 +747,13 @@ class _DashboardBody extends StatelessWidget {
     final logsAsync = ref.watch(accessLogsProvider(student.id));
     final logs = logsAsync.valueOrNull ?? [];
     final now = DateTime.now();
+    // Include year in the comparison to avoid counting logs from the same
+    // calendar day in a previous year.
     final todayCount = logs
-        .where((l) => l.accessTime.day == now.day && l.accessTime.month == now.month)
+        .where((l) =>
+            l.accessTime.year == now.year &&
+            l.accessTime.month == now.month &&
+            l.accessTime.day == now.day)
         .length;
     final latest = logs.isNotEmpty ? logs.first : null;
 
@@ -722,6 +906,7 @@ class _DashboardBody extends StatelessWidget {
             color: Colors.black87,
           ),
         ),
+        // NOTE: No "View all" button here — user navigates via the red Today button above.
         const SizedBox(height: 12),
 
         if (logs.isEmpty)
@@ -829,40 +1014,38 @@ class _ActivityTile extends StatelessWidget {
   bool _isLate(DateTime t) => t.hour >= 22;
 }
 
-// ── History log list ───────────────────────────────────────────────────────────
+// ── History log list (7-day grouped view) ─────────────────────────────────────
 
 class _LogList extends StatelessWidget {
-  final List<AccessLog> todayLogs;
-  final List<AccessLog> yesterdayLogs;
-  final List<AccessLog> allLogs;
+  final List<MapEntry<String, List<AccessLog>>> sections;
+  final String noDataLabel;
 
-  const _LogList({
-    required this.todayLogs,
-    required this.yesterdayLogs,
-    required this.allLogs,
-  });
+  const _LogList({required this.sections, required this.noDataLabel});
 
   @override
   Widget build(BuildContext context) {
-    if (allLogs.isEmpty) {
+    if (sections.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Placeholder visual graphic to match "No data for today"
             Container(
               width: 120,
               height: 80,
               decoration: BoxDecoration(
-                color: const Color(0xFFFFF5F5), // Light pinkish red
+                color: const Color(0xFFFFF5F5),
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: const Icon(Icons.search_rounded, color: Colors.orangeAccent, size: 40),
+              child: const Icon(Icons.search_rounded,
+                  color: Colors.orangeAccent, size: 40),
             ),
             const SizedBox(height: 16),
-            const Text(
-              'No data for today',
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.black87),
+            Text(
+              noDataLabel,
+              style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black87),
             ),
           ],
         ),
@@ -872,27 +1055,10 @@ class _LogList extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       children: [
-        if (todayLogs.isNotEmpty) ...[
-          const _DayHeader(label: 'Today'),
-          ...todayLogs.map((l) => _HistoryTile(log: l)),
+        for (final section in sections) ...[
+          _DayHeader(label: section.key),
+          ...section.value.map((l) => _HistoryTile(log: l)),
         ],
-        if (yesterdayLogs.isNotEmpty) ...[
-          const _DayHeader(label: 'Yesterday'),
-          ...yesterdayLogs.map((l) => _HistoryTile(log: l)),
-        ],
-        if (todayLogs.isEmpty)
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 40),
-            child: Center(
-              child: Column(
-                children: [
-                  Icon(Icons.search_off_rounded, size: 40, color: Colors.black26),
-                  SizedBox(height: 12),
-                  Text('No data for today', style: TextStyle(fontSize: 14, color: Colors.black54)),
-                ],
-              ),
-            ),
-          ),
       ],
     );
   }
@@ -1066,22 +1232,44 @@ class _FilterChip extends StatelessWidget {
 // Empty / Error helpers
 // ═══════════════════════════════════════════════════════════════════════════════
 
-class _EmptyView extends StatelessWidget {
+class _EmptyView extends ConsumerWidget {
   const _EmptyView();
 
   @override
-  Widget build(BuildContext context) => Center(
+  Widget build(BuildContext context, WidgetRef ref) {
+    final s = ref.watch(stringsProvider);
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.person_search_rounded, size: 64, color: Colors.grey.shade300),
+            Icon(Icons.person_search_rounded,
+                size: 64, color: Colors.grey.shade300),
             const SizedBox(height: 16),
-            const Text('No student data found', style: TextStyle(color: Colors.black54)),
-            const SizedBox(height: 6),
-            const Text('Please contact staff for support', style: TextStyle(color: Colors.black38, fontSize: 12)),
+            Text(s.noStudentLinked,
+                style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black54)),
+            const SizedBox(height: 8),
+            Text(s.noStudentLinkedSub,
+                style: const TextStyle(
+                    color: Colors.black38, fontSize: 12),
+                textAlign: TextAlign.center),
+            const SizedBox(height: 20),
+            TextButton.icon(
+              onPressed: () => ref.invalidate(studentsProvider),
+              icon: const Icon(Icons.refresh_rounded, size: 18),
+              label: Text(s.retry),
+              style: TextButton.styleFrom(
+                  foregroundColor: const Color(0xFFD61A22)),
+            ),
           ],
         ),
-      );
+      ),
+    );
+  }
 }
 
 class _ErrorView extends StatelessWidget {
