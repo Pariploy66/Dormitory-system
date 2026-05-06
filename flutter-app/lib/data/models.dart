@@ -16,6 +16,27 @@ class Student {
       );
 }
 
+class ParentProfile {
+  final String id;
+  final String name;
+  final String phone;
+  final String email;
+
+  const ParentProfile({
+    required this.id,
+    required this.name,
+    required this.phone,
+    required this.email,
+  });
+
+  factory ParentProfile.fromJson(Map<String, dynamic> json) => ParentProfile(
+        id: json['id'] as String,
+        name: json['name'] as String,
+        phone: json['phone'] as String,
+        email: json['email'] as String,
+      );
+}
+
 enum AccessType { IN, OUT }
 
 class AccessLog {

@@ -43,6 +43,9 @@ let AccessLogsController = class AccessLogsController {
     ingest(dto) {
         return this.service.ingest(dto);
     }
+    myProfile(req) {
+        return this.service.getMyProfile(req.user.sub);
+    }
     myStudents(req) {
         return this.service.getMyStudents(req.user.sub);
     }
@@ -59,6 +62,14 @@ __decorate([
     __metadata("design:paramtypes", [IngestDto]),
     __metadata("design:returntype", void 0)
 ], AccessLogsController.prototype, "ingest", null);
+__decorate([
+    (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt')),
+    (0, common_1.Get)('me/profile'),
+    __param(0, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], AccessLogsController.prototype, "myProfile", null);
 __decorate([
     (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt')),
     (0, common_1.Get)('me/students'),

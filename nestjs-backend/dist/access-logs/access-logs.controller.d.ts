@@ -19,6 +19,13 @@ export declare class AccessLogsController {
         skipped?: undefined;
         reason?: undefined;
     }>;
+    myProfile(req: any): Promise<{
+        id: string;
+        createdAt: Date;
+        name: string;
+        phone: string;
+        email: string;
+    }>;
     myStudents(req: any): Promise<{
         id: string;
         studentCode: string;

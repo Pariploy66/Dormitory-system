@@ -26,6 +26,21 @@ final authStateProvider = FutureProvider<bool>((ref) async {
   return repo.isLoggedIn();
 });
 
+// ── Parent profile ───────────────────────────────────────────
+
+/// Fetches the authenticated parent's own profile (name, phone, email).
+/// Automatically invalidates auth on 401.
+final profileProvider = FutureProvider<ParentProfile>((ref) async {
+  final isLoggedIn = await ref.watch(authStateProvider.future);
+  if (!isLoggedIn) throw Exception('Not logged in');
+  try {
+    return await ref.read(apiRepositoryProvider).getMyProfile();
+  } on DioException catch (e) {
+    if (e.response?.statusCode == 401) ref.invalidate(authStateProvider);
+    rethrow;
+  }
+});
+
 // ── Students list ────────────────────────────────────────────
 
 final studentsProvider = FutureProvider<List<Student>>((ref) async {
