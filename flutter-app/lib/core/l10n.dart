@@ -36,6 +36,17 @@ class AppStrings {
   final String wrongCredentials;
   final String last3Days;
   final String last7Days;
+  final String noActivityToday;
+  // Dashboard status card
+  final String statusLabel;
+  final String lateStatus;
+  final String onTime;
+  final String updateLabel;
+  // Recent Activity header
+  final String updatedAt;
+  final String noRecentActivity;
+  // Today count button
+  final String entryLabel;
 
   const AppStrings({
     required this.loginTitle,
@@ -75,6 +86,14 @@ class AppStrings {
     required this.wrongCredentials,
     required this.last3Days,
     required this.last7Days,
+    required this.noActivityToday,
+    required this.statusLabel,
+    required this.lateStatus,
+    required this.onTime,
+    required this.updateLabel,
+    required this.updatedAt,
+    required this.noRecentActivity,
+    required this.entryLabel,
   });
 
   static const en = AppStrings(
@@ -115,6 +134,14 @@ class AppStrings {
     wrongCredentials: 'Email or password is incorrect',
     last3Days: 'Last 3 Days',
     last7Days: 'Last 7 Days',
+    noActivityToday: 'No activity for today',
+    statusLabel: 'Status :',
+    lateStatus: 'late',
+    onTime: 'on time',
+    updateLabel: 'update :',
+    updatedAt: 'Updated',
+    noRecentActivity: 'No recent activity',
+    entryLabel: 'entry',
   );
 
   static const th = AppStrings(
@@ -155,5 +182,13 @@ class AppStrings {
     wrongCredentials: 'อีเมลหรือรหัสผ่านไม่ถูกต้อง',
     last3Days: '3 วันล่าสุด',
     last7Days: '7 วันล่าสุด',
+    noActivityToday: 'ยังไม่มีกิจกรรมวันนี้',
+    statusLabel: 'สถานะ :',
+    lateStatus: 'สาย',
+    onTime: 'ตรงเวลา',
+    updateLabel: 'อัปเดต :',
+    updatedAt: 'อัปเดตเมื่อ',
+    noRecentActivity: 'ยังไม่มีกิจกรรมล่าสุด',
+    entryLabel: 'ครั้ง',
   );
 }

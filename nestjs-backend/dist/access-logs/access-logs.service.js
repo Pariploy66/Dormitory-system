@@ -24,7 +24,10 @@ let AccessLogsService = class AccessLogsService {
         });
         if (!student)
             return { skipped: true, reason: 'student not found' };
-        const accessTime = new Date(payload.accessTime);
+        const thaiStr = payload.accessTime
+            .replace(/\.\d+/, '')
+            .replace(/[Zz]$|[+-]\d{2}:\d{2}$/, '');
+        const accessTime = new Date(thaiStr + '+07:00');
         const log = await this.prisma.accessLog.upsert({
             where: {
                 unique_access_event: {
@@ -51,9 +54,10 @@ let AccessLogsService = class AccessLogsService {
         if (!mapping) {
             throw new common_1.ForbiddenException('You do not have access to this student\'s records');
         }
-        const since = new Date();
-        since.setDate(since.getDate() - (days - 1));
-        since.setHours(0, 0, 0, 0);
+        const nowUtc = new Date();
+        const since = new Date(Date.UTC(nowUtc.getUTCFullYear(), nowUtc.getUTCMonth(), nowUtc.getUTCDate()));
+        since.setUTCDate(since.getUTCDate() - (days - 1));
+        since.setTime(since.getTime() - 7 * 60 * 60 * 1000);
         return this.prisma.accessLog.findMany({
             where: { studentId, accessTime: { gte: since } },
             orderBy: { accessTime: 'desc' },

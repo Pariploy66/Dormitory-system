@@ -10,7 +10,6 @@ Deduplication happens at two levels:
 """
 import asyncio
 import logging
-from datetime import timezone
 
 from tenacity import RetryError
 
@@ -45,11 +44,11 @@ async def run_poll_cycle() -> dict:
         ok = await forward_event(event)
         if ok:
             forwarded += 1
-        # Track the latest event time seen regardless of forward success
-        event_utc = event.event_time.replace(tzinfo=timezone.utc) \
-            if event.event_time.tzinfo is None else event.event_time
-        if event_utc > latest_time:
-            latest_time = event_utc
+        # Track the latest event time seen regardless of forward success.
+        # After the schema fix, event_time is always timezone-aware (+07:00).
+        # Python compares tz-aware datetimes correctly across timezones.
+        if event.event_time > latest_time:
+            latest_time = event.event_time
 
     # Advance watermark only after processing the whole batch
     poller_state.advance(latest_time)

@@ -73,6 +73,28 @@ class ApiRepository {
         .toList();
   }
 
+  /// Fetch only today's logs for [studentId].
+  ///
+  /// Uses the existing /logs?days=2 endpoint (always deployed, no 404 risk)
+  /// and applies a client-side local-date filter so only records whose local
+  /// date equals today are returned.  Requesting days=2 instead of days=1
+  /// ensures Thai midnight records are captured even on a UTC server
+  /// (Thai 00:00–07:00 ICT maps to the previous UTC calendar day).
+  Future<List<AccessLog>> getTodayLogs(String studentId) async {
+    final resp = await _dio.get(
+      '/me/students/$studentId/logs',
+      queryParameters: {'days': 2},
+    );
+    final today = DateTime.now();
+    return (resp.data as List)
+        .map((e) => AccessLog.fromJson(e as Map<String, dynamic>))
+        .where((l) =>
+            l.accessTime.year == today.year &&
+            l.accessTime.month == today.month &&
+            l.accessTime.day == today.day)
+        .toList();
+  }
+
   Future<List<AccessLog>> getAccessLogs(String studentId,
       {int days = 7}) async {
     final resp = await _dio.get(
