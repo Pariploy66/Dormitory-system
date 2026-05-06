@@ -70,6 +70,15 @@ let AccessLogsService = class AccessLogsService {
             },
         });
     }
+    async getMyProfile(parentId) {
+        const parent = await this.prisma.parent.findUnique({
+            where: { id: parentId },
+            select: { id: true, name: true, phone: true, email: true, createdAt: true },
+        });
+        if (!parent)
+            throw new common_1.NotFoundException('Parent not found');
+        return parent;
+    }
     async getMyStudents(parentId) {
         const mappings = await this.prisma.parentStudentMapping.findMany({
             where: { parentId },

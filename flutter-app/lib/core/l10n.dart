@@ -37,6 +37,8 @@ class AppStrings {
   final String last3Days;
   final String last7Days;
   final String noActivityToday;
+  final String account;
+  final String accountInfo;
   // Dashboard status card
   final String statusLabel;
   final String lateStatus;
@@ -87,6 +89,8 @@ class AppStrings {
     required this.last3Days,
     required this.last7Days,
     required this.noActivityToday,
+    required this.account,
+    required this.accountInfo,
     required this.statusLabel,
     required this.lateStatus,
     required this.onTime,
@@ -135,6 +139,8 @@ class AppStrings {
     last3Days: 'Last 3 Days',
     last7Days: 'Last 7 Days',
     noActivityToday: 'No activity for today',
+    account: 'Account',
+    accountInfo: 'Account Info',
     statusLabel: 'Status :',
     lateStatus: 'late',
     onTime: 'on time',
@@ -183,6 +189,8 @@ class AppStrings {
     last3Days: '3 วันล่าสุด',
     last7Days: '7 วันล่าสุด',
     noActivityToday: 'ยังไม่มีกิจกรรมวันนี้',
+    account: 'บัญชี',
+    accountInfo: 'ข้อมูลบัญชี',
     statusLabel: 'สถานะ :',
     lateStatus: 'สาย',
     onTime: 'ตรงเวลา',

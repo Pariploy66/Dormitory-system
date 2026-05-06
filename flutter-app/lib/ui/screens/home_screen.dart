@@ -590,6 +590,16 @@ class _SettingPage extends ConsumerWidget {
               child: Column(
                 children: [
                   _SettingTile(
+                    icon: Icons.person_rounded,
+                    label: s.account,
+                    subtitle: s.accountInfo,
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const _AccountPage()),
+                    ),
+                  ),
+                  const Divider(height: 1, indent: 50, endIndent: 20, color: Colors.black12),
+                  _SettingTile(
                     icon: Icons.language_rounded,
                     label: s.language,
                     subtitle: isThai ? 'ภาษาไทย' : 'English',
@@ -1227,6 +1237,263 @@ class _FilterChip extends StatelessWidget {
             ],
           ],
         ),
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Account Page — shows parent profile (name, phone, email) from /me/profile
+// ═══════════════════════════════════════════════════════════════════════════════
+
+class _AccountPage extends ConsumerWidget {
+  const _AccountPage();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final s            = ref.watch(stringsProvider);
+    final profileAsync = ref.watch(profileProvider);
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFFDFBF7),
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded,
+              color: Colors.black87, size: 20),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(s.account,
+            style: const TextStyle(
+                color: Colors.black87,
+                fontSize: 18,
+                fontWeight: FontWeight.w700)),
+        centerTitle: false,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(
+              height: 1,
+              color: Colors.black.withOpacity(0.06)),
+        ),
+      ),
+      body: profileAsync.when(
+        loading: () => const Center(
+            child: CircularProgressIndicator(color: MfuTheme.primary)),
+        error: (e, _) => Center(
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.error_outline_rounded,
+                    size: 52, color: Color(0xFFD61A22)),
+                const SizedBox(height: 12),
+                Text(s.failedToLoad,
+                    style: const TextStyle(color: Colors.black54)),
+                const SizedBox(height: 12),
+                TextButton.icon(
+                  onPressed: () => ref.invalidate(profileProvider),
+                  icon: const Icon(Icons.refresh_rounded),
+                  label: Text(s.retry),
+                  style: TextButton.styleFrom(
+                      foregroundColor: const Color(0xFFD61A22)),
+                ),
+              ],
+            ),
+          ),
+        ),
+        data: (profile) => _AccountBody(profile: profile, s: s),
+      ),
+    );
+  }
+}
+
+// ── Account body ─────────────────────────────────────────────────────────────
+
+class _AccountBody extends StatelessWidget {
+  final ParentProfile profile;
+  final AppStrings s;
+  const _AccountBody({required this.profile, required this.s});
+
+  /// Returns up to 2 initials from the full name (first + last word).
+  String _initials(String name) {
+    final parts = name.trim().split(RegExp(r'\s+'));
+    if (parts.length == 1) return parts[0][0].toUpperCase();
+    return '${parts.first[0]}${parts.last[0]}'.toUpperCase();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+      children: [
+        // ── Avatar + name header ─────────────────────────────────────────────
+        Center(
+          child: Column(
+            children: [
+              Container(
+                width: 88,
+                height: 88,
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Color(0xFFD61A22), Color(0xFFA31219)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  shape: BoxShape.circle,
+                ),
+                child: Center(
+                  child: Text(
+                    _initials(profile.name),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 32,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 1,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                profile.name,
+                style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.black87),
+              ),
+              const SizedBox(height: 6),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFD61A22).withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Text(
+                  'ผู้ปกครอง · Parent',
+                  style: TextStyle(
+                      fontSize: 11,
+                      color: Color(0xFFD61A22),
+                      fontWeight: FontWeight.w600),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 28),
+
+        // ── Info section label ───────────────────────────────────────────────
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 10),
+          child: Text(
+            s.accountInfo,
+            style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: Colors.black54),
+          ),
+        ),
+
+        // ── Info card ────────────────────────────────────────────────────────
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                  color: Colors.black.withOpacity(0.04),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4))
+            ],
+          ),
+          child: Column(
+            children: [
+              _ProfileRow(
+                icon: Icons.person_rounded,
+                label: s.name,
+                value: profile.name,
+              ),
+              const Divider(
+                  height: 1,
+                  indent: 52,
+                  endIndent: 16,
+                  color: Color(0xFFF0F0F0)),
+              _ProfileRow(
+                icon: Icons.phone_rounded,
+                label: s.phone,
+                value: profile.phone,
+              ),
+              const Divider(
+                  height: 1,
+                  indent: 52,
+                  endIndent: 16,
+                  color: Color(0xFFF0F0F0)),
+              _ProfileRow(
+                icon: Icons.email_rounded,
+                label: s.email,
+                value: profile.email,
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 24),
+      ],
+    );
+  }
+}
+
+// ── Profile info row ──────────────────────────────────────────────────────────
+
+class _ProfileRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+
+  const _ProfileRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      child: Row(
+        children: [
+          // Icon badge
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: const Color(0xFFD61A22).withOpacity(0.08),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, size: 20, color: const Color(0xFFD61A22)),
+          ),
+          const SizedBox(width: 14),
+          // Label + value
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label,
+                    style: const TextStyle(
+                        fontSize: 11,
+                        color: Colors.black45,
+                        fontWeight: FontWeight.w500)),
+                const SizedBox(height: 3),
+                Text(value,
+                    style: const TextStyle(
+                        fontSize: 15,
+                        color: Colors.black87,
+                        fontWeight: FontWeight.w600)),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

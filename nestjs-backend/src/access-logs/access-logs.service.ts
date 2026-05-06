@@ -132,6 +132,19 @@ export class AccessLogsService {
     });
   }
 
+  /**
+   * Return the profile of the authenticated parent (name, phone, email).
+   * Used by the Flutter Account page under Settings.
+   */
+  async getMyProfile(parentId: string) {
+    const parent = await this.prisma.parent.findUnique({
+      where: { id: parentId },
+      select: { id: true, name: true, phone: true, email: true, createdAt: true },
+    });
+    if (!parent) throw new NotFoundException('Parent not found');
+    return parent;
+  }
+
   /** Return all students linked to a parent (for the home screen) */
   async getMyStudents(parentId: string) {
     const mappings = await this.prisma.parentStudentMapping.findMany({

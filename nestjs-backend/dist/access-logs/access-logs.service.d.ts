@@ -27,6 +27,13 @@ export declare class AccessLogsService {
         type: import(".prisma/client").$Enums.AccessType;
         gateName: string;
     }[]>;
+    getMyProfile(parentId: string): Promise<{
+        id: string;
+        createdAt: Date;
+        name: string;
+        phone: string;
+        email: string;
+    }>;
     getMyStudents(parentId: string): Promise<{
         id: string;
         studentCode: string;

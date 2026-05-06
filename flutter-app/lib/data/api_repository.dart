@@ -64,6 +64,14 @@ class ApiRepository {
     await _dio.post('/auth/device', data: {'fcmToken': fcmToken});
   }
 
+  // ── Profile ──────────────────────────────────────────────────
+
+  /// Fetch the authenticated parent's own profile (name, phone, email).
+  Future<ParentProfile> getMyProfile() async {
+    final resp = await _dio.get('/me/profile');
+    return ParentProfile.fromJson(resp.data as Map<String, dynamic>);
+  }
+
   // ── Students & Logs ──────────────────────────────────────────
 
   Future<List<Student>> getMyStudents() async {

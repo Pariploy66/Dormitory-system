@@ -33,6 +33,12 @@ export class AccessLogsController {
 
   // ── Parent-facing endpoints ──────────────────────────────────
   @UseGuards(AuthGuard('jwt'))
+  @Get('me/profile')
+  myProfile(@Request() req) {
+    return this.service.getMyProfile(req.user.sub);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
   @Get('me/students')
   myStudents(@Request() req) {
     return this.service.getMyStudents(req.user.sub);
