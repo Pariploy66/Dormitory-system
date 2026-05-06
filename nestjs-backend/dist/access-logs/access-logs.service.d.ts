@@ -21,15 +21,15 @@ export declare class AccessLogsService {
         skipped?: undefined;
         reason?: undefined;
     }>;
-    getLogsForStudent(parentId: string, studentId: string, limit?: number): Promise<{
+    getLogsForStudent(parentId: string, studentId: string, days?: number): Promise<{
         id: string;
+        accessTime: Date;
         type: import(".prisma/client").$Enums.AccessType;
         gateName: string;
-        accessTime: Date;
     }[]>;
     getMyStudents(parentId: string): Promise<{
-        name: string;
         id: string;
         studentCode: string;
+        name: string;
     }[]>;
 }

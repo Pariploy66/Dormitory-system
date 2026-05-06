@@ -5,7 +5,6 @@ import '../providers/app_providers.dart';
 import '../ui/screens/login_screen.dart';
 import '../ui/screens/register_screen.dart';
 import '../ui/screens/home_screen.dart';
-import '../ui/screens/logs_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final notifier = _RouterNotifier(ref);
@@ -14,19 +13,9 @@ final routerProvider = Provider<GoRouter>((ref) {
     refreshListenable: notifier,
     redirect: notifier._redirect,
     routes: [
-      GoRoute(path: '/login', builder: (_, __) => const LoginScreen()),
+      GoRoute(path: '/login',    builder: (_, __) => const LoginScreen()),
       GoRoute(path: '/register', builder: (_, __) => const RegisterScreen()),
-      GoRoute(
-        path: '/home',
-        builder: (_, __) => const HomeScreen(),
-        routes: [
-          GoRoute(
-            path: 'logs/:studentId',
-            builder: (_, state) =>
-                LogsScreen(studentId: state.pathParameters['studentId']!),
-          ),
-        ],
-      ),
+      GoRoute(path: '/home',     builder: (_, __) => const HomeScreen()),
     ],
   );
   ref.onDispose(notifier.dispose);

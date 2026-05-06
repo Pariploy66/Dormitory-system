@@ -20,15 +20,15 @@ export declare class AccessLogsController {
         reason?: undefined;
     }>;
     myStudents(req: any): Promise<{
-        name: string;
         id: string;
         studentCode: string;
+        name: string;
     }[]>;
-    logs(req: any, studentId: string, limit?: string): Promise<{
+    logs(req: any, studentId: string, days?: string): Promise<{
         id: string;
+        accessTime: Date;
         type: import(".prisma/client").$Enums.AccessType;
         gateName: string;
-        accessTime: Date;
     }[]>;
 }
 export {};

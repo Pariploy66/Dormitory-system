@@ -8,7 +8,18 @@ import { NotificationsService } from '../notifications/notifications.service';
 
 export interface IngestPayload {
   externalStudentId: string;
-  accessTime: string;   // ISO-8601
+  /**
+   * Thai local time (ICT, UTC+7) written as an ISO-8601 string.
+   * Any timezone designator is stripped and +07:00 is re-attached,
+   * so ALL of the following are treated identically:
+   *
+   *   "2026-05-06T17:35:00"          → Thai 17:35 ✓
+   *   "2026-05-06T17:35:00+07:00"    → Thai 17:35 ✓
+   *   "2026-05-06T17:35:00.000Z"     → Thai 17:35 ✓  (Z is ignored)
+   *
+   * Just write the Thai clock reading — no UTC math needed.
+   */
+  accessTime: string;
   type: 'IN' | 'OUT';
   gateName: string;
 }
@@ -30,7 +41,30 @@ export class AccessLogsService {
     });
     if (!student) return { skipped: true, reason: 'student not found' };
 
-    const accessTime = new Date(payload.accessTime);
+    // ── Timezone normalisation ───────────────────────────────────────────────
+    // This system is entirely Thailand-based: the on-site hardware, FastAPI
+    // integration, and manual Postman tests all report times in Thai local
+    // time (ICT, UTC+7).  We therefore ALWAYS interpret the incoming datetime
+    // as Thai time, regardless of whatever timezone designator the caller
+    // appended (Z, +00:00, +07:00, or nothing).
+    //
+    // Algorithm:
+    //   1. Strip fractional seconds  → "2026-05-06T17:35:00.000Z" → "...17:35:00Z"
+    //   2. Strip timezone designator → "2026-05-06T17:35:00"
+    //   3. Attach +07:00             → "2026-05-06T17:35:00+07:00"
+    //
+    // Result: new Date("2026-05-06T17:35:00+07:00") = UTC 10:35
+    //         Flutter .toLocal() = Thai 17:35  ✓
+    //
+    // This means callers can write the Thai clock reading in ANY of these
+    // formats and get the same correct result:
+    //   "2026-05-06T17:35:00"          (no timezone)
+    //   "2026-05-06T17:35:00+07:00"    (explicit Thai offset)
+    //   "2026-05-06T17:35:00.000Z"     (bare Z — treated as Thai, not UTC)
+    const thaiStr  = payload.accessTime
+      .replace(/\.\d+/, '')                     // strip fractional seconds
+      .replace(/[Zz]$|[+-]\d{2}:\d{2}$/, '');  // strip any timezone designator
+    const accessTime = new Date(thaiStr + '+07:00');
 
     const log = await this.prisma.accessLog.upsert({
       where: {
@@ -70,12 +104,20 @@ export class AccessLogsService {
       );
     }
 
-    // "days=7" means the 7 calendar days that include today.
-    // Subtract (days - 1) so the window is: [today-6 days at 00:00, now].
-    // Example with days=7 on May 5 → since = April 29 00:00 → 7 days total.
-    const since = new Date();
-    since.setDate(since.getDate() - (days - 1));
-    since.setHours(0, 0, 0, 0);
+    // "days=7" means the 7 Thai calendar days that include today.
+    // We use UTC arithmetic + a 7-hour offset so the window starts at Thai
+    // midnight (UTC-7h) of the first day, regardless of the server's TZ.
+    // Example: days=7 on Thai May 6 → since = Thai Apr 30 00:00 = UTC Apr 29 17:00
+    const nowUtc = new Date();
+    const since = new Date(
+      Date.UTC(
+        nowUtc.getUTCFullYear(),
+        nowUtc.getUTCMonth(),
+        nowUtc.getUTCDate(),
+      ),
+    );
+    since.setUTCDate(since.getUTCDate() - (days - 1)); // go back (days-1) UTC days
+    since.setTime(since.getTime() - 7 * 60 * 60 * 1000); // shift to Thai midnight (UTC-7h)
 
     return this.prisma.accessLog.findMany({
       where: { studentId, accessTime: { gte: since } },
