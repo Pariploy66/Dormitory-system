@@ -62,12 +62,7 @@ let AccessLogsService = class AccessLogsService {
             where: { studentId, accessTime: { gte: since } },
             orderBy: { accessTime: 'desc' },
             take: 500,
-            select: {
-                id: true,
-                accessTime: true,
-                type: true,
-                gateName: true,
-            },
+            select: { id: true, accessTime: true, type: true, gateName: true },
         });
         return logs.map((log) => ({
             ...log,

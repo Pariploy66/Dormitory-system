@@ -126,16 +126,15 @@ export class AccessLogsService {
     const logs = await this.prisma.accessLog.findMany({
       where: { studentId, accessTime: { gte: since } },
       orderBy: { accessTime: 'desc' },
-      take: 500, // safety cap — 7 days rarely exceeds this
-      select: {
-        id: true,
-        accessTime: true,
-        type: true,
-        gateName: true,
-      },
+      take: 500,
+      select: { id: true, accessTime: true, type: true, gateName: true },
     });
 
+<<<<<<< HEAD
     // Attach computed status to each record
+=======
+    // Attach computed curfew status to every record.
+>>>>>>> f47adf29 (แก้บัค)
     return logs.map((log) => ({
       ...log,
       status: this.computeStatus(log.accessTime, log.type),
@@ -143,6 +142,7 @@ export class AccessLogsService {
   }
 
   /**
+<<<<<<< HEAD
    * Compute whether an IN entry is "late" or "ontime" based on Thai local time.
    *
    * Curfew window: 22:30 → 05:59 (crosses midnight).
@@ -152,6 +152,22 @@ export class AccessLogsService {
    * accessTime is stored as UTC in the database.
    * Thai time = UTC + 7 h, so we add 7 × 60 minutes before computing
    * minutes-since-midnight, then wrap modulo 1440 (24 × 60).
+=======
+   * Determine whether an IN entry falls inside the curfew window.
+   *
+   * Curfew: 22:30 → 05:59 Thai time (ICT, UTC+7) — crosses midnight.
+   *
+   *   Thai minutes-since-midnight = (UTC_hh × 60 + UTC_mm + 420) mod 1440
+   *
+   *   Late  when: thaiMin >= 1350  (22:30–23:59)
+   *            OR thaiMin <   360  (00:00–05:59)
+   *   OnTime when: 360 ≤ thaiMin < 1350  (06:00–22:29)
+   *
+   * accessTime is stored in UTC by Prisma/Postgres, so we add +7 h (420 min)
+   * before computing minutes-since-midnight and wrap modulo 1440.
+   *
+   * OUT entries are always "ontime" — curfew applies only to entries (IN).
+>>>>>>> f47adf29 (แก้บัค)
    */
   private computeStatus(
     accessTime: Date,
@@ -159,6 +175,7 @@ export class AccessLogsService {
   ): 'late' | 'ontime' {
     if (type !== 'IN') return 'ontime';
 
+<<<<<<< HEAD
     // Convert UTC stored time → Thai local minutes-since-midnight
     const utcMinutes = accessTime.getUTCHours() * 60 + accessTime.getUTCMinutes();
     const thaiMinutes = (utcMinutes + 7 * 60) % (24 * 60); // wrap at midnight
@@ -170,6 +187,16 @@ export class AccessLogsService {
     return thaiMinutes >= CURFEW_START || thaiMinutes < CURFEW_END
       ? 'late'
       : 'ontime';
+=======
+    const utcMin   = accessTime.getUTCHours() * 60 + accessTime.getUTCMinutes();
+    const thaiMin  = (utcMin + 7 * 60) % (24 * 60); // shift +7 h, wrap at midnight
+
+    const CURFEW_START = 22 * 60 + 30; // 22:30 = 1350
+    const CURFEW_END   =  6 * 60;      // 06:00 =  360
+
+    // Window wraps midnight → OR, not AND
+    return thaiMin >= CURFEW_START || thaiMin < CURFEW_END ? 'late' : 'ontime';
+>>>>>>> f47adf29 (แก้บัค)
   }
 
   /**
