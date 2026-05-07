@@ -58,7 +58,7 @@ let AccessLogsService = class AccessLogsService {
         const since = new Date(Date.UTC(nowUtc.getUTCFullYear(), nowUtc.getUTCMonth(), nowUtc.getUTCDate()));
         since.setUTCDate(since.getUTCDate() - (days - 1));
         since.setTime(since.getTime() - 7 * 60 * 60 * 1000);
-        return this.prisma.accessLog.findMany({
+        const logs = await this.prisma.accessLog.findMany({
             where: { studentId, accessTime: { gte: since } },
             orderBy: { accessTime: 'desc' },
             take: 500,
@@ -69,6 +69,21 @@ let AccessLogsService = class AccessLogsService {
                 gateName: true,
             },
         });
+        return logs.map((log) => ({
+            ...log,
+            status: this.computeStatus(log.accessTime, log.type),
+        }));
+    }
+    computeStatus(accessTime, type) {
+        if (type !== 'IN')
+            return 'ontime';
+        const utcMinutes = accessTime.getUTCHours() * 60 + accessTime.getUTCMinutes();
+        const thaiMinutes = (utcMinutes + 7 * 60) % (24 * 60);
+        const CURFEW_START = 22 * 60 + 30;
+        const CURFEW_END = 6 * 60;
+        return thaiMinutes >= CURFEW_START || thaiMinutes < CURFEW_END
+            ? 'late'
+            : 'ontime';
     }
     async getMyProfile(parentId) {
         const parent = await this.prisma.parent.findUnique({

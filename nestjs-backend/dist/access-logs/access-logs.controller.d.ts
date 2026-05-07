@@ -32,6 +32,7 @@ export declare class AccessLogsController {
         name: string;
     }[]>;
     logs(req: any, studentId: string, days?: string): Promise<{
+        status: "late" | "ontime";
         id: string;
         accessTime: Date;
         type: import(".prisma/client").$Enums.AccessType;
