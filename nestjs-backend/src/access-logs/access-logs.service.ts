@@ -92,6 +92,10 @@ export class AccessLogsService {
   /**
    * Fetch access logs for a student within the last `days` days (default 7),
    * enforcing that the requesting parent has a mapping to that student.
+   *
+   * Each record includes a computed `status` field:
+   *   - "late"   → IN entry between 22:30 and 05:59 Thai time (crosses midnight)
+   *   - "ontime" → all other IN entries and all OUT entries
    */
   async getLogsForStudent(parentId: string, studentId: string, days = 7) {
     // Security: verify parent owns this student
@@ -119,7 +123,7 @@ export class AccessLogsService {
     since.setUTCDate(since.getUTCDate() - (days - 1)); // go back (days-1) UTC days
     since.setTime(since.getTime() - 7 * 60 * 60 * 1000); // shift to Thai midnight (UTC-7h)
 
-    return this.prisma.accessLog.findMany({
+    const logs = await this.prisma.accessLog.findMany({
       where: { studentId, accessTime: { gte: since } },
       orderBy: { accessTime: 'desc' },
       take: 500, // safety cap — 7 days rarely exceeds this
@@ -130,6 +134,42 @@ export class AccessLogsService {
         gateName: true,
       },
     });
+
+    // Attach computed status to each record
+    return logs.map((log) => ({
+      ...log,
+      status: this.computeStatus(log.accessTime, log.type),
+    }));
+  }
+
+  /**
+   * Compute whether an IN entry is "late" or "ontime" based on Thai local time.
+   *
+   * Curfew window: 22:30 → 05:59 (crosses midnight).
+   *   Late  = minutes-since-Thai-midnight ∈ [1350, 1440) ∪ [0, 360)
+   *   OnTime = everything else (and all OUT entries)
+   *
+   * accessTime is stored as UTC in the database.
+   * Thai time = UTC + 7 h, so we add 7 × 60 minutes before computing
+   * minutes-since-midnight, then wrap modulo 1440 (24 × 60).
+   */
+  private computeStatus(
+    accessTime: Date,
+    type: 'IN' | 'OUT',
+  ): 'late' | 'ontime' {
+    if (type !== 'IN') return 'ontime';
+
+    // Convert UTC stored time → Thai local minutes-since-midnight
+    const utcMinutes = accessTime.getUTCHours() * 60 + accessTime.getUTCMinutes();
+    const thaiMinutes = (utcMinutes + 7 * 60) % (24 * 60); // wrap at midnight
+
+    const CURFEW_START = 22 * 60 + 30; // 22:30 = 1350 min
+    const CURFEW_END   =  6 * 60;      // 06:00 = 360 min
+
+    // The window [22:30, 06:00) wraps midnight, so we use OR not AND
+    return thaiMinutes >= CURFEW_START || thaiMinutes < CURFEW_END
+      ? 'late'
+      : 'ontime';
   }
 
   /**

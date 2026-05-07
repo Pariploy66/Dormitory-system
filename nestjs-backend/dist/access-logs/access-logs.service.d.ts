@@ -22,11 +22,13 @@ export declare class AccessLogsService {
         reason?: undefined;
     }>;
     getLogsForStudent(parentId: string, studentId: string, days?: number): Promise<{
+        status: "late" | "ontime";
         id: string;
         accessTime: Date;
         type: import(".prisma/client").$Enums.AccessType;
         gateName: string;
     }[]>;
+    private computeStatus;
     getMyProfile(parentId: string): Promise<{
         id: string;
         createdAt: Date;

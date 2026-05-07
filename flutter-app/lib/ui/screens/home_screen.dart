@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../core/l10n.dart';
 import '../../data/api_repository.dart';
@@ -21,6 +22,7 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   int _currentIndex = 0;
 
+  // Pages are kept alive in IndexedStack — state is preserved when switching tabs
   late final List<Widget> _pages = [
     const _DashboardPage(),
     const _HistoryPage(),
@@ -30,16 +32,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final s = ref.watch(stringsProvider);
-    // Allow Dashboard (or any widget) to switch tabs programmatically
-    ref.listen(selectedTabProvider, (_, idx) {
-      if (_currentIndex != idx) setState(() => _currentIndex = idx);
-    });
     return Scaffold(
       backgroundColor: MfuTheme.bgPage,
+      // ── IndexedStack preserves each page's scroll/state ──────
       body: IndexedStack(
         index: _currentIndex,
         children: _pages,
       ),
+      // ── Bottom Navigation Bar (UI Redesign: Gradient & Icons) ─
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -48,13 +48,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             end: Alignment.bottomCenter,
           ),
           boxShadow: [
-            BoxShadow(color: Colors.black26, blurRadius: 10, offset: Offset(0, -2))
+            BoxShadow(
+              color: Colors.black26,
+              blurRadius: 10,
+              offset: Offset(0, -2),
+            )
           ],
         ),
         child: SafeArea(
           child: BottomNavigationBar(
             currentIndex: _currentIndex,
-            onTap: (i) => setState(() => _currentIndex = i),
+            onTap: (index) => setState(() => _currentIndex = index),
             selectedItemColor: Colors.white,
             unselectedItemColor: Colors.white54,
             backgroundColor: Colors.transparent,
@@ -65,15 +69,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600),
             items: [
               BottomNavigationBarItem(
-                icon: const Padding(padding: EdgeInsets.only(bottom: 4), child: Icon(Icons.home_rounded)),
+                icon: const Padding(
+                  padding: EdgeInsets.only(bottom: 4.0),
+                  child: Icon(Icons.home_rounded),
+                ),
                 label: s.dashboard,
               ),
               BottomNavigationBarItem(
-                icon: const Padding(padding: EdgeInsets.only(bottom: 4), child: Icon(Icons.access_time_rounded)),
+                icon: const Padding(
+                  padding: EdgeInsets.only(bottom: 4.0),
+                  child: Icon(Icons.access_time_rounded),
+                ),
                 label: s.history,
               ),
               BottomNavigationBarItem(
-                icon: const Padding(padding: EdgeInsets.only(bottom: 4), child: Icon(Icons.settings_outlined)),
+                icon: const Padding(
+                  padding: EdgeInsets.only(bottom: 4.0),
+                  child: Icon(Icons.settings_outlined),
+                ),
                 label: s.setting,
               ),
             ],
@@ -85,27 +98,34 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// Custom AppBar
+// Custom AppBar แบบมี Logo ตามดีไซน์ (ใช้สำหรับ Dashboard และ History)
 // ═══════════════════════════════════════════════════════════════════════════════
 
 class _MfuCustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final List<Widget>? actions;
+
   const _MfuCustomAppBar({this.actions});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: EdgeInsets.only(
-        top: MediaQuery.of(context).padding.top + 10,
+        top: MediaQuery.of(context).padding.top + 10, // เผื่อพื้นที่ SafeArea ด้านบน
         bottom: 15,
         left: 20,
         right: 10,
       ),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(24)),
+        borderRadius: const BorderRadius.vertical(
+          bottom: Radius.circular(24), // ขอบมนด้านล่างตามรูป
+        ),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 10, offset: const Offset(0, 4)),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
         ],
       ),
       child: Row(
@@ -116,7 +136,7 @@ class _MfuCustomAppBar extends StatelessWidget implements PreferredSizeWidget {
             height: 50,
             width: 44,
             fit: BoxFit.contain,
-            errorBuilder: (_, __, ___) => const Icon(Icons.image_not_supported, size: 40, color: Colors.grey),
+            errorBuilder: (ctx, err, stack) => const Icon(Icons.image_not_supported, size: 40, color: Colors.grey),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -126,11 +146,20 @@ class _MfuCustomAppBar extends StatelessWidget implements PreferredSizeWidget {
               children: [
                 const Text(
                   'MFU Dormitory',
-                  style: TextStyle(color: Color(0xFFC00000), fontSize: 22, fontWeight: FontWeight.w800, letterSpacing: 0.2),
+                  style: TextStyle(
+                    color: Color(0xFFC00000), // สีแดงเข้ม MFU
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.2,
+                  ),
                 ),
                 Text(
                   'Dormitory Management System',
-                  style: TextStyle(color: Colors.grey.shade500, fontSize: 12, fontWeight: FontWeight.w400),
+                  style: TextStyle(
+                    color: Colors.grey.shade500, // สีเทา
+                    fontSize: 12,
+                    fontWeight: FontWeight.w400,
+                  ),
                 ),
               ],
             ),
@@ -157,23 +186,28 @@ class _DashboardPage extends ConsumerStatefulWidget {
 }
 
 class _DashboardPageState extends ConsumerState<_DashboardPage> {
-  /// Updated every time either log provider delivers fresh data via
-  /// background polling — drives the "Updated HH:mm" indicator.
+  /// Tracks when either log provider last delivered fresh data so we can
+  /// display a human-readable "Last updated HH:mm" footer.
   DateTime? _lastRefreshedAt;
 
   @override
   Widget build(BuildContext context) {
     final studentsAsync = ref.watch(studentsProvider);
-    final students = studentsAsync.valueOrNull ?? [];
 
-    // Listen to both providers so _lastRefreshedAt is updated on every
-    // silent background poll, without causing an unnecessary full rebuild.
+    // Listen to both log providers so _lastRefreshedAt updates whenever
+    // background polling delivers new data (no rebuild side-effects here —
+    // the setState only touches the timestamp field).
+    final students = studentsAsync.valueOrNull ?? [];
     if (students.isNotEmpty) {
       ref.listen(todayLogsProvider(students.first.id), (_, next) {
-        if (next is AsyncData) setState(() => _lastRefreshedAt = DateTime.now());
+        if (next is AsyncData) {
+          setState(() => _lastRefreshedAt = DateTime.now());
+        }
       });
       ref.listen(accessLogsProvider(students.first.id), (_, next) {
-        if (next is AsyncData) setState(() => _lastRefreshedAt = DateTime.now());
+        if (next is AsyncData) {
+          setState(() => _lastRefreshedAt = DateTime.now());
+        }
       });
     }
 
@@ -219,7 +253,7 @@ class _DashboardPageState extends ConsumerState<_DashboardPage> {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// Page 2 — History
+// Page 2 — History  (full log list, same logic as LogsScreen but tab-embedded)
 // ═══════════════════════════════════════════════════════════════════════════════
 
 class _HistoryPage extends ConsumerStatefulWidget {
@@ -232,7 +266,7 @@ class _HistoryPage extends ConsumerStatefulWidget {
 class _HistoryPageState extends ConsumerState<_HistoryPage> {
   String _searchQuery = '';
   String _filterType = 'All Status';
-  int _daysBack = 7; // default: Last 7 Days
+  int _daysBack = 1; // default: Today only — user can tap chip to widen range
   final _searchCtrl = TextEditingController();
   DateTime? _lastRefreshedAt;
 
@@ -251,7 +285,8 @@ class _HistoryPageState extends ConsumerState<_HistoryPage> {
   void _showPeriodSheet(BuildContext ctx, AppStrings s) {
     showModalBottomSheet(
       context: ctx,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (_) => Padding(
         padding: const EdgeInsets.symmetric(vertical: 8),
         child: Column(
@@ -260,7 +295,9 @@ class _HistoryPageState extends ConsumerState<_HistoryPage> {
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
               child: Row(children: [
-                Text(s.history, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                Text(s.history,
+                    style: const TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.w700)),
               ]),
             ),
             const Divider(height: 1),
@@ -270,17 +307,25 @@ class _HistoryPageState extends ConsumerState<_HistoryPage> {
               (7, s.last7Days),
             ].map((pair) => ListTile(
                   leading: Icon(
-                    pair.$1 == 1 ? Icons.today_rounded : Icons.date_range_rounded,
-                    color: _daysBack == pair.$1 ? const Color(0xFFD61A22) : Colors.black54,
+                    pair.$1 == 1
+                        ? Icons.today_rounded
+                        : Icons.date_range_rounded,
+                    color: _daysBack == pair.$1
+                        ? const Color(0xFFD61A22)
+                        : Colors.black54,
                     size: 22,
                   ),
                   title: Text(pair.$2,
                       style: TextStyle(
-                        fontWeight: _daysBack == pair.$1 ? FontWeight.w700 : FontWeight.w500,
-                        color: _daysBack == pair.$1 ? const Color(0xFFD61A22) : Colors.black87,
-                      )),
+                          fontWeight: _daysBack == pair.$1
+                              ? FontWeight.w700
+                              : FontWeight.w500,
+                          color: _daysBack == pair.$1
+                              ? const Color(0xFFD61A22)
+                              : Colors.black87)),
                   trailing: _daysBack == pair.$1
-                      ? const Icon(Icons.check_circle_rounded, color: Color(0xFFD61A22), size: 20)
+                      ? const Icon(Icons.check_circle_rounded,
+                          color: Color(0xFFD61A22), size: 20)
                       : null,
                   onTap: () {
                     setState(() => _daysBack = pair.$1);
@@ -301,46 +346,32 @@ class _HistoryPageState extends ConsumerState<_HistoryPage> {
     final student = students.isNotEmpty ? students.first : null;
     final studentId = student?.id ?? '';
 
+    // When _daysBack == 1 (default "Today"), use the dedicated todayLogsProvider.
+    // For wider ranges (3 / 7 days), fall back to the 7-day rolling provider.
     final bool isTodayView = _daysBack == 1;
 
-    // Always watch both providers so today's data is guaranteed to appear
-    // even when accessLogsProvider is slow or has a timezone edge case.
-    final AsyncValue<List<AccessLog>>? allLogsAsync = studentId.isEmpty
-        ? null
-        : ref.watch(accessLogsProvider(studentId));
-    final AsyncValue<List<AccessLog>>? todayAsync = studentId.isEmpty
-        ? null
-        : ref.watch(todayLogsProvider(studentId));
-
-    // Update LIVE timestamp whenever either provider delivers fresh data.
+    // Track when background polling delivers fresh data.
     if (studentId.isNotEmpty) {
-      ref.listen(accessLogsProvider(studentId), (_, next) {
-        if (next is AsyncData) setState(() => _lastRefreshedAt = DateTime.now());
-      });
-      ref.listen(todayLogsProvider(studentId), (_, next) {
-        if (next is AsyncData) setState(() => _lastRefreshedAt = DateTime.now());
+      ref.listen(isTodayView ? todayLogsProvider(studentId) : accessLogsProvider(studentId),
+          (_, next) {
+        if (next is AsyncData) {
+          setState(() => _lastRefreshedAt = DateTime.now());
+        }
       });
     }
 
-    // Merge: today's logs are always injected so History never misses them.
-    final List<AccessLog> allLogs;
-    if (isTodayView) {
-      allLogs = todayAsync?.valueOrNull ?? [];
-    } else {
-      final todayLogs = todayAsync?.valueOrNull ?? [];
-      final histLogs = allLogsAsync?.valueOrNull ?? [];
-      final seen = <String>{};
-      allLogs = [...todayLogs, ...histLogs]
-          .where((l) => seen.add(l.id))
-          .toList()
-        ..sort((a, b) => b.accessTime.compareTo(a.accessTime));
-    }
+    final AsyncValue<List<AccessLog>>? logsAsync = studentId.isEmpty
+        ? null
+        : isTodayView
+            ? ref.watch(todayLogsProvider(studentId))
+            : ref.watch(accessLogsProvider(studentId));
 
-    // Primary async for loading / error states
-    final primaryAsync = isTodayView ? todayAsync : allLogsAsync;
-
+    final allLogs = logsAsync?.valueOrNull ?? [];
     final now = DateTime.now();
 
+    // For the rolling-window view, apply a client-side cutoff so that data
+    // older than _daysBack days is never shown (defence-in-depth).
+    // For the today view the provider already guarantees today-only data.
     final cutoff = DateTime(now.year, now.month, now.day)
         .subtract(Duration(days: _daysBack - 1));
 
@@ -355,13 +386,12 @@ class _HistoryPageState extends ConsumerState<_HistoryPage> {
       return inRange && matchQ && matchT;
     }).toList();
 
-    final locale = ref.watch(localeProvider).languageCode;
+    final locale = ref.watch(localeProvider);
     final sections = _buildDaySections(filtered, now, s,
-        daysBack: _daysBack, locale: locale);
+        locale: locale.languageCode, daysBack: _daysBack);
 
     return Scaffold(
-      backgroundColor: MfuTheme.bgPage,
-      // ── Same white top bar as Dashboard ──────────────────────────
+      backgroundColor: const Color(0xFFFDFBF7),
       appBar: _MfuCustomAppBar(
         actions: [
           if (studentId.isNotEmpty)
@@ -369,52 +399,109 @@ class _HistoryPageState extends ConsumerState<_HistoryPage> {
               icon: const Icon(Icons.refresh_rounded,
                   color: Colors.black54, size: 24),
               onPressed: () {
-                ref.invalidate(todayLogsProvider(studentId));
-                ref.invalidate(accessLogsProvider(studentId));
+                // Invalidate whichever provider is currently active.
+                if (isTodayView) {
+                  ref.invalidate(todayLogsProvider(studentId));
+                } else {
+                  ref.invalidate(accessLogsProvider(studentId));
+                }
               },
             ),
         ],
       ),
       body: Column(
         children: [
-          // ── Search + filter chips (no white card, plain background) ─
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+          // ── White header: title + search + filters ────────────
+          Container(
+            color: const Color(0xFFFDFBF7),
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 10),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Search bar
-                TextField(
-                  controller: _searchCtrl,
-                  onChanged: (v) => setState(() => _searchQuery = v),
-                  decoration: InputDecoration(
-                    hintText: s.searchHint,
-                    prefixIcon: const Icon(Icons.search_rounded,
-                        color: Colors.black38, size: 20),
-                    suffixIcon: _searchQuery.isNotEmpty
-                        ? IconButton(
-                            icon: const Icon(Icons.clear_rounded,
-                                size: 16, color: Colors.black38),
-                            onPressed: () {
-                              _searchCtrl.clear();
-                              setState(() => _searchQuery = '');
-                            },
-                          )
-                        : null,
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(24),
-                      borderSide: BorderSide.none,
+                // Title row — LIVE badge + last-updated time
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Text(
+                      s.history,
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.black87,
+                      ),
                     ),
-                    contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 12),
+                    const SizedBox(width: 10),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: Colors.green.shade50,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: Colors.green.shade300, width: 1),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 6,
+                            height: 6,
+                            decoration: const BoxDecoration(
+                              color: Colors.green,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          const Text(
+                            'LIVE',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.green,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Spacer(),
+                    if (_lastRefreshedAt != null)
+                      Text(
+                        DateFormat('HH:mm').format(_lastRefreshedAt!),
+                        style: const TextStyle(fontSize: 11, color: Colors.black38),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      )
+                    ],
+                  ),
+                  child: TextField(
+                    controller: _searchCtrl,
+                    onChanged: (v) => setState(() => _searchQuery = v),
+                    decoration: InputDecoration(
+                      hintText: s.searchHint,
+                      hintStyle:
+                          const TextStyle(color: Colors.black38, fontSize: 14),
+                      prefixIcon: const Icon(Icons.search_rounded,
+                          color: Colors.black38, size: 20),
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 14),
+                    ),
                   ),
                 ),
-                const SizedBox(height: 10),
-                // Filter chips + LIVE badge
+                const SizedBox(height: 16),
                 Row(
                   children: [
+                    // Tappable period selector — Today / Last 3 Days / Last 7 Days
                     _FilterChip(
                       label: _periodLabel(s),
                       isActive: true,
@@ -423,54 +510,40 @@ class _HistoryPageState extends ConsumerState<_HistoryPage> {
                     ),
                     const SizedBox(width: 10),
                     _FilterChip(
-                      label: _filterType == 'All Status'
-                          ? s.allStatus
-                          : _filterType == 'Entry'
-                              ? s.entry
-                              : s.exit,
-                      isActive: _filterType != 'All Status',
+                      label: _filterType,
+                      isActive: false,
                       hasArrow: true,
                       onTap: () => _showTypeSheet(context, s),
                     ),
-                    const Spacer(),
-                    _LiveBadge(),
-                    if (_lastRefreshedAt != null) ...[
-                      const SizedBox(width: 4),
-                      Text(
-                        DateFormat('HH:mm').format(_lastRefreshedAt!),
-                        style: const TextStyle(
-                            fontSize: 10, color: Colors.black38),
-                      ),
-                    ],
                   ],
                 ),
               ],
             ),
           ),
 
-          // ── Log list ──────────────────────────────────────────────
+          // ── Log list ──────────────────────────────────────────
           Expanded(
-            child: primaryAsync == null
+            child: logsAsync == null
                 ? Center(
                     child: Text(s.noStudentLinked,
-                        style: const TextStyle(color: Colors.black45)))
-                : primaryAsync.isLoading
+                        style: const TextStyle(color: Colors.grey)))
+                : logsAsync.isLoading
                     ? const Center(
                         child: CircularProgressIndicator(
                             color: MfuTheme.primary))
-                    : primaryAsync.hasError
+                    : logsAsync.hasError
                         ? Center(
                             child: Text(s.failedToLoad,
-                                style: const TextStyle(
-                                    color: Colors.black45)))
+                                style: const TextStyle(color: Colors.grey)))
                         : RefreshIndicator(
                             color: MfuTheme.primary,
-                            onRefresh: () async {
-                              ref.invalidate(todayLogsProvider(studentId));
-                              ref.invalidate(accessLogsProvider(studentId));
-                            },
+                            onRefresh: () async => isTodayView
+                                ? ref.invalidate(todayLogsProvider(studentId))
+                                : ref.invalidate(accessLogsProvider(studentId)),
                             child: _LogList(
                               sections: sections,
+                              // Show specific "no activity today" message for the
+                              // default today view; generic "no data" otherwise.
                               noDataLabel: isTodayView
                                   ? s.noActivityToday
                                   : s.noData,
@@ -485,7 +558,8 @@ class _HistoryPageState extends ConsumerState<_HistoryPage> {
   void _showTypeSheet(BuildContext ctx, AppStrings s) {
     showModalBottomSheet(
       context: ctx,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
       builder: (_) => Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -509,36 +583,26 @@ class _HistoryPageState extends ConsumerState<_HistoryPage> {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// Day-section builder
-// ═══════════════════════════════════════════════════════════════════════════════
-
-// Thai short day/month abbreviations
-const _thDays   = {1:'จ.',2:'อ.',3:'พ.',4:'พฤ.',5:'ศ.',6:'ส.',7:'อา.'};
-const _thMonths = {1:'ม.ค.',2:'ก.พ.',3:'มี.ค.',4:'เม.ย.',5:'พ.ค.',
-                   6:'มิ.ย.',7:'ก.ค.',8:'ส.ค.',9:'ก.ย.',10:'ต.ค.',
-                   11:'พ.ย.',12:'ธ.ค.'};
-
-String _dayLabel(DateTime day, int i, AppStrings s, String locale) {
-  if (i == 0) return s.today;
-  if (i == 1) return s.yesterday;
-  if (locale == 'th') {
-    return '${_thDays[day.weekday]}, ${day.day} ${_thMonths[day.month]}';
-  }
-  return DateFormat('EEE, d MMM', 'en').format(day);
-}
-
+// Builds a list of (label, logs) pairs, newest first.
+// [daysBack] controls how many calendar days are included (1 = today only).
+// [locale] must be passed explicitly ('en' or 'th') so DateFormat never falls
+// back to Intl.defaultLocale = 'th' regardless of the user's language setting.
 List<MapEntry<String, List<AccessLog>>> _buildDaySections(
   List<AccessLog> logs,
   DateTime now,
   AppStrings s, {
+  required String locale,
   int daysBack = 7,
-  String locale = 'en',
 }) {
   final sections = <MapEntry<String, List<AccessLog>>>[];
   for (var i = 0; i < daysBack; i++) {
-    final day = DateTime(now.year, now.month, now.day).subtract(Duration(days: i));
-    final label = _dayLabel(day, i, s, locale);
+    final day = DateTime(now.year, now.month, now.day)
+        .subtract(Duration(days: i));
+    final label = i == 0
+        ? s.today
+        : i == 1
+            ? s.yesterday
+            : DateFormat('EEE, d MMM', locale).format(day); // explicit locale
     final dayLogs = logs
         .where((l) =>
             l.accessTime.year == day.year &&
@@ -551,7 +615,7 @@ List<MapEntry<String, List<AccessLog>>> _buildDaySections(
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// Page 3 — Setting
+// Page 3 — Setting  (Account & Security menu — logout is a button, NOT a tab)
 // ═══════════════════════════════════════════════════════════════════════════════
 
 class _SettingPage extends ConsumerWidget {
@@ -573,39 +637,57 @@ class _SettingPage extends ConsumerWidget {
         child: ListView(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
           children: [
-            Text(s.setting,
-                style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w800, color: Colors.black87)),
+            // ── Top Bar ───────────────────────────────────────────
+            Text(
+              s.setting,
+              style: const TextStyle(
+                fontSize: 26,
+                fontWeight: FontWeight.w800,
+                color: Colors.black87,
+              ),
+            ),
+
             const SizedBox(height: 30),
+
+            // ── Account & Security section ────────────────────────
             const Padding(
               padding: EdgeInsets.only(bottom: 12),
-              child: Text('Account & Security',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.black54)),
+              child: Text(
+                'Account & Security',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black54,
+                ),
+              ),
             ),
+
             Container(
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(16),
-                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4))],
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.03),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  )
+                ],
               ),
               child: Column(
                 children: [
-                  _SettingTile(
-                    icon: Icons.person_rounded,
-                    label: s.account,
-                    subtitle: s.accountInfo,
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const _AccountPage()),
-                    ),
-                  ),
-                  const Divider(height: 1, indent: 50, endIndent: 20, color: Colors.black12),
+                  // Language tile — replaces Change Password
                   _SettingTile(
                     icon: Icons.language_rounded,
                     label: s.language,
                     subtitle: isThai ? 'ภาษาไทย' : 'English',
                     onTap: () => _showLangSheet(context, ref, s, isThai),
                   ),
-                  const Divider(height: 1, indent: 50, endIndent: 20, color: Colors.black12),
+                  const Divider(
+                      height: 1,
+                      indent: 50,
+                      endIndent: 20,
+                      color: Colors.black12),
                   _SettingTile(
                     icon: Icons.logout_rounded,
                     label: s.logout,
@@ -623,30 +705,52 @@ class _SettingPage extends ConsumerWidget {
     );
   }
 
-  void _showLangSheet(BuildContext context, WidgetRef ref, AppStrings s, bool isThai) {
+  void _showLangSheet(
+      BuildContext context, WidgetRef ref, AppStrings s, bool isThai) {
     showModalBottomSheet(
       context: context,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (ctx) => Padding(
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (sheetCtx) => Padding(
         padding: const EdgeInsets.symmetric(vertical: 8),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
-              child: Text(s.language, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+              child: Text(s.language,
+                  style: const TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.w700)),
             ),
             ListTile(
-              leading: const Text('🇺🇸', style: TextStyle(fontSize: 24)),
-              title: const Text('English', style: TextStyle(fontWeight: FontWeight.w500)),
-              trailing: !isThai ? const Icon(Icons.check_circle_rounded, color: Color(0xFFD61A22)) : null,
-              onTap: () { ref.read(localeProvider.notifier).state = const Locale('en'); Navigator.pop(ctx); },
+              leading: const Text('🇺🇸',
+                  style: TextStyle(fontSize: 24)),
+              title: const Text('English',
+                  style: TextStyle(fontWeight: FontWeight.w500)),
+              trailing: !isThai
+                  ? const Icon(Icons.check_circle_rounded,
+                      color: Color(0xFFD61A22))
+                  : null,
+              onTap: () {
+                ref.read(localeProvider.notifier).state =
+                    const Locale('en');
+                Navigator.pop(sheetCtx);
+              },
             ),
             ListTile(
-              leading: const Text('🇹🇭', style: TextStyle(fontSize: 24)),
-              title: const Text('ภาษาไทย', style: TextStyle(fontWeight: FontWeight.w500)),
-              trailing: isThai ? const Icon(Icons.check_circle_rounded, color: Color(0xFFD61A22)) : null,
-              onTap: () { ref.read(localeProvider.notifier).state = const Locale('th'); Navigator.pop(ctx); },
+              leading: const Text('🇹🇭',
+                  style: TextStyle(fontSize: 24)),
+              title: const Text('ภาษาไทย',
+                  style: TextStyle(fontWeight: FontWeight.w500)),
+              trailing: isThai
+                  ? const Icon(Icons.check_circle_rounded,
+                      color: Color(0xFFD61A22))
+                  : null,
+              onTap: () {
+                ref.read(localeProvider.notifier).state =
+                    const Locale('th');
+                Navigator.pop(sheetCtx);
+              },
             ),
             const SizedBox(height: 8),
           ],
@@ -659,13 +763,18 @@ class _SettingPage extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(s.logoutTitle, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
-        content: Text(s.logoutConfirm, style: const TextStyle(fontSize: 14)),
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(s.logoutTitle,
+            style: const TextStyle(
+                fontSize: 18, fontWeight: FontWeight.w700)),
+        content: Text(s.logoutConfirm,
+            style: const TextStyle(fontSize: 14)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text(s.cancel, style: const TextStyle(color: Colors.grey)),
+            child: Text(s.cancel,
+                style: const TextStyle(color: Colors.grey)),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -673,13 +782,15 @@ class _SettingPage extends ConsumerWidget {
               await ref.read(apiRepositoryProvider).logout();
               ref.invalidate(authStateProvider);
               ref.invalidate(studentsProvider);
+              ref.invalidate(accessLogsProvider);
               ref.invalidate(selectedStudentProvider);
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFD61A22),
               foregroundColor: Colors.white,
               elevation: 0,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8)),
             ),
             child: Text(s.logout),
           ),
@@ -689,7 +800,7 @@ class _SettingPage extends ConsumerWidget {
   }
 }
 
-// ── Setting tile ──────────────────────────────────────────────────────────────
+// ── Setting tile helper ────────────────────────────────────────────────────────
 
 class _SettingTile extends StatelessWidget {
   final IconData icon;
@@ -722,26 +833,35 @@ class _SettingTile extends StatelessWidget {
         ),
         child: Icon(icon, size: 20, color: iconColor ?? Colors.black87),
       ),
-      title: Text(label,
-          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: labelColor ?? Colors.black87)),
+      title: Text(
+        label,
+        style: TextStyle(
+          fontSize: 15,
+          fontWeight: FontWeight.w600,
+          color: labelColor ?? Colors.black87,
+        ),
+      ),
       subtitle: subtitle != null
-          ? Text(subtitle!, style: const TextStyle(fontSize: 12, color: Colors.black45))
+          ? Text(subtitle!,
+              style: const TextStyle(fontSize: 12, color: Colors.black45))
           : null,
-      trailing: showChevron ? const Icon(Icons.chevron_right_rounded, size: 20, color: Colors.black38) : null,
+      trailing: showChevron
+          ? const Icon(Icons.chevron_right_rounded,
+              size: 20, color: Colors.black38)
+          : null,
       onTap: onTap,
     );
   }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// Dashboard body
+// Dashboard body (unchanged logic, UI redesigned to match images)
 // ═══════════════════════════════════════════════════════════════════════════════
 
 class _DashboardBody extends StatelessWidget {
   final List<Student> students;
   final WidgetRef ref;
   final DateTime? lastRefreshedAt;
-
   const _DashboardBody({
     required this.students,
     required this.ref,
@@ -751,46 +871,65 @@ class _DashboardBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final student = students.first;
-    final s       = ref.watch(stringsProvider);
-    final locale  = ref.watch(localeProvider).languageCode;
+    final s = ref.watch(stringsProvider);
 
-    // ── todayLogsProvider → today count & current status ──────────────────────
-    // Uses /logs?days=2 + client filter → only today's records.
-    final todayAsync = ref.watch(todayLogsProvider(student.id));
-    final todayLogs = todayAsync.valueOrNull ?? [];
-    final latestToday = todayLogs.isNotEmpty ? todayLogs.first : null;
-    final todayCount = todayLogs.length;
-
-    // ── accessLogsProvider → SINGLE most-recent record (Recent Activity) ──────
-    // Returns up to 7 days sorted newest-first; we display only [0].
+    // accessLogsProvider → /logs?days=7 — ordered desc by accessTime.
+    // Recent Activity shows logs.first: the most-recent log across all days.
     final allLogsAsync = ref.watch(accessLogsProvider(student.id));
-    final allLogs = allLogsAsync.valueOrNull ?? [];
-    final latestLog = allLogs.isNotEmpty ? allLogs.first : null;
+    final allLogs      = allLogsAsync.valueOrNull ?? [];
+    final latestLog    = allLogs.isNotEmpty ? allLogs.first : null;
+
+    // todayLogsProvider → /logs/today.  Merge with today-filtered allLogs so
+    // that near-midnight entries (e.g. 00:10) are never missed.
+    final todayAsync = ref.watch(todayLogsProvider(student.id));
+    final todayLogs  = todayAsync.valueOrNull ?? [];
+    final now = DateTime.now();
+    final todayFromAll = allLogs.where((l) =>
+        l.accessTime.year == now.year &&
+        l.accessTime.month == now.month &&
+        l.accessTime.day == now.day).toList();
+    final seenIds = <String>{};
+    final mergedToday = [...todayLogs, ...todayFromAll]
+        .where((l) => seenIds.add(l.id))
+        .toList()
+      ..sort((a, b) => b.accessTime.compareTo(a.accessTime));
+    final latestToday = mergedToday.isNotEmpty ? mergedToday.first : null;
+    final todayCount  = mergedToday.length;
 
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       children: [
-        // ── Profile card ───────────────────────────────────────────────────────
+        // ── Profile card (UI redesigned) ────────────────────────────────────────
         _buildCard(
           child: Row(
             children: [
-              const CircleAvatar(
+              CircleAvatar(
                 radius: 28,
                 backgroundColor: Colors.black87,
-                child: Icon(Icons.person_rounded, color: Colors.white, size: 36),
+                child: const Icon(Icons.person_rounded, color: Colors.white, size: 36),
               ),
               const SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(student.name,
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Color(0xFFA31219))),
+                    Text(
+                      student.name,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFFA31219), // Dark red Name color
+                      ),
+                    ),
                     const SizedBox(height: 4),
-                    Text(student.studentCode,
-                        style: const TextStyle(fontSize: 12, color: Colors.black54)),
-                    const Text('Dorm F1 room 229',
-                        style: TextStyle(fontSize: 12, color: Colors.black54)),
+                    Text(
+                      student.studentCode,
+                      style: const TextStyle(fontSize: 12, color: Colors.black54),
+                    ),
+                    const Text(
+                      'Dorm F1 room 229',
+                      style: TextStyle(fontSize: 12, color: Colors.black54),
+                    ),
                   ],
                 ),
               ),
@@ -799,7 +938,7 @@ class _DashboardBody extends StatelessWidget {
         ),
         const SizedBox(height: 16),
 
-        // ── Current status card (uses today's logs only) ───────────────────────
+        // ── Current status card (UI redesigned) ─────────────────────────────────
         _buildCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -807,8 +946,14 @@ class _DashboardBody extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(s.currentStatus,
-                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Colors.black87)),
+                  Text(
+                    s.currentStatus,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.black87,
+                    ),
+                  ),
                   const Icon(Icons.more_horiz_rounded, color: Colors.black38, size: 20),
                 ],
               ),
@@ -816,28 +961,26 @@ class _DashboardBody extends StatelessWidget {
               if (latestToday != null) ...[
                 Row(
                   children: [
-                    Text('${s.statusLabel} ',
-                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.black54)),
-                    // late = entry after 22:00
                     Text(
-                      _isLateEntry(latestToday) ? s.lateStatus : s.onTime,
+                      s.statusLabel,
+                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.black54),
+                    ),
+                    Text(
+                      latestToday.isLate ? s.lateStatus : s.onTime,
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
-                        color: _isLateEntry(latestToday) ? Colors.orange : Colors.green,
+                        color: latestToday.isLate ? Colors.orange : Colors.green,
                       ),
                     ),
                     const SizedBox(width: 12),
                     Container(height: 30, width: 1, color: Colors.black12),
                     const SizedBox(width: 12),
-                    Flexible(
-                      child: Text(
-                        latestToday.type == AccessType.IN
-                            ? '${s.entry} : ${latestToday.gateName}'
-                            : '${s.exit} : ${latestToday.gateName}',
-                        style: const TextStyle(fontSize: 12, color: Colors.black54),
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                    Text(
+                      latestToday.type == AccessType.IN
+                          ? '${s.entry} : ${latestToday.gateName}'
+                          : '${s.exit} : ${latestToday.gateName}',
+                      style: const TextStyle(fontSize: 12, color: Colors.black54),
                     ),
                   ],
                 ),
@@ -847,25 +990,34 @@ class _DashboardBody extends StatelessWidget {
                   style: const TextStyle(fontSize: 12, color: Colors.black38),
                 ),
               ] else
-                Text(s.noActivityToday,
-                    style: const TextStyle(fontSize: 13, color: Colors.black54)),
+                Text(
+                  s.noActivityToday,
+                  style: const TextStyle(fontSize: 13, color: Colors.black54),
+                ),
             ],
           ),
         ),
         const SizedBox(height: 16),
 
-        // ── Today entry count button ───────────────────────────────────────────
+        // ── Red Action Button ──────────────────────────────────────────────
         Container(
           width: double.infinity,
           height: 50,
           decoration: BoxDecoration(
-            gradient: const LinearGradient(colors: [Color(0xFFD61A22), Color(0xFFA31219)]),
+            gradient: const LinearGradient(
+              colors: [Color(0xFFD61A22), Color(0xFFA31219)], // Matches Image Red gradient
+            ),
             borderRadius: BorderRadius.circular(12),
-            boxShadow: [BoxShadow(color: const Color(0xFFD61A22).withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 4))],
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFFD61A22).withOpacity(0.3),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
+              )
+            ],
           ),
           child: ElevatedButton(
-            onPressed: () =>
-                ref.read(selectedTabProvider.notifier).state = 1,
+            onPressed: () => context.push('/home/logs/${student.id}'),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.transparent,
               shadowColor: Colors.transparent,
@@ -874,129 +1026,136 @@ class _DashboardBody extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(s.today, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white)),
-                Text('$todayCount ${s.entryLabel}', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white)),
+                Text(
+                  s.today,
+                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white),
+                ),
+                Text(
+                  '$todayCount ${s.entry}',
+                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white),
+                ),
               ],
             ),
           ),
         ),
         const SizedBox(height: 24),
 
-        // ── Recent Activity header — LIVE badge + last-updated time ────────────
+        // ── Recent Activity header — LIVE badge + last-updated time ────
         Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Text(s.recentActivity,
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Colors.black87)),
+            Text(
+              s.recentActivity,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+                color: Colors.black87,
+              ),
+            ),
             const SizedBox(width: 8),
-            _LiveBadge(),
+            // ● LIVE pill — shows auto-polling is active
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: Colors.green.shade50,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: Colors.green.shade300, width: 1),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 6,
+                    height: 6,
+                    decoration: const BoxDecoration(
+                      color: Colors.green,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  const Text(
+                    'LIVE',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.green,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
             const Spacer(),
+            // Last-updated timestamp (shown after first poll completes)
             if (lastRefreshedAt != null)
-              Text('${s.updatedAt} ${DateFormat('HH:mm').format(lastRefreshedAt!)}',
-                  style: const TextStyle(fontSize: 11, color: Colors.black38)),
+              Text(
+                '${s.updateLabel} ${DateFormat('HH:mm').format(lastRefreshedAt!)}',
+                style: const TextStyle(fontSize: 11, color: Colors.black38),
+              ),
           ],
         ),
-        // ── ONE tile — absolute latest log from API (any day) ──────────────────
+        // Single tile — the most-recent access log the API has for this student,
+        // regardless of date. API returns records sorted desc by accessTime so
+        // allLogs.first is always the latest event.
         const SizedBox(height: 12),
+
         if (latestLog == null)
           Padding(
             padding: const EdgeInsets.all(20),
-            child: Center(child: Text(s.noRecentActivity, style: const TextStyle(fontSize: 14, color: Colors.black54))),
+            child: Center(
+              child: Text(
+                s.noData,
+                style: const TextStyle(fontSize: 14, color: Colors.black54),
+              ),
+            ),
           )
         else
           _ActivityTile(
             log: latestLog,
-            locale: locale,
-            onTap: () =>
-                ref.read(selectedTabProvider.notifier).state = 1,
+            onTap: () => context.push('/home/logs/${student.id}'),
           ),
       ],
     );
   }
 
-  bool _isLateEntry(AccessLog log) => log.type == AccessType.IN && log.accessTime.hour >= 22;
-
-  Widget _buildCard({required Widget child}) => Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4))],
-        ),
-        child: child,
-      );
+  Widget _buildCard({required Widget child}) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          )
+        ],
+      ),
+      child: child,
+    );
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// Shared widgets
+// Shared widgets (Activity tile, Log list, Filter chip, Empty/Error)
 // ═══════════════════════════════════════════════════════════════════════════════
 
-/// Green ● LIVE badge — indicates background polling is active.
-class _LiveBadge extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-        decoration: BoxDecoration(
-          color: Colors.green.shade50,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.green.shade300, width: 1),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(width: 6, height: 6,
-                decoration: const BoxDecoration(color: Colors.green, shape: BoxShape.circle)),
-            const SizedBox(width: 4),
-            const Text('LIVE',
-                style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.green, letterSpacing: 0.5)),
-          ],
-        ),
-      );
-}
-
-class _ActivityTile extends StatelessWidget {
+class _ActivityTile extends ConsumerWidget {
   final AccessLog log;
   final VoidCallback onTap;
-  final String locale;
-
-  const _ActivityTile({
-    required this.log,
-    required this.onTap,
-    this.locale = 'en',
-  });
-
-  /// วันที่แบบ localize: วันนี้/Today, เมื่อวาน/Yesterday, หรือ วัน/เดือน
-  String _dateLabel(DateTime t) {
-    final now   = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final diff  = today.difference(DateTime(t.year, t.month, t.day)).inDays;
-
-    if (locale == 'th') {
-      if (diff == 0) return 'วันนี้';
-      if (diff == 1) return 'เมื่อวาน';
-      return '${_thDays[t.weekday]}, ${t.day} ${_thMonths[t.month]}';
-    } else {
-      if (diff == 0) return 'Today';
-      if (diff == 1) return 'Yesterday';
-      return DateFormat('EEE, d MMM', 'en').format(t);
-    }
-  }
+  const _ActivityTile({required this.log, required this.onTap});
 
   @override
-  Widget build(BuildContext context) {
-    final isIn        = log.type == AccessType.IN;
-    final timeStr     = DateFormat('HH:mm').format(log.accessTime);
-    final isLateEntry = log.accessTime.hour >= 22 && isIn;
-    final borderColor =
-        isLateEntry ? Colors.orange : (isIn ? Colors.green : Colors.red);
-    final typeLabel   = isIn
-        ? (locale == 'th' ? 'เข้า' : 'Entry')
-        : (locale == 'th' ? 'ออก' : 'Exit');
-    final lateLabel   =
-        isLateEntry ? (locale == 'th' ? ' (สาย)' : ' (Late)') : '';
+  Widget build(BuildContext context, WidgetRef ref) {
+    final s = ref.watch(stringsProvider);
+    final isIn = log.type == AccessType.IN;
+    final timeStr = DateFormat('HH:mm').format(log.accessTime);
+
+    final isLateEntry = log.isLate; // authoritative value from backend
+    final borderColor = isLateEntry ? Colors.orange : (isIn ? Colors.green : Colors.red);
 
     return InkWell(
-      borderRadius: BorderRadius.circular(12),
       onTap: onTap,
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
@@ -1004,100 +1163,91 @@ class _ActivityTile extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: borderColor, width: 1.5),
+          border: Border.all(color: borderColor, width: 1.5), // Colored outline box
           boxShadow: [
             BoxShadow(
-                color: Colors.black.withOpacity(0.02),
-                blurRadius: 4,
-                offset: const Offset(0, 2))
+              color: Colors.black.withOpacity(0.02),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            )
           ],
         ),
         child: Row(
           children: [
-            // ── Type icon ──────────────────────────────────────────
-            CircleAvatar(
-              radius: 22,
-              backgroundColor:
-                  isIn ? Colors.green.shade50 : Colors.red.shade50,
-              child: Icon(
-                isIn ? Icons.login_rounded : Icons.logout_rounded,
-                size: 20,
-                color: isIn ? Colors.green : const Color(0xFFD61A22),
-              ),
-            ),
-            const SizedBox(width: 12),
-            // ── Text info ──────────────────────────────────────────
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Time + type
                   Text(
-                    '$timeStr  $typeLabel$lateLabel',
-                    style: TextStyle(
+                    '$timeStr ${isIn ? s.entry : s.exit}${isLateEntry ? " (${s.lateStatus})" : ""}',
+                    style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
-                      color: isIn ? Colors.black87 : const Color(0xFFD61A22),
+                      color: Colors.black87,
                     ),
                   ),
-                  const SizedBox(height: 3),
-                  // Gate name
+                  const SizedBox(height: 4),
                   Text(
                     log.gateName,
-                    style: const TextStyle(
-                        fontSize: 12, color: Colors.black54),
-                  ),
-                  const SizedBox(height: 3),
-                  // ── Date label (localized) ──────────────────────
-                  Row(
-                    children: [
-                      const Icon(Icons.calendar_today_rounded,
-                          size: 10, color: Colors.black38),
-                      const SizedBox(width: 4),
-                      Text(
-                        _dateLabel(log.accessTime),
-                        style: const TextStyle(
-                            fontSize: 11, color: Colors.black38),
-                      ),
-                    ],
+                    style: const TextStyle(fontSize: 12, color: Colors.black54),
                   ),
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right_rounded,
-                color: Colors.black38, size: 22),
+            const Icon(Icons.chevron_right_rounded, color: Colors.black38, size: 24),
           ],
         ),
       ),
     );
   }
+
 }
 
-// ── History log list ──────────────────────────────────────────────────────────
+// ── History log list (7-day grouped view) ─────────────────────────────────────
 
 class _LogList extends StatelessWidget {
   final List<MapEntry<String, List<AccessLog>>> sections;
   final String noDataLabel;
+
   const _LogList({required this.sections, required this.noDataLabel});
 
   @override
   Widget build(BuildContext context) {
-    if (sections.isEmpty) return const SizedBox.expand();
+    if (sections.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 120,
+              height: 80,
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFF5F5),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: const Icon(Icons.search_rounded,
+                  color: Colors.orangeAccent, size: 40),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              noDataLabel,
+              style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black87),
+            ),
+          ],
+        ),
+      );
+    }
 
     return ListView(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
       children: [
         for (final section in sections) ...[
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
-            child: _DayHeader(
-                label: section.key, count: section.value.length),
-          ),
-          ...section.value.expand((l) => [
-                _HistoryTile(log: l),
-                const Divider(height: 1, indent: 16, endIndent: 16),
-              ]),
+          _DayHeader(label: section.key),
+          ...section.value.map((l) => _HistoryTile(log: l)),
         ],
-        const SizedBox(height: 16),
       ],
     );
   }
@@ -1105,32 +1255,23 @@ class _LogList extends StatelessWidget {
 
 class _DayHeader extends StatelessWidget {
   final String label;
-  final int count;
-  const _DayHeader({required this.label, required this.count});
+  const _DayHeader({required this.label});
 
   @override
   Widget build(BuildContext context) => Padding(
         padding: const EdgeInsets.only(top: 16, bottom: 8),
         child: Row(
           children: [
-            Text(label,
-                style: const TextStyle(
-                    fontSize: 14, color: Colors.black87, fontWeight: FontWeight.w700)),
-            const SizedBox(width: 8),
-            const Expanded(child: Divider(color: Colors.black12)),
-            const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.06),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
-                '$count',
-                style: const TextStyle(
-                    fontSize: 11, color: Colors.black54, fontWeight: FontWeight.w600),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 14,
+                color: Colors.black87,
+                fontWeight: FontWeight.w700,
               ),
             ),
+            const SizedBox(width: 8),
+            const Expanded(child: Divider(color: Colors.black12)),
           ],
         ),
       );
@@ -1142,60 +1283,120 @@ class _HistoryTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final s       = ref.watch(stringsProvider);
-    final isIn    = log.type == AccessType.IN;
-    final timeStr = DateFormat('HH:mm').format(log.accessTime);
+    final s = ref.watch(stringsProvider);
+    final isIn = log.type == AccessType.IN;
+    final timeStr = DateFormat('HH.mm').format(log.accessTime);
 
+    final isLate = log.isLate; // authoritative value from backend
+
+    final bottomBorderColor = isIn ? Colors.green : const Color(0xFFD61A22);
+
+    // ── Fix: Flutter forbids mixing non-uniform Border with borderRadius
+    // in the same BoxDecoration — it throws a paint error and renders a
+    // blank white card.  Solution: outer Container owns borderRadius +
+    // shadow; ClipRRect enforces the rounded shape; inner Container holds
+    // the non-uniform border without any borderRadius (valid Flutter). ──
     return Container(
-      color: Colors.white,
-      child: ListTile(
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-        leading: CircleAvatar(
-          radius: 20,
-          backgroundColor: isIn
-              ? Colors.green.shade50
-              : Colors.red.shade50,
-          child: Icon(
-            isIn ? Icons.login_rounded : Icons.logout_rounded,
-            size: 18,
-            color: isIn ? Colors.green : const Color(0xFFD61A22),
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12), // rounded corners live here
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
           ),
-        ),
-        title: Text(
-          '$timeStr  ${isIn ? s.entry : s.exit}',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w700,
-            color: isIn ? Colors.black87 : const Color(0xFFD61A22),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12), // clip child to same radius
+        child: Container(
+          decoration: BoxDecoration(
+            // Non-uniform Border is valid here because there is NO borderRadius
+            border: Border(
+              bottom: BorderSide(color: bottomBorderColor, width: 3),
+              top: const BorderSide(color: Colors.black12, width: 0.5),
+              left: const BorderSide(color: Colors.black12, width: 0.5),
+              right: const BorderSide(color: Colors.black12, width: 0.5),
+            ),
           ),
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(log.gateName,
-                style: const TextStyle(
-                    fontSize: 12, color: Colors.black54)),
-            if (isIn)
-              const Text('Face Scan ✓',
-                  style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.green)),
-          ],
-        ),
-        trailing: const CircleAvatar(
-          radius: 14,
-          backgroundColor: Color(0xFFF0F0F0),
-          child: Icon(Icons.person_outline_rounded,
-              size: 15, color: Colors.black45),
+          child: ListTile(
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            title: Text(
+              '$timeStr ${isIn ? s.entry : s.exit}',
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w800,
+                color: Colors.black87,
+              ),
+            ),
+            subtitle: Padding(
+              padding: const EdgeInsets.only(top: 4.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min, // prevent unbounded expansion
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    log.gateName,
+                    style:
+                        const TextStyle(fontSize: 12, color: Colors.black54),
+                  ),
+                  if (isIn) ...[
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Face Scan ✓',
+                      style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.green),
+                    ),
+                    const SizedBox(height: 4),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 7, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: isLate
+                            ? Colors.orange.shade50
+                            : Colors.green.shade50,
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(
+                          // uniform border → borderRadius is safe here
+                          color: isLate
+                              ? Colors.orange.shade300
+                              : Colors.green.shade300,
+                          width: 0.8,
+                        ),
+                      ),
+                      child: Text(
+                        isLate ? s.lateStatus : s.onTime,
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: isLate
+                              ? Colors.orange.shade700
+                              : Colors.green.shade700,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            trailing: const CircleAvatar(
+              radius: 18,
+              backgroundColor: Colors.black87,
+              child: Icon(Icons.person_rounded, size: 24, color: Colors.white),
+            ),
+          ),
         ),
       ),
     );
   }
 }
 
-// ── Filter chip ───────────────────────────────────────────────────────────────
+// ── Filter chip ────────────────────────────────────────────────────────────────
 
 class _FilterChip extends StatelessWidget {
   final String label;
@@ -1217,283 +1418,49 @@ class _FilterChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          gradient: isActive ? const LinearGradient(colors: [Color(0xFFD61A22), Color(0xFFA31219)]) : null,
+          // Match red gradient active state or clean outline state
+          gradient: isActive
+              ? const LinearGradient(
+                  colors: [Color(0xFFD61A22), Color(0xFFA31219)],
+                )
+              : null,
           color: isActive ? null : Colors.white,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: isActive ? Colors.transparent : Colors.black12, width: 1),
+          border: Border.all(
+            color: isActive ? Colors.transparent : Colors.black12,
+            width: 1,
+          ),
           boxShadow: isActive
-              ? [BoxShadow(color: const Color(0xFFD61A22).withOpacity(0.3), blurRadius: 6, offset: const Offset(0, 2))]
+              ? [
+                  BoxShadow(
+                    color: const Color(0xFFD61A22).withOpacity(0.3),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  )
+                ]
               : null,
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(label,
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600,
-                    color: isActive ? Colors.white : Colors.black87)),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: isActive ? Colors.white : Colors.black87,
+              ),
+            ),
             if (hasArrow) ...[
               const SizedBox(width: 4),
-              Icon(Icons.keyboard_arrow_down_rounded, size: 16, color: isActive ? Colors.white : Colors.black87),
+              Icon(
+                Icons.keyboard_arrow_down_rounded,
+                size: 16,
+                color: isActive ? Colors.white : Colors.black87,
+              ),
             ],
           ],
         ),
-      ),
-    );
-  }
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// Account Page — shows parent profile (name, phone, email) from /me/profile
-// ═══════════════════════════════════════════════════════════════════════════════
-
-class _AccountPage extends ConsumerWidget {
-  const _AccountPage();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final s            = ref.watch(stringsProvider);
-    final profileAsync = ref.watch(profileProvider);
-
-    return Scaffold(
-      backgroundColor: const Color(0xFFFDFBF7),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded,
-              color: Colors.black87, size: 20),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text(s.account,
-            style: const TextStyle(
-                color: Colors.black87,
-                fontSize: 18,
-                fontWeight: FontWeight.w700)),
-        centerTitle: false,
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: Container(
-              height: 1,
-              color: Colors.black.withOpacity(0.06)),
-        ),
-      ),
-      body: profileAsync.when(
-        loading: () => const Center(
-            child: CircularProgressIndicator(color: MfuTheme.primary)),
-        error: (e, _) => Center(
-          child: Padding(
-            padding: const EdgeInsets.all(32),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.error_outline_rounded,
-                    size: 52, color: Color(0xFFD61A22)),
-                const SizedBox(height: 12),
-                Text(s.failedToLoad,
-                    style: const TextStyle(color: Colors.black54)),
-                const SizedBox(height: 12),
-                TextButton.icon(
-                  onPressed: () => ref.invalidate(profileProvider),
-                  icon: const Icon(Icons.refresh_rounded),
-                  label: Text(s.retry),
-                  style: TextButton.styleFrom(
-                      foregroundColor: const Color(0xFFD61A22)),
-                ),
-              ],
-            ),
-          ),
-        ),
-        data: (profile) => _AccountBody(profile: profile, s: s),
-      ),
-    );
-  }
-}
-
-// ── Account body ─────────────────────────────────────────────────────────────
-
-class _AccountBody extends StatelessWidget {
-  final ParentProfile profile;
-  final AppStrings s;
-  const _AccountBody({required this.profile, required this.s});
-
-  /// Returns up to 2 initials from the full name (first + last word).
-  String _initials(String name) {
-    final parts = name.trim().split(RegExp(r'\s+'));
-    if (parts.length == 1) return parts[0][0].toUpperCase();
-    return '${parts.first[0]}${parts.last[0]}'.toUpperCase();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-      children: [
-        // ── Avatar + name header ─────────────────────────────────────────────
-        Center(
-          child: Column(
-            children: [
-              Container(
-                width: 88,
-                height: 88,
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Color(0xFFD61A22), Color(0xFFA31219)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  shape: BoxShape.circle,
-                ),
-                child: Center(
-                  child: Text(
-                    _initials(profile.name),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 32,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 1,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                profile.name,
-                style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.black87),
-              ),
-              const SizedBox(height: 6),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFD61A22).withOpacity(0.08),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Text(
-                  'ผู้ปกครอง · Parent',
-                  style: TextStyle(
-                      fontSize: 11,
-                      color: Color(0xFFD61A22),
-                      fontWeight: FontWeight.w600),
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 28),
-
-        // ── Info section label ───────────────────────────────────────────────
-        Padding(
-          padding: const EdgeInsets.only(left: 4, bottom: 10),
-          child: Text(
-            s.accountInfo,
-            style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: Colors.black54),
-          ),
-        ),
-
-        // ── Info card ────────────────────────────────────────────────────────
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                  color: Colors.black.withOpacity(0.04),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4))
-            ],
-          ),
-          child: Column(
-            children: [
-              _ProfileRow(
-                icon: Icons.person_rounded,
-                label: s.name,
-                value: profile.name,
-              ),
-              const Divider(
-                  height: 1,
-                  indent: 52,
-                  endIndent: 16,
-                  color: Color(0xFFF0F0F0)),
-              _ProfileRow(
-                icon: Icons.phone_rounded,
-                label: s.phone,
-                value: profile.phone,
-              ),
-              const Divider(
-                  height: 1,
-                  indent: 52,
-                  endIndent: 16,
-                  color: Color(0xFFF0F0F0)),
-              _ProfileRow(
-                icon: Icons.email_rounded,
-                label: s.email,
-                value: profile.email,
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 24),
-      ],
-    );
-  }
-}
-
-// ── Profile info row ──────────────────────────────────────────────────────────
-
-class _ProfileRow extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-
-  const _ProfileRow({
-    required this.icon,
-    required this.label,
-    required this.value,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      child: Row(
-        children: [
-          // Icon badge
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: const Color(0xFFD61A22).withOpacity(0.08),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, size: 20, color: const Color(0xFFD61A22)),
-          ),
-          const SizedBox(width: 14),
-          // Label + value
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(label,
-                    style: const TextStyle(
-                        fontSize: 11,
-                        color: Colors.black45,
-                        fontWeight: FontWeight.w500)),
-                const SizedBox(height: 3),
-                Text(value,
-                    style: const TextStyle(
-                        fontSize: 15,
-                        color: Colors.black87,
-                        fontWeight: FontWeight.w600)),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -1515,19 +1482,26 @@ class _EmptyView extends ConsumerWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.person_search_rounded, size: 64, color: Colors.grey.shade300),
+            Icon(Icons.person_search_rounded,
+                size: 64, color: Colors.grey.shade300),
             const SizedBox(height: 16),
             Text(s.noStudentLinked,
-                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.black54)),
+                style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black54)),
             const SizedBox(height: 8),
             Text(s.noStudentLinkedSub,
-                style: const TextStyle(color: Colors.black38, fontSize: 12), textAlign: TextAlign.center),
+                style: const TextStyle(
+                    color: Colors.black38, fontSize: 12),
+                textAlign: TextAlign.center),
             const SizedBox(height: 20),
             TextButton.icon(
               onPressed: () => ref.invalidate(studentsProvider),
               icon: const Icon(Icons.refresh_rounded, size: 18),
               label: Text(s.retry),
-              style: TextButton.styleFrom(foregroundColor: const Color(0xFFD61A22)),
+              style: TextButton.styleFrom(
+                  foregroundColor: const Color(0xFFD61A22)),
             ),
           ],
         ),
@@ -1550,14 +1524,18 @@ class _ErrorView extends StatelessWidget {
             children: [
               const Icon(Icons.error_outline_rounded, size: 52, color: Color(0xFFD61A22)),
               const SizedBox(height: 12),
-              Text(message, textAlign: TextAlign.center, style: const TextStyle(color: Colors.black54)),
+              Text(
+                message,
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Colors.black54),
+              ),
               const SizedBox(height: 16),
               TextButton.icon(
                 onPressed: onRetry,
                 icon: const Icon(Icons.refresh_rounded),
                 label: const Text('Retry'),
                 style: TextButton.styleFrom(foregroundColor: const Color(0xFFD61A22)),
-              ),
+              )
             ],
           ),
         ),
