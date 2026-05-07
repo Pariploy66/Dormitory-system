@@ -130,11 +130,7 @@ export class AccessLogsService {
       select: { id: true, accessTime: true, type: true, gateName: true },
     });
 
-<<<<<<< HEAD
-    // Attach computed status to each record
-=======
     // Attach computed curfew status to every record.
->>>>>>> f47adf29 (แก้บัค)
     return logs.map((log) => ({
       ...log,
       status: this.computeStatus(log.accessTime, log.type),
@@ -142,17 +138,6 @@ export class AccessLogsService {
   }
 
   /**
-<<<<<<< HEAD
-   * Compute whether an IN entry is "late" or "ontime" based on Thai local time.
-   *
-   * Curfew window: 22:30 → 05:59 (crosses midnight).
-   *   Late  = minutes-since-Thai-midnight ∈ [1350, 1440) ∪ [0, 360)
-   *   OnTime = everything else (and all OUT entries)
-   *
-   * accessTime is stored as UTC in the database.
-   * Thai time = UTC + 7 h, so we add 7 × 60 minutes before computing
-   * minutes-since-midnight, then wrap modulo 1440 (24 × 60).
-=======
    * Determine whether an IN entry falls inside the curfew window.
    *
    * Curfew: 22:30 → 05:59 Thai time (ICT, UTC+7) — crosses midnight.
@@ -167,7 +152,6 @@ export class AccessLogsService {
    * before computing minutes-since-midnight and wrap modulo 1440.
    *
    * OUT entries are always "ontime" — curfew applies only to entries (IN).
->>>>>>> f47adf29 (แก้บัค)
    */
   private computeStatus(
     accessTime: Date,
@@ -175,28 +159,14 @@ export class AccessLogsService {
   ): 'late' | 'ontime' {
     if (type !== 'IN') return 'ontime';
 
-<<<<<<< HEAD
-    // Convert UTC stored time → Thai local minutes-since-midnight
-    const utcMinutes = accessTime.getUTCHours() * 60 + accessTime.getUTCMinutes();
-    const thaiMinutes = (utcMinutes + 7 * 60) % (24 * 60); // wrap at midnight
+    const utcMin  = accessTime.getUTCHours() * 60 + accessTime.getUTCMinutes();
+    const thaiMin = (utcMin + 7 * 60) % (24 * 60); // shift +7 h, wrap at midnight
 
     const CURFEW_START = 22 * 60 + 30; // 22:30 = 1350 min
-    const CURFEW_END   =  6 * 60;      // 06:00 = 360 min
+    const CURFEW_END   =  6 * 60;      // 06:00 =  360 min
 
-    // The window [22:30, 06:00) wraps midnight, so we use OR not AND
-    return thaiMinutes >= CURFEW_START || thaiMinutes < CURFEW_END
-      ? 'late'
-      : 'ontime';
-=======
-    const utcMin   = accessTime.getUTCHours() * 60 + accessTime.getUTCMinutes();
-    const thaiMin  = (utcMin + 7 * 60) % (24 * 60); // shift +7 h, wrap at midnight
-
-    const CURFEW_START = 22 * 60 + 30; // 22:30 = 1350
-    const CURFEW_END   =  6 * 60;      // 06:00 =  360
-
-    // Window wraps midnight → OR, not AND
+    // The window [22:30, 06:00) wraps midnight → OR, not AND
     return thaiMin >= CURFEW_START || thaiMin < CURFEW_END ? 'late' : 'ontime';
->>>>>>> f47adf29 (แก้บัค)
   }
 
   /**

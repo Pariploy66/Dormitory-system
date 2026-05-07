@@ -45,15 +45,9 @@ class AccessLog {
   final AccessType type;
   final String gateName;
 
-<<<<<<< HEAD
-  /// Authoritative status computed by the backend.
-  /// "late"   → IN entry between 22:30 and 05:59 Thai time.
-  /// "ontime" → all other IN entries and all OUT entries.
-=======
   /// Authoritative curfew status computed by the backend.
   /// "late"   → IN entry at 22:30–05:59 Thai time.
   /// "ontime" → everything else (all OUT entries are always "ontime").
->>>>>>> f47adf29 (แก้บัค)
   final String status;
 
   const AccessLog({
@@ -64,11 +58,7 @@ class AccessLog {
     required this.status,
   });
 
-<<<<<<< HEAD
-  /// True when the backend flagged this entry as a curfew violation.
-=======
-  /// Convenience getter — true when the backend flagged this as curfew violation.
->>>>>>> f47adf29 (แก้บัค)
+  /// Convenience getter — true when the backend flagged this as a curfew violation.
   bool get isLate => status == 'late';
 
   factory AccessLog.fromJson(Map<String, dynamic> json) => AccessLog(
@@ -76,11 +66,7 @@ class AccessLog {
         accessTime: DateTime.parse(json['accessTime'] as String).toLocal(),
         type: json['type'] == 'IN' ? AccessType.IN : AccessType.OUT,
         gateName: json['gateName'] as String,
-<<<<<<< HEAD
-        // Older API versions may not return status — default to ontime.
-=======
         // Older API versions won't send status — default to ontime.
->>>>>>> f47adf29 (แก้บัค)
         status: json['status'] as String? ?? 'ontime',
       );
 }

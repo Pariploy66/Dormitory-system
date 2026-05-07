@@ -676,7 +676,23 @@ class _SettingPage extends ConsumerWidget {
               ),
               child: Column(
                 children: [
-                  // Language tile — replaces Change Password
+                  // Account tile
+                  _SettingTile(
+                    icon: Icons.person_outline_rounded,
+                    label: s.account,
+                    subtitle: s.accountInfo,
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => const AccountScreen()),
+                    ),
+                  ),
+                  const Divider(
+                      height: 1,
+                      indent: 50,
+                      endIndent: 20,
+                      color: Colors.black12),
+                  // Language tile
                   _SettingTile(
                     icon: Icons.language_rounded,
                     label: s.language,
@@ -795,6 +811,176 @@ class _SettingPage extends ConsumerWidget {
             child: Text(s.logout),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ── Account Screen (full page) ────────────────────────────────────────────────
+
+class AccountScreen extends ConsumerWidget {
+  const AccountScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final s            = ref.watch(stringsProvider);
+    final profileAsync = ref.watch(profileProvider);
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFF5F5F5),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFFD61A22),
+        foregroundColor: Colors.white,
+        elevation: 0,
+        title: Text(s.account,
+            style: const TextStyle(
+                fontSize: 18, fontWeight: FontWeight.w700)),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
+      body: profileAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.error_outline_rounded,
+                  size: 48, color: Colors.black26),
+              const SizedBox(height: 12),
+              Text('$e',
+                  style: const TextStyle(
+                      color: Colors.black54, fontSize: 13),
+                  textAlign: TextAlign.center),
+            ],
+          ),
+        ),
+        data: (profile) => ListView(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+          children: [
+            // ── Avatar + name hero ──────────────────────────────────
+            Center(
+              child: Column(
+                children: [
+                  CircleAvatar(
+                    radius: 42,
+                    backgroundColor: const Color(0xFFD61A22),
+                    child: Text(
+                      profile.name.isNotEmpty
+                          ? profile.name[0].toUpperCase()
+                          : '?',
+                      style: const TextStyle(
+                          fontSize: 36,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  Text(
+                    profile.name,
+                    style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.black87),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    s.accountInfo,
+                    style: const TextStyle(
+                        fontSize: 13, color: Colors.black45),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 28),
+
+            // ── Info card ───────────────────────────────────────────
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.04),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  )
+                ],
+              ),
+              child: Column(
+                children: [
+                  _InfoRow(
+                    icon: Icons.person_outline_rounded,
+                    label: s.name,
+                    value: profile.name,
+                    isFirst: true,
+                  ),
+                  const Divider(
+                      height: 1, indent: 56, color: Colors.black12),
+                  _InfoRow(
+                    icon: Icons.phone_outlined,
+                    label: s.phone,
+                    value: profile.phone,
+                  ),
+                  const Divider(
+                      height: 1, indent: 56, color: Colors.black12),
+                  _InfoRow(
+                    icon: Icons.email_outlined,
+                    label: s.email,
+                    value: profile.email,
+                    isLast: true,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _InfoRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+  final bool isFirst;
+  final bool isLast;
+
+  const _InfoRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+    this.isFirst = false,
+    this.isLast = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      contentPadding:
+          const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+      leading: Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          color: const Color(0xFFD61A22).withOpacity(0.08),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Icon(icon, size: 18, color: const Color(0xFFD61A22)),
+      ),
+      title: Text(
+        label,
+        style: const TextStyle(fontSize: 11, color: Colors.black45),
+      ),
+      subtitle: Text(
+        value,
+        style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Colors.black87),
       ),
     );
   }
@@ -1118,25 +1304,6 @@ class _DashboardBody extends StatelessWidget {
     );
   }
 
-<<<<<<< HEAD
-  Widget _buildCard({required Widget child}) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          )
-        ],
-      ),
-      child: child,
-    );
-  }
-=======
   // Delegates to the authoritative backend value — no local time math needed.
   bool _isLateEntry(AccessLog log) => log.isLate;
 
@@ -1149,7 +1316,6 @@ class _DashboardBody extends StatelessWidget {
         ),
         child: child,
       );
->>>>>>> f47adf29 (แก้บัค)
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -1162,7 +1328,6 @@ class _ActivityTile extends ConsumerWidget {
   const _ActivityTile({required this.log, required this.onTap});
 
   @override
-<<<<<<< HEAD
   Widget build(BuildContext context, WidgetRef ref) {
     final s = ref.watch(stringsProvider);
     final isIn = log.type == AccessType.IN;
@@ -1170,19 +1335,6 @@ class _ActivityTile extends ConsumerWidget {
 
     final isLateEntry = log.isLate; // authoritative value from backend
     final borderColor = isLateEntry ? Colors.orange : (isIn ? Colors.green : Colors.red);
-=======
-  Widget build(BuildContext context) {
-    final isIn        = log.type == AccessType.IN;
-    final timeStr     = DateFormat('HH:mm').format(log.accessTime);
-    final isLateEntry = log.isLate; // authoritative value from backend
-    final borderColor =
-        isLateEntry ? Colors.orange : (isIn ? Colors.green : Colors.red);
-    final typeLabel   = isIn
-        ? (locale == 'th' ? 'เข้า' : 'Entry')
-        : (locale == 'th' ? 'ออก' : 'Exit');
-    final lateLabel   =
-        isLateEntry ? (locale == 'th' ? ' (สาย)' : ' (Late)') : '';
->>>>>>> f47adf29 (แก้บัค)
 
     return InkWell(
       onTap: onTap,
@@ -1312,18 +1464,10 @@ class _HistoryTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-<<<<<<< HEAD
-    final s = ref.watch(stringsProvider);
-    final isIn = log.type == AccessType.IN;
-    final timeStr = DateFormat('HH.mm').format(log.accessTime);
-=======
     final s       = ref.watch(stringsProvider);
     final isIn    = log.type == AccessType.IN;
     final isLate  = log.isLate; // authoritative value from backend
     final timeStr = DateFormat('HH:mm').format(log.accessTime);
->>>>>>> f47adf29 (แก้บัค)
-
-    final isLate = log.isLate; // authoritative value from backend
 
     final bottomBorderColor = isIn ? Colors.green : const Color(0xFFD61A22);
 
@@ -1333,7 +1477,6 @@ class _HistoryTile extends ConsumerWidget {
     // shadow; ClipRRect enforces the rounded shape; inner Container holds
     // the non-uniform border without any borderRadius (valid Flutter). ──
     return Container(
-<<<<<<< HEAD
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -1343,23 +1486,6 @@ class _HistoryTile extends ConsumerWidget {
             color: Colors.black.withOpacity(0.04),
             blurRadius: 6,
             offset: const Offset(0, 2),
-=======
-      color: Colors.white,
-      child: ListTile(
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-        leading: CircleAvatar(
-          radius: 20,
-          backgroundColor: isIn
-              ? (isLate ? Colors.orange.shade50 : Colors.green.shade50)
-              : Colors.red.shade50,
-          child: Icon(
-            isIn ? Icons.login_rounded : Icons.logout_rounded,
-            size: 18,
-            color: isIn
-                ? (isLate ? Colors.orange : Colors.green)
-                : const Color(0xFFD61A22),
->>>>>>> f47adf29 (แก้บัค)
           ),
         ],
       ),
@@ -1444,63 +1570,6 @@ class _HistoryTile extends ConsumerWidget {
               child: Icon(Icons.person_rounded, size: 24, color: Colors.white),
             ),
           ),
-<<<<<<< HEAD
-=======
-        ),
-        subtitle: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(log.gateName,
-                style: const TextStyle(fontSize: 12, color: Colors.black54)),
-            if (isIn) ...[
-              const SizedBox(height: 3),
-              Row(
-                children: [
-                  const Text('Face Scan ✓',
-                      style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.green)),
-                  const SizedBox(width: 8),
-                  // ── Late / On-time badge ──────────────────────────
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 7, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: isLate
-                          ? Colors.orange.shade50
-                          : Colors.green.shade50,
-                      borderRadius: BorderRadius.circular(4),
-                      border: Border.all(
-                        color: isLate
-                            ? Colors.orange.shade300
-                            : Colors.green.shade300,
-                        width: 0.8,
-                      ),
-                    ),
-                    child: Text(
-                      isLate ? s.lateStatus : s.onTime,
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        color: isLate
-                            ? Colors.orange.shade700
-                            : Colors.green.shade700,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ],
-        ),
-        trailing: const CircleAvatar(
-          radius: 14,
-          backgroundColor: Color(0xFFF0F0F0),
-          child: Icon(Icons.person_outline_rounded,
-              size: 15, color: Colors.black45),
->>>>>>> f47adf29 (แก้บัค)
         ),
       ),
     );
