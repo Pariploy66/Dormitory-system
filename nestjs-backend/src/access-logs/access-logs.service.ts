@@ -188,7 +188,7 @@ export class AccessLogsService {
       where: { parentId },
       include: {
         student: {
-          select: { id: true, name: true, studentCode: true },
+          select: { id: true, name: true, studentCode: true, dormitory: true, roomNumber: true },
         },
       },
     });

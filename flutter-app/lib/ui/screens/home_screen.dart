@@ -1112,10 +1112,11 @@ class _DashboardBody extends StatelessWidget {
                       student.studentCode,
                       style: const TextStyle(fontSize: 12, color: Colors.black54),
                     ),
-                    const Text(
-                      'Dorm F1 room 229',
-                      style: TextStyle(fontSize: 12, color: Colors.black54),
-                    ),
+                    if (student.locationLabel.isNotEmpty)
+                      Text(
+                        student.locationLabel,
+                        style: const TextStyle(fontSize: 12, color: Colors.black54),
+                      ),
                   ],
                 ),
               ),
