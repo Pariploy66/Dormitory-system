@@ -2,17 +2,29 @@ class Student {
   final String id;
   final String name;
   final String studentCode;
+  final String? dormitory;
+  final String? roomNumber;
 
   const Student({
     required this.id,
     required this.name,
     required this.studentCode,
+    this.dormitory,
+    this.roomNumber,
   });
+
+  String get locationLabel {
+    if (dormitory == null && roomNumber == null) return '';
+    if (dormitory != null && roomNumber != null) return 'Dorm $dormitory room $roomNumber';
+    return dormitory ?? 'Room $roomNumber';
+  }
 
   factory Student.fromJson(Map<String, dynamic> json) => Student(
         id: json['id'] as String,
         name: json['name'] as String,
         studentCode: json['studentCode'] as String,
+        dormitory: json['dormitory'] as String?,
+        roomNumber: json['roomNumber'] as String?,
       );
 }
 
