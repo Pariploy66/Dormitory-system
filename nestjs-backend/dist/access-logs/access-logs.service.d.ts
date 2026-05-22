@@ -24,21 +24,23 @@ export declare class AccessLogsService {
     getLogsForStudent(parentId: string, studentId: string, days?: number): Promise<{
         status: "late" | "ontime";
         id: string;
-        accessTime: Date;
         type: import(".prisma/client").$Enums.AccessType;
         gateName: string;
+        accessTime: Date;
     }[]>;
     private computeStatus;
     getMyProfile(parentId: string): Promise<{
         id: string;
-        createdAt: Date;
         name: string;
         phone: string;
         email: string;
+        createdAt: Date;
     }>;
     getMyStudents(parentId: string): Promise<{
         id: string;
-        studentCode: string;
         name: string;
+        studentCode: string;
+        dormitory: string;
+        roomNumber: string;
     }[]>;
 }

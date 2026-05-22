@@ -33,6 +33,21 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], UpsertStudentDto.prototype, "name", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], UpsertStudentDto.prototype, "dormitory", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], UpsertStudentDto.prototype, "roomNumber", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], UpsertStudentDto.prototype, "room_number", void 0);
 class LinkStudentDto {
 }
 exports.LinkStudentDto = LinkStudentDto;
@@ -49,10 +64,22 @@ let StudentsService = class StudentsService {
         this.prisma = prisma;
     }
     async upsertStudent(dto) {
+        const room = dto.roomNumber ?? dto.room_number;
         return this.prisma.student.upsert({
             where: { externalStudentId: dto.externalStudentId },
-            create: dto,
-            update: { name: dto.name, studentCode: dto.studentCode },
+            create: {
+                externalStudentId: dto.externalStudentId,
+                studentCode: dto.studentCode,
+                name: dto.name,
+                dormitory: dto.dormitory,
+                roomNumber: room,
+            },
+            update: {
+                name: dto.name,
+                studentCode: dto.studentCode,
+                dormitory: dto.dormitory,
+                roomNumber: room,
+            },
         });
     }
     async linkStudentToParent(dto) {

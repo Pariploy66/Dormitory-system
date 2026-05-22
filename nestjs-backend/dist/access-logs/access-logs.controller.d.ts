@@ -21,22 +21,24 @@ export declare class AccessLogsController {
     }>;
     myProfile(req: any): Promise<{
         id: string;
-        createdAt: Date;
         name: string;
         phone: string;
         email: string;
+        createdAt: Date;
     }>;
     myStudents(req: any): Promise<{
         id: string;
-        studentCode: string;
         name: string;
+        studentCode: string;
+        dormitory: string;
+        roomNumber: string;
     }[]>;
     logs(req: any, studentId: string, days?: string): Promise<{
         status: "late" | "ontime";
         id: string;
-        accessTime: Date;
         type: import(".prisma/client").$Enums.AccessType;
         gateName: string;
+        accessTime: Date;
     }[]>;
 }
 export {};

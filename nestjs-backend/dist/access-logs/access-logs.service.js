@@ -72,13 +72,11 @@ let AccessLogsService = class AccessLogsService {
     computeStatus(accessTime, type) {
         if (type !== 'IN')
             return 'ontime';
-        const utcMinutes = accessTime.getUTCHours() * 60 + accessTime.getUTCMinutes();
-        const thaiMinutes = (utcMinutes + 7 * 60) % (24 * 60);
+        const utcMin = accessTime.getUTCHours() * 60 + accessTime.getUTCMinutes();
+        const thaiMin = (utcMin + 7 * 60) % (24 * 60);
         const CURFEW_START = 22 * 60 + 30;
         const CURFEW_END = 6 * 60;
-        return thaiMinutes >= CURFEW_START || thaiMinutes < CURFEW_END
-            ? 'late'
-            : 'ontime';
+        return thaiMin >= CURFEW_START || thaiMin < CURFEW_END ? 'late' : 'ontime';
     }
     async getMyProfile(parentId) {
         const parent = await this.prisma.parent.findUnique({
@@ -94,7 +92,7 @@ let AccessLogsService = class AccessLogsService {
             where: { parentId },
             include: {
                 student: {
-                    select: { id: true, name: true, studentCode: true },
+                    select: { id: true, name: true, studentCode: true, dormitory: true, roomNumber: true },
                 },
             },
         });
