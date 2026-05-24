@@ -20,8 +20,6 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
-  int _currentIndex = 0;
-
   // Pages are kept alive in IndexedStack — state is preserved when switching tabs
   late final List<Widget> _pages = [
     const _DashboardPage(),
@@ -32,11 +30,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final s = ref.watch(stringsProvider);
+    final currentIndex = ref.watch(selectedTabProvider);
     return Scaffold(
       backgroundColor: MfuTheme.bgPage,
       // ── IndexedStack preserves each page's scroll/state ──────
       body: IndexedStack(
-        index: _currentIndex,
+        index: currentIndex,
         children: _pages,
       ),
       // ── Bottom Navigation Bar (UI Redesign: Gradient & Icons) ─
@@ -57,8 +56,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ),
         child: SafeArea(
           child: BottomNavigationBar(
-            currentIndex: _currentIndex,
-            onTap: (index) => setState(() => _currentIndex = index),
+            currentIndex: currentIndex,
+            onTap: (index) => ref.read(selectedTabProvider.notifier).state = index,
             selectedItemColor: Colors.white,
             unselectedItemColor: Colors.white54,
             backgroundColor: Colors.transparent,
@@ -1079,8 +1078,9 @@ class _DashboardBody extends StatelessWidget {
         .where((l) => seenIds.add(l.id))
         .toList()
       ..sort((a, b) => b.accessTime.compareTo(a.accessTime));
-    final latestToday = mergedToday.isNotEmpty ? mergedToday.first : null;
-    final todayCount  = mergedToday.length;
+    final latestToday   = mergedToday.isNotEmpty ? mergedToday.first : null;
+    final todayInCount  = mergedToday.where((l) => l.type == AccessType.IN).length;
+    final todayOutCount = mergedToday.where((l) => l.type == AccessType.OUT).length;
 
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -1186,13 +1186,13 @@ class _DashboardBody extends StatelessWidget {
         ),
         const SizedBox(height: 16),
 
-        // ── Red Action Button ──────────────────────────────────────────────
+        // ── Today summary box (non-tappable, red gradient) ────────────────
         Container(
           width: double.infinity,
-          height: 50,
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
           decoration: BoxDecoration(
             gradient: const LinearGradient(
-              colors: [Color(0xFFD61A22), Color(0xFFA31219)], // Matches Image Red gradient
+              colors: [Color(0xFFD61A22), Color(0xFFA31219)],
             ),
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
@@ -1200,29 +1200,52 @@ class _DashboardBody extends StatelessWidget {
                 color: const Color(0xFFD61A22).withOpacity(0.3),
                 blurRadius: 8,
                 offset: const Offset(0, 4),
-              )
+              ),
             ],
           ),
-          child: ElevatedButton(
-            onPressed: () => context.push('/home/logs/${student.id}'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.transparent,
-              shadowColor: Colors.transparent,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  s.today,
-                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white),
+          child: Row(
+            children: [
+              Text(
+                s.today,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
                 ),
-                Text(
-                  '$todayCount ${s.entry}',
-                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white),
-                ),
-              ],
-            ),
+              ),
+              const Spacer(),
+              // Entry count
+              Row(
+                children: [
+                  const Icon(Icons.login_rounded, size: 16, color: Colors.white70),
+                  const SizedBox(width: 4),
+                  Text(
+                    '$todayInCount ${s.entry}',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(width: 16),
+              // Exit count
+              Row(
+                children: [
+                  const Icon(Icons.logout_rounded, size: 16, color: Colors.white70),
+                  const SizedBox(width: 4),
+                  Text(
+                    '$todayOutCount ${s.exit}',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
         const SizedBox(height: 24),
@@ -1299,7 +1322,7 @@ class _DashboardBody extends StatelessWidget {
         else
           _ActivityTile(
             log: latestLog,
-            onTap: () => context.push('/home/logs/${student.id}'),
+            onTap: () => ref.read(selectedTabProvider.notifier).state = 1,
           ),
       ],
     );
