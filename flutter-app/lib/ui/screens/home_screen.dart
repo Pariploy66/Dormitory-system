@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../core/l10n.dart';
 import '../../data/api_repository.dart';
@@ -263,17 +262,9 @@ class _HistoryPage extends ConsumerStatefulWidget {
 }
 
 class _HistoryPageState extends ConsumerState<_HistoryPage> {
-  String _searchQuery = '';
   String _filterType = 'All Status';
   int _daysBack = 1; // default: Today only — user can tap chip to widen range
-  final _searchCtrl = TextEditingController();
   DateTime? _lastRefreshedAt;
-
-  @override
-  void dispose() {
-    _searchCtrl.dispose();
-    super.dispose();
-  }
 
   String _periodLabel(AppStrings s) {
     if (_daysBack == 1) return s.today;
@@ -376,13 +367,10 @@ class _HistoryPageState extends ConsumerState<_HistoryPage> {
 
     final filtered = allLogs.where((l) {
       final inRange = isTodayView || !l.accessTime.isBefore(cutoff);
-      final matchQ = _searchQuery.isEmpty ||
-          l.gateName.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          DateFormat('HH:mm').format(l.accessTime).contains(_searchQuery);
       final matchT = _filterType == 'All Status' ||
           (_filterType == 'Entry' && l.type == AccessType.IN) ||
           (_filterType == 'Exit' && l.type == AccessType.OUT);
-      return inRange && matchQ && matchT;
+      return inRange && matchT;
     }).toList();
 
     final locale = ref.watch(localeProvider);
@@ -468,34 +456,6 @@ class _HistoryPageState extends ConsumerState<_HistoryPage> {
                         style: const TextStyle(fontSize: 11, color: Colors.black38),
                       ),
                   ],
-                ),
-                const SizedBox(height: 16),
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(24),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      )
-                    ],
-                  ),
-                  child: TextField(
-                    controller: _searchCtrl,
-                    onChanged: (v) => setState(() => _searchQuery = v),
-                    decoration: InputDecoration(
-                      hintText: s.searchHint,
-                      hintStyle:
-                          const TextStyle(color: Colors.black38, fontSize: 14),
-                      prefixIcon: const Icon(Icons.search_rounded,
-                          color: Colors.black38, size: 20),
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 14),
-                    ),
-                  ),
                 ),
                 const SizedBox(height: 16),
                 Row(
@@ -1328,9 +1288,6 @@ class _DashboardBody extends StatelessWidget {
     );
   }
 
-  // Delegates to the authoritative backend value — no local time math needed.
-  bool _isLateEntry(AccessLog log) => log.isLate;
-
   Widget _buildCard({required Widget child}) => Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
@@ -1713,6 +1670,7 @@ class _EmptyView extends ConsumerWidget {
     );
   }
 }
+
 
 class _ErrorView extends StatelessWidget {
   const _ErrorView({required this.message, required this.onRetry});

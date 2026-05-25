@@ -19,15 +19,16 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   } else {
     await Firebase.initializeApp();
   }
-  print("Handling a background message: ${message.messageId}");
+  debugPrint('FCM background message: ${message.messageId}');
 }
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // 2. ตั้งค่า Locale
+  // 2. ตั้งค่า Locale — init both so DateFormat('EEE, d MMM', 'th'/'en') both work
   await initializeDateFormatting('th', null);
-  Intl.defaultLocale = 'th';
+  await initializeDateFormatting('en', null);
+  Intl.defaultLocale = 'en'; // default English; UI locale drives DateFormat explicitly
   timeago.setLocaleMessages('th', timeago.ThMessages());
 
   // 3. Initialize Firebase

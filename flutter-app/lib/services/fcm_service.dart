@@ -76,10 +76,10 @@ class FcmService {
       ),
     );
 
-    // ลงทะเบียน Background Handler
-    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+    // Background handler is already registered in main.dart — do NOT register
+    // again here; calling onBackgroundMessage() twice overwrites the first and
+    // causes duplicate notification behaviour on some Android versions.
 
-    // 3. แก้ไขจุดนี้: เรียกใช้ _showNotification แทนชื่อเดิมที่หาไม่เจอ
     FirebaseMessaging.onMessage.listen((message) {
       _showNotification(_localNotifications, message);
     });

@@ -7,7 +7,7 @@ class Settings(BaseSettings):
     external_api_base_url: str
     external_api_key: str
 
-    nestjs_base_url: str = "http://172.25.30.115:3000"
+    nestjs_base_url: str = "http://172.25.38.244:3000"
     internal_api_key: str
 
     poll_interval_seconds: int = 30

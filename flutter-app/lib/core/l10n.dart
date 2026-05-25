@@ -49,6 +49,10 @@ class AppStrings {
   final String noRecentActivity;
   // Today count button
   final String entryLabel;
+  // Error messages
+  final String networkError;
+  final String serverError;
+  final String validationError;
 
   const AppStrings({
     required this.loginTitle,
@@ -98,6 +102,9 @@ class AppStrings {
     required this.updatedAt,
     required this.noRecentActivity,
     required this.entryLabel,
+    required this.networkError,
+    required this.serverError,
+    required this.validationError,
   });
 
   static const en = AppStrings(
@@ -124,7 +131,7 @@ class AppStrings {
     allStatus: 'All Status',
     today: 'Today',
     yesterday: 'Yesterday',
-    searchHint: 'Search by gate / time',
+    searchHint: 'Search by gate or date (e.g. 23 May)',
     noData: 'No data found',
     retry: 'Retry',
     failedToLoad: 'Failed to load data',
@@ -148,6 +155,9 @@ class AppStrings {
     updatedAt: 'Updated',
     noRecentActivity: 'No recent activity',
     entryLabel: 'entry',
+    networkError: 'Cannot connect to server. Please check your connection.',
+    serverError: 'Server error. Please try again.',
+    validationError: 'Please check your information and try again.',
   );
 
   static const th = AppStrings(
@@ -174,7 +184,7 @@ class AppStrings {
     allStatus: 'ทุกสถานะ',
     today: 'วันนี้',
     yesterday: 'เมื่อวาน',
-    searchHint: 'ค้นหาด้วยชื่อประตู / เวลา',
+    searchHint: 'ค้นหาชื่อประตู หรือวันที่ (เช่น 23 พ.ค.)',
     noData: 'ไม่พบข้อมูล',
     retry: 'ลองใหม่',
     failedToLoad: 'โหลดข้อมูลไม่สำเร็จ',
@@ -198,5 +208,8 @@ class AppStrings {
     updatedAt: 'อัปเดตเมื่อ',
     noRecentActivity: 'ยังไม่มีกิจกรรมล่าสุด',
     entryLabel: 'ครั้ง',
+    networkError: 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้ กรุณาตรวจสอบการเชื่อมต่อ',
+    serverError: 'เกิดข้อผิดพลาดที่เซิร์ฟเวอร์ กรุณาลองใหม่',
+    validationError: 'กรุณาตรวจสอบข้อมูลที่กรอก',
   );
 }
