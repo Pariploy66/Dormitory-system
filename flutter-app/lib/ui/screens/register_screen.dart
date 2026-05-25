@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -38,9 +39,26 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           );
       // Redirect to login — do NOT auto-login to avoid stale-state bugs
       if (mounted) context.go('/login');
+    } on DioException catch (e) {
+      final s = ref.read(stringsProvider);
+      final isNetworkError = e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout ||
+          e.type == DioExceptionType.sendTimeout ||
+          e.type == DioExceptionType.connectionError ||
+          e.type == DioExceptionType.unknown;
+      final status = e.response?.statusCode;
+      setState(() {
+        _error = isNetworkError
+            ? s.networkError
+            : status == 409
+                ? s.alreadyRegistered   // email / phone duplicate
+                : status == 400
+                    ? s.validationError // DTO validation failed (e.g. phone format)
+                    : s.serverError;
+      });
     } catch (_) {
       final s = ref.read(stringsProvider);
-      setState(() => _error = s.alreadyRegistered);
+      setState(() => _error = s.serverError);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -87,14 +105,22 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     TextInputType.name),
                 const SizedBox(height: 14),
                 _field(_phoneCtrl, s.phone, Icons.phone_outlined,
-                    TextInputType.phone),
+                    TextInputType.phone,
+                    customValidator: (v) {
+                      if (v == null || v.trim().isEmpty) return s.phone;
+                      final digits = v.trim().replaceAll(RegExp(r'\D'), '');
+                      if (digits.length != 10 || !digits.startsWith('0')) {
+                        return 'กรอกเบอร์โทรศัพท์ไทย 10 หลัก (เช่น 0812345678)';
+                      }
+                      return null;
+                    }),
                 const SizedBox(height: 14),
                 _field(_emailCtrl, s.email, Icons.email_outlined,
                     TextInputType.emailAddress),
                 const SizedBox(height: 14),
                 _field(_passCtrl, s.passwordHint,
                     Icons.lock_outline_rounded, TextInputType.visiblePassword,
-                    obscure: true),
+                    obscure: true, minLength: 8, customError: s.passwordHint),
                 if (_error != null) ...[
                   const SizedBox(height: 10),
                   Text(_error!,
@@ -145,6 +171,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     IconData icon,
     TextInputType type, {
     bool obscure = false,
+    int minLength = 2,
+    String? customError,
+    String? Function(String?)? customValidator,
   }) {
     return TextFormField(
       controller: ctrl,
@@ -155,7 +184,12 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         hintText: hint,
         prefixIcon: Icon(icon, size: 18, color: MfuTheme.textHint),
       ),
-      validator: (v) => v != null && v.length >= 2 ? null : 'Please enter $hint',
+      validator: customValidator ??
+          (v) {
+            if (v == null || v.trim().isEmpty) return customError ?? hint;
+            if (v.trim().length < minLength) return customError ?? hint;
+            return null;
+          },
     );
   }
 }

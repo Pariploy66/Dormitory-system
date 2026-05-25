@@ -16,17 +16,9 @@ class LogsScreen extends ConsumerStatefulWidget {
 }
 
 class _LogsScreenState extends ConsumerState<LogsScreen> {
-  String _searchQuery = '';
   String _filterType  = 'All Status';
   int _daysBack       = 1; // default: Today only — user can tap chip to widen range
-  final _searchCtrl   = TextEditingController();
   DateTime? _lastRefreshedAt;
-
-  @override
-  void dispose() {
-    _searchCtrl.dispose();
-    super.dispose();
-  }
 
   String _periodLabel(AppStrings s) {
     if (_daysBack == 1) return s.today;
@@ -128,13 +120,10 @@ class _LogsScreenState extends ConsumerState<LogsScreen> {
 
     final filtered = allLogs.where((l) {
       final inRange = isTodayView || !l.accessTime.isBefore(cutoff);
-      final matchQ = _searchQuery.isEmpty ||
-          l.gateName.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          DateFormat('HH:mm').format(l.accessTime).contains(_searchQuery);
       final matchT = _filterType == 'All Status' ||
           (_filterType == 'Entry' && l.type == AccessType.IN) ||
           (_filterType == 'Exit' && l.type == AccessType.OUT);
-      return inRange && matchQ && matchT;
+      return inRange && matchT;
     }).toList();
 
     final sections = _buildLogSections(filtered, now, s, daysBack: _daysBack);
@@ -235,18 +224,6 @@ class _LogsScreenState extends ConsumerState<LogsScreen> {
                       ),
                     ],
                   ],
-                ),
-                const SizedBox(height: 10),
-                TextField(
-                  controller: _searchCtrl,
-                  onChanged: (v) => setState(() => _searchQuery = v),
-                  decoration: InputDecoration(
-                    hintText: s.searchHint,
-                    prefixIcon: const Icon(Icons.search_rounded,
-                        color: MfuTheme.textHint, size: 18),
-                    contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 8),
-                  ),
                 ),
                 const SizedBox(height: 10),
                 Row(children: [

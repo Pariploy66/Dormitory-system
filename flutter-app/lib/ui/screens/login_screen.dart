@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -34,17 +35,30 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           .login(_emailCtrl.text.trim(), _passCtrl.text);
 
       // Clear all cached provider state so the new session starts fresh.
-      // This prevents a previously logged-in parent's student data from
-      // appearing briefly when a different parent logs in.
       ref.invalidate(authStateProvider);
       ref.invalidate(studentsProvider);
       ref.invalidate(accessLogsProvider);
       ref.invalidate(selectedStudentProvider);
 
       if (mounted) context.go('/home');
+    } on DioException catch (e) {
+      final s = ref.read(stringsProvider);
+      final isNetworkError = e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout ||
+          e.type == DioExceptionType.sendTimeout ||
+          e.type == DioExceptionType.connectionError ||
+          e.type == DioExceptionType.unknown;
+      setState(() {
+        _error = isNetworkError
+            ? s.networkError
+            : (e.response?.statusCode == 401 ||
+                    e.response?.statusCode == 400)
+                ? s.wrongCredentials
+                : s.serverError;
+      });
     } catch (_) {
       final s = ref.read(stringsProvider);
-      setState(() => _error = s.wrongCredentials);
+      setState(() => _error = s.serverError);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -186,9 +200,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             prefixIcon: const Icon(Icons.email_outlined,
                                 size: 18, color: MfuTheme.textHint),
                           ),
-                          validator: (v) => v != null && v.contains('@')
-                              ? null
-                              : s.email,
+                          validator: (v) {
+                            if (v == null || v.trim().isEmpty) return s.email;
+                            final hasAt = v.contains('@');
+                            final hasDot = v.contains('.');
+                            return hasAt && hasDot ? null : s.email;
+                          },
                         ),
                         const SizedBox(height: 12),
                         TextFormField(

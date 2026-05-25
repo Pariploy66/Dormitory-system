@@ -21,14 +21,14 @@ class ApiRepository {
       'email': email,
       'password': password,
     });
-    await _storage.write(
-      key: AppConstants.jwtStorageKey,
-      value: resp.data['accessToken'] as String,
-    );
-    await _storage.write(
-      key: AppConstants.parentIdStorageKey,
-      value: resp.data['parentId'] as String,
-    );
+    final data = resp.data as Map<String, dynamic>? ?? {};
+    final accessToken = data['accessToken'] as String?;
+    final parentId    = data['parentId']    as String?;
+    if (accessToken == null || parentId == null) {
+      throw Exception('Invalid server response: missing token fields');
+    }
+    await _storage.write(key: AppConstants.jwtStorageKey,     value: accessToken);
+    await _storage.write(key: AppConstants.parentIdStorageKey, value: parentId);
   }
 
   /// Creates the account but does NOT store the JWT.

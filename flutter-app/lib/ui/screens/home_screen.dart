@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../core/l10n.dart';
 import '../../data/api_repository.dart';
@@ -20,8 +19,6 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
-  int _currentIndex = 0;
-
   // Pages are kept alive in IndexedStack — state is preserved when switching tabs
   late final List<Widget> _pages = [
     const _DashboardPage(),
@@ -32,11 +29,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final s = ref.watch(stringsProvider);
+    final currentIndex = ref.watch(selectedTabProvider);
     return Scaffold(
       backgroundColor: MfuTheme.bgPage,
       // ── IndexedStack preserves each page's scroll/state ──────
       body: IndexedStack(
-        index: _currentIndex,
+        index: currentIndex,
         children: _pages,
       ),
       // ── Bottom Navigation Bar (UI Redesign: Gradient & Icons) ─
@@ -57,8 +55,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ),
         child: SafeArea(
           child: BottomNavigationBar(
-            currentIndex: _currentIndex,
-            onTap: (index) => setState(() => _currentIndex = index),
+            currentIndex: currentIndex,
+            onTap: (index) => ref.read(selectedTabProvider.notifier).state = index,
             selectedItemColor: Colors.white,
             unselectedItemColor: Colors.white54,
             backgroundColor: Colors.transparent,
@@ -264,17 +262,9 @@ class _HistoryPage extends ConsumerStatefulWidget {
 }
 
 class _HistoryPageState extends ConsumerState<_HistoryPage> {
-  String _searchQuery = '';
   String _filterType = 'All Status';
   int _daysBack = 1; // default: Today only — user can tap chip to widen range
-  final _searchCtrl = TextEditingController();
   DateTime? _lastRefreshedAt;
-
-  @override
-  void dispose() {
-    _searchCtrl.dispose();
-    super.dispose();
-  }
 
   String _periodLabel(AppStrings s) {
     if (_daysBack == 1) return s.today;
@@ -377,13 +367,10 @@ class _HistoryPageState extends ConsumerState<_HistoryPage> {
 
     final filtered = allLogs.where((l) {
       final inRange = isTodayView || !l.accessTime.isBefore(cutoff);
-      final matchQ = _searchQuery.isEmpty ||
-          l.gateName.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          DateFormat('HH:mm').format(l.accessTime).contains(_searchQuery);
       final matchT = _filterType == 'All Status' ||
           (_filterType == 'Entry' && l.type == AccessType.IN) ||
           (_filterType == 'Exit' && l.type == AccessType.OUT);
-      return inRange && matchQ && matchT;
+      return inRange && matchT;
     }).toList();
 
     final locale = ref.watch(localeProvider);
@@ -469,34 +456,6 @@ class _HistoryPageState extends ConsumerState<_HistoryPage> {
                         style: const TextStyle(fontSize: 11, color: Colors.black38),
                       ),
                   ],
-                ),
-                const SizedBox(height: 16),
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(24),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      )
-                    ],
-                  ),
-                  child: TextField(
-                    controller: _searchCtrl,
-                    onChanged: (v) => setState(() => _searchQuery = v),
-                    decoration: InputDecoration(
-                      hintText: s.searchHint,
-                      hintStyle:
-                          const TextStyle(color: Colors.black38, fontSize: 14),
-                      prefixIcon: const Icon(Icons.search_rounded,
-                          color: Colors.black38, size: 20),
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 14),
-                    ),
-                  ),
                 ),
                 const SizedBox(height: 16),
                 Row(
@@ -1079,8 +1038,9 @@ class _DashboardBody extends StatelessWidget {
         .where((l) => seenIds.add(l.id))
         .toList()
       ..sort((a, b) => b.accessTime.compareTo(a.accessTime));
-    final latestToday = mergedToday.isNotEmpty ? mergedToday.first : null;
-    final todayCount  = mergedToday.length;
+    final latestToday   = mergedToday.isNotEmpty ? mergedToday.first : null;
+    final todayInCount  = mergedToday.where((l) => l.type == AccessType.IN).length;
+    final todayOutCount = mergedToday.where((l) => l.type == AccessType.OUT).length;
 
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -1186,13 +1146,13 @@ class _DashboardBody extends StatelessWidget {
         ),
         const SizedBox(height: 16),
 
-        // ── Red Action Button ──────────────────────────────────────────────
+        // ── Today summary box (non-tappable, red gradient) ────────────────
         Container(
           width: double.infinity,
-          height: 50,
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
           decoration: BoxDecoration(
             gradient: const LinearGradient(
-              colors: [Color(0xFFD61A22), Color(0xFFA31219)], // Matches Image Red gradient
+              colors: [Color(0xFFD61A22), Color(0xFFA31219)],
             ),
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
@@ -1200,29 +1160,52 @@ class _DashboardBody extends StatelessWidget {
                 color: const Color(0xFFD61A22).withOpacity(0.3),
                 blurRadius: 8,
                 offset: const Offset(0, 4),
-              )
+              ),
             ],
           ),
-          child: ElevatedButton(
-            onPressed: () => context.push('/home/logs/${student.id}'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.transparent,
-              shadowColor: Colors.transparent,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  s.today,
-                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white),
+          child: Row(
+            children: [
+              Text(
+                s.today,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
                 ),
-                Text(
-                  '$todayCount ${s.entry}',
-                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white),
-                ),
-              ],
-            ),
+              ),
+              const Spacer(),
+              // Entry count
+              Row(
+                children: [
+                  const Icon(Icons.login_rounded, size: 16, color: Colors.white70),
+                  const SizedBox(width: 4),
+                  Text(
+                    '$todayInCount ${s.entry}',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(width: 16),
+              // Exit count
+              Row(
+                children: [
+                  const Icon(Icons.logout_rounded, size: 16, color: Colors.white70),
+                  const SizedBox(width: 4),
+                  Text(
+                    '$todayOutCount ${s.exit}',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
         const SizedBox(height: 24),
@@ -1299,14 +1282,11 @@ class _DashboardBody extends StatelessWidget {
         else
           _ActivityTile(
             log: latestLog,
-            onTap: () => context.push('/home/logs/${student.id}'),
+            onTap: () => ref.read(selectedTabProvider.notifier).state = 1,
           ),
       ],
     );
   }
-
-  // Delegates to the authoritative backend value — no local time math needed.
-  bool _isLateEntry(AccessLog log) => log.isLate;
 
   Widget _buildCard({required Widget child}) => Container(
         padding: const EdgeInsets.all(16),
@@ -1690,6 +1670,7 @@ class _EmptyView extends ConsumerWidget {
     );
   }
 }
+
 
 class _ErrorView extends StatelessWidget {
   const _ErrorView({required this.message, required this.onRetry});
