@@ -26,13 +26,20 @@ void main() async {
   Intl.defaultLocale = 'en';
   timeago.setLocaleMessages('th', timeago.ThMessages());
 
-  // Firebase
-  if (kIsWeb) {
-    await Firebase.initializeApp(options: firebaseOptions);
-  } else {
-    await Firebase.initializeApp();
+  // Firebase — gracefully degrade if SHA-1/APNs not registered or project misconfigured
+  // Android: reads android/app/google-services.json
+  // iOS:     reads ios/Runner/GoogleService-Info.plist
+  // Web:     uses DefaultFirebaseOptions.web (fill in after Firebase Console setup)
+  try {
+    if (kIsWeb) {
+      await Firebase.initializeApp(options: DefaultFirebaseOptions.web);
+    } else {
+      await Firebase.initializeApp();
+    }
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+  } catch (e) {
+    debugPrint('[FCM] Firebase init failed — push notifications disabled: $e');
   }
-  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
   // Service locator — sets up ApiClient, TokenStorage, Repositories
   await setupServiceLocator();

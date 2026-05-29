@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../core/di/service_locator.dart';
+import '../core/di/service_locator.dart' show apiService, socketService;
 import '../core/theme/mfu_theme.dart';
 import '../features/auth/bloc/auth_bloc.dart';
 import '../features/dorm/bloc/dorm_bloc.dart';
@@ -24,9 +24,9 @@ class _StudentAccessAppState extends State<StudentAccessApp> {
   @override
   void initState() {
     super.initState();
-    _authBloc = AuthBloc(authRepository)
+    _authBloc = AuthBloc(apiService)
       ..add(const AuthCheckRequested());
-    _dormBloc = DormBloc(dormRepository, authRepository);
+    _dormBloc = DormBloc(apiService, socketService);
     _localeBloc = LocaleBloc();
   }
 

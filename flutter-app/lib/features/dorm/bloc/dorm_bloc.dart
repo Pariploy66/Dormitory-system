@@ -1,40 +1,59 @@
+import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
-import '../data/dorm_repository.dart';
 import '../domain/student_model.dart';
 import '../domain/access_log_model.dart';
-import '../../auth/data/auth_repository.dart';
 import '../../auth/domain/parent_model.dart';
+import '../../../services/api_service.dart';
+import '../../../services/socket_service.dart';
 
 part 'dorm_event.dart';
 part 'dorm_state.dart';
 
 /// Manages all dorm data: students, logs, history filters, profile.
-/// Company pattern: features/dorm/bloc/dorm_bloc.dart
-/// Auto-polling (30s) is driven by the Dashboard screen via Timer.periodic
-/// dispatching DormRefreshDashboard — keeping the BLoC stateless.
+/// Auto-polling (30s) + real-time Socket.IO via [SocketService.logCreatedStream].
 class DormBloc extends Bloc<DormEvent, DormState> {
-  final DormRepository _dormRepo;
-  final AuthRepository _authRepo;
+  final ApiService _api;
+  final SocketService _socket;
+  Timer? _pollTimer;
+  StreamSubscription<String>? _socketSub;
+  static const _pollInterval = Duration(seconds: 30);
 
-  DormBloc(this._dormRepo, this._authRepo) : super(const DormState()) {
+  DormBloc(this._api, this._socket) : super(const DormState()) {
     on<DormRefreshDashboard>(_onRefreshDashboard);
     on<DormRefreshHistory>(_onRefreshHistory);
     on<DormSetFilterDays>(_onSetFilterDays);
     on<DormSetFilterType>(_onSetFilterType);
     on<DormFetchProfile>(_onFetchProfile);
+
+    _socketSub = _socket.logCreatedStream.listen((studentId) {
+      final tracked = state.students.any((s) => s.id == studentId);
+      if (tracked) add(const DormRefreshDashboard());
+    });
+  }
+
+  @override
+  Future<void> close() {
+    _socketSub?.cancel();
+    _pollTimer?.cancel();
+    return super.close();
   }
 
   // ── Dashboard ────────────────────────────────────────────────
 
   Future<void> _onRefreshDashboard(
       DormRefreshDashboard event, Emitter<DormState> emit) async {
-    // Only show loading spinner on first load (students list empty)
+    // Start 30-second auto-poll on first dispatch (lazy, owned by BLoC)
+    _pollTimer ??= Timer.periodic(
+      _pollInterval,
+      (_) => add(const DormRefreshDashboard()),
+    );
+
     if (state.students.isEmpty) {
       emit(state.copyWith(status: DormStatus.loading));
     }
     try {
-      final students = await _dormRepo.getStudents();
+      final students = await _api.getStudents();
       if (students.isEmpty) {
         emit(state.copyWith(
             status: DormStatus.success,
@@ -43,8 +62,8 @@ class DormBloc extends Bloc<DormEvent, DormState> {
         return;
       }
       final id = students.first.id;
-      final logsToday = await _dormRepo.getLogsToday(id);
-      final logs = await _dormRepo.getLogs(id);
+      final logsToday = await _api.getLogsToday(id);
+      final logs = await _api.getLogs(id);
       emit(state.copyWith(
         status: DormStatus.success,
         students: students,
@@ -53,7 +72,6 @@ class DormBloc extends Bloc<DormEvent, DormState> {
         lastUpdated: DateTime.now(),
       ));
     } catch (e) {
-      // On background poll error keep existing data visible
       emit(state.copyWith(
         status:
             state.students.isEmpty ? DormStatus.failure : DormStatus.success,
@@ -70,12 +88,11 @@ class DormBloc extends Bloc<DormEvent, DormState> {
     if (id == null) return;
     try {
       if (state.filterDays == 1) {
-        final logsToday = await _dormRepo.getLogsToday(id);
+        final logsToday = await _api.getLogsToday(id);
         emit(state.copyWith(
             logsToday: logsToday, lastUpdated: DateTime.now()));
       } else {
-        final logs =
-            await _dormRepo.getLogs(id, days: state.filterDays);
+        final logs = await _api.getLogs(id, days: state.filterDays);
         emit(state.copyWith(logs: logs, lastUpdated: DateTime.now()));
       }
     } catch (_) {
@@ -86,7 +103,6 @@ class DormBloc extends Bloc<DormEvent, DormState> {
   Future<void> _onSetFilterDays(
       DormSetFilterDays event, Emitter<DormState> emit) async {
     emit(state.copyWith(filterDays: event.days));
-    // Refresh with new period
     add(const DormRefreshHistory());
   }
 
@@ -99,10 +115,10 @@ class DormBloc extends Bloc<DormEvent, DormState> {
 
   Future<void> _onFetchProfile(
       DormFetchProfile event, Emitter<DormState> emit) async {
-    if (state.profile != null) return; // already loaded
+    if (state.profile != null) return;
     emit(state.copyWith(profileLoading: true));
     try {
-      final profile = await _authRepo.getProfile();
+      final profile = await _api.getProfile();
       emit(state.copyWith(profile: profile, profileLoading: false));
     } catch (e) {
       emit(state.copyWith(

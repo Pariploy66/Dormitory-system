@@ -1,17 +1,21 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:student_access_app/features/auth/data/auth_repository.dart';
 import 'package:student_access_app/features/auth/domain/parent_model.dart';
 import 'package:student_access_app/features/dorm/bloc/dorm_bloc.dart';
-import 'package:student_access_app/features/dorm/data/dorm_repository.dart';
 import 'package:student_access_app/features/dorm/domain/access_log_model.dart';
 import 'package:student_access_app/features/dorm/domain/student_model.dart';
+import 'package:student_access_app/services/api_service.dart';
+import 'package:student_access_app/services/socket_service.dart';
 
 // ── Mocks ─────────────────────────────────────────────────────────────────────
 
-class MockDormRepository extends Mock implements DormRepository {}
-class MockAuthRepository extends Mock implements AuthRepository {}
+class MockApiService extends Mock implements ApiService {}
+
+class MockSocketService extends Mock implements SocketService {
+  @override
+  Stream<String> get logCreatedStream => Stream<String>.empty();
+}
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 
@@ -41,12 +45,12 @@ const _profile = ParentModel(
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 void main() {
-  late MockDormRepository mockDormRepo;
-  late MockAuthRepository mockAuthRepo;
+  late MockApiService mockApi;
+  late MockSocketService mockSocket;
 
   setUp(() {
-    mockDormRepo = MockDormRepository();
-    mockAuthRepo = MockAuthRepository();
+    mockApi = MockApiService();
+    mockSocket = MockSocketService();
   });
 
   group('DormBloc', () {
@@ -56,13 +60,13 @@ void main() {
       blocTest<DormBloc, DormState>(
         'emits [loading, success] with students + logs on first load',
         build: () {
-          when(() => mockDormRepo.getStudents())
+          when(() => mockApi.getStudents())
               .thenAnswer((_) async => [_student]);
-          when(() => mockDormRepo.getLogsToday(any()))
+          when(() => mockApi.getLogsToday(any()))
               .thenAnswer((_) async => [_log]);
-          when(() => mockDormRepo.getLogs(any()))
+          when(() => mockApi.getLogs(any()))
               .thenAnswer((_) async => [_log]);
-          return DormBloc(mockDormRepo, mockAuthRepo);
+          return DormBloc(mockApi, mockSocket);
         },
         act: (bloc) => bloc.add(const DormRefreshDashboard()),
         expect: () => [
@@ -78,9 +82,9 @@ void main() {
       blocTest<DormBloc, DormState>(
         'emits success with empty lists when no students linked',
         build: () {
-          when(() => mockDormRepo.getStudents())
+          when(() => mockApi.getStudents())
               .thenAnswer((_) async => []);
-          return DormBloc(mockDormRepo, mockAuthRepo);
+          return DormBloc(mockApi, mockSocket);
         },
         act: (bloc) => bloc.add(const DormRefreshDashboard()),
         expect: () => [
@@ -93,9 +97,9 @@ void main() {
       blocTest<DormBloc, DormState>(
         'emits failure on network error (no existing students)',
         build: () {
-          when(() => mockDormRepo.getStudents())
+          when(() => mockApi.getStudents())
               .thenThrow(Exception('NETWORK_ERROR'));
-          return DormBloc(mockDormRepo, mockAuthRepo);
+          return DormBloc(mockApi, mockSocket);
         },
         act: (bloc) => bloc.add(const DormRefreshDashboard()),
         expect: () => [
@@ -109,9 +113,9 @@ void main() {
       blocTest<DormBloc, DormState>(
         'keeps existing data visible (success) on background poll error',
         build: () {
-          when(() => mockDormRepo.getStudents())
+          when(() => mockApi.getStudents())
               .thenThrow(Exception('NETWORK_ERROR'));
-          return DormBloc(mockDormRepo, mockAuthRepo);
+          return DormBloc(mockApi, mockSocket);
         },
         seed: () => DormState(
           status: DormStatus.success,
@@ -134,9 +138,9 @@ void main() {
       blocTest<DormBloc, DormState>(
         'updates filterDays and refreshes history',
         build: () {
-          when(() => mockDormRepo.getLogs(any(), days: any(named: 'days')))
+          when(() => mockApi.getLogs(any(), days: any(named: 'days')))
               .thenAnswer((_) async => [_log]);
-          return DormBloc(mockDormRepo, mockAuthRepo);
+          return DormBloc(mockApi, mockSocket);
         },
         seed: () => const DormState(
           status: DormStatus.success,
@@ -152,7 +156,7 @@ void main() {
 
       blocTest<DormBloc, DormState>(
         'filterDays defaults to 1 in initial state',
-        build: () => DormBloc(mockDormRepo, mockAuthRepo),
+        build: () => DormBloc(mockApi, mockSocket),
         act: (_) {},
         verify: (bloc) => expect(bloc.state.filterDays, equals(1)),
       );
@@ -163,7 +167,7 @@ void main() {
     group('DormSetFilterType', () {
       blocTest<DormBloc, DormState>(
         'updates filterType to Entry',
-        build: () => DormBloc(mockDormRepo, mockAuthRepo),
+        build: () => DormBloc(mockApi, mockSocket),
         act: (bloc) => bloc.add(const DormSetFilterType('Entry')),
         expect: () => [
           predicate<DormState>((s) => s.filterType == 'Entry'),
@@ -172,7 +176,7 @@ void main() {
 
       blocTest<DormBloc, DormState>(
         'updates filterType to Exit',
-        build: () => DormBloc(mockDormRepo, mockAuthRepo),
+        build: () => DormBloc(mockApi, mockSocket),
         act: (bloc) => bloc.add(const DormSetFilterType('Exit')),
         expect: () => [
           predicate<DormState>((s) => s.filterType == 'Exit'),
@@ -186,9 +190,9 @@ void main() {
       blocTest<DormBloc, DormState>(
         'emits [profileLoading=true, profile loaded] on success',
         build: () {
-          when(() => mockAuthRepo.getProfile())
+          when(() => mockApi.getProfile())
               .thenAnswer((_) async => _profile);
-          return DormBloc(mockDormRepo, mockAuthRepo);
+          return DormBloc(mockApi, mockSocket);
         },
         act: (bloc) => bloc.add(const DormFetchProfile()),
         expect: () => [
@@ -201,19 +205,19 @@ void main() {
 
       blocTest<DormBloc, DormState>(
         'does not re-fetch if profile already loaded',
-        build: () => DormBloc(mockDormRepo, mockAuthRepo),
+        build: () => DormBloc(mockApi, mockSocket),
         seed: () => const DormState(profile: _profile),
         act: (bloc) => bloc.add(const DormFetchProfile()),
         expect: () => [],
-        verify: (_) => verifyNever(() => mockAuthRepo.getProfile()),
+        verify: (_) => verifyNever(() => mockApi.getProfile()),
       );
 
       blocTest<DormBloc, DormState>(
         'emits error state when profile fetch fails',
         build: () {
-          when(() => mockAuthRepo.getProfile())
+          when(() => mockApi.getProfile())
               .thenThrow(Exception('SERVER_ERROR'));
-          return DormBloc(mockDormRepo, mockAuthRepo);
+          return DormBloc(mockApi, mockSocket);
         },
         act: (bloc) => bloc.add(const DormFetchProfile()),
         expect: () => [

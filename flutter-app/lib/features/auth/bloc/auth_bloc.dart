@@ -1,16 +1,15 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
-import '../data/auth_repository.dart';
+import '../../../services/api_service.dart';
 
 part 'auth_event.dart';
 part 'auth_state.dart';
 
 /// Handles authentication lifecycle: check, login, logout.
-/// Company pattern: features/auth/bloc/auth_bloc.dart
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
-  final AuthRepository _repository;
+  final ApiService _api;
 
-  AuthBloc(this._repository) : super(const AuthState()) {
+  AuthBloc(this._api) : super(const AuthState()) {
     on<AuthCheckRequested>(_onCheck);
     on<AuthLoginRequested>(_onLogin);
     on<AuthLogoutRequested>(_onLogout);
@@ -19,7 +18,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   Future<void> _onCheck(
       AuthCheckRequested event, Emitter<AuthState> emit) async {
     emit(state.copyWith(status: AuthStatus.loading));
-    final loggedIn = await _repository.isLoggedIn();
+    final loggedIn = await _api.isLoggedIn();
     emit(state.copyWith(
         status:
             loggedIn ? AuthStatus.authenticated : AuthStatus.unauthenticated));
@@ -29,7 +28,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       AuthLoginRequested event, Emitter<AuthState> emit) async {
     emit(state.copyWith(status: AuthStatus.loading));
     try {
-      await _repository.login(event.email, event.password);
+      await _api.login(event.email, event.password);
       emit(state.copyWith(status: AuthStatus.authenticated));
     } catch (e) {
       emit(state.copyWith(
@@ -40,7 +39,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
   Future<void> _onLogout(
       AuthLogoutRequested event, Emitter<AuthState> emit) async {
-    await _repository.logout();
+    await _api.logout();
     emit(const AuthState(status: AuthStatus.unauthenticated));
   }
 }

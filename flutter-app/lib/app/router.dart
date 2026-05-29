@@ -2,9 +2,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../features/auth/bloc/auth_bloc.dart';
-import '../features/auth/presentation/login_screen.dart';
-import '../features/auth/presentation/register_screen.dart';
-import '../features/dorm/presentation/home_screen.dart';
+import '../screens/login/login_screen.dart';
+import '../screens/register/register_screen.dart';
+import '../screens/home/home_screen.dart';
 
 /// App router with BLoC-based auth guard.
 /// Company pattern: app/router.dart — go_router with stream-based redirect.

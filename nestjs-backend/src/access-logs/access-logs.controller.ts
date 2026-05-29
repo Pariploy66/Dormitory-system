@@ -12,6 +12,8 @@ import { AuthGuard } from '@nestjs/passport';
 import { IsString, IsIn, IsDateString } from 'class-validator';
 import { AccessLogsService, IngestPayload } from './access-logs.service';
 import { InternalApiKeyGuard } from '../common/internal-api-key.guard';
+import { AuthorizeGuard } from '../common/guards/authorize.guard';
+import { Authorize } from '../common/decorators/authorize.decorator';
 
 class IngestDto implements IngestPayload {
   @IsString() externalStudentId: string;
@@ -20,38 +22,45 @@ class IngestDto implements IngestPayload {
   @IsString() gateName: string;
 }
 
+// ── Pattern: auth guard → @Authorize → service handler (NewSystem standard) ──
 @Controller()
 export class AccessLogsController {
   constructor(private readonly service: AccessLogsService) {}
 
-  // ── Internal endpoint — called only by FastAPI ──────────────
+  // POST /internal/access-logs — internal only (FastAPI)
+  // No JWT — uses X-Internal-API-Key header instead
   @UseGuards(InternalApiKeyGuard)
   @Post('internal/access-logs')
-  ingest(@Body() dto: IngestDto) {
-    return this.service.ingest(dto);
+  onCreate(@Body() dto: IngestDto) {
+    return this.service.onCreate(dto);
   }
 
-  // ── Parent-facing endpoints ──────────────────────────────────
-  @UseGuards(AuthGuard('jwt'))
+  // GET /me/profile — auth → authorize(account, view) → onQuery
+  @UseGuards(AuthGuard('jwt'), AuthorizeGuard)
+  @Authorize('account', 'view')
   @Get('me/profile')
-  myProfile(@Request() req) {
-    return this.service.getMyProfile(req.user.sub);
+  onQuery(@Request() req) {
+    return this.service.onQuery(req.user.sub);
   }
 
-  @UseGuards(AuthGuard('jwt'))
+  // GET /me/students — auth → authorize(students, view) → onQuerys
+  @UseGuards(AuthGuard('jwt'), AuthorizeGuard)
+  @Authorize('students', 'view')
   @Get('me/students')
-  myStudents(@Request() req) {
-    return this.service.getMyStudents(req.user.sub);
+  onQuerys(@Request() req) {
+    return this.service.onQuerys(req.user.sub);
   }
 
-  @UseGuards(AuthGuard('jwt'))
+  // GET /me/students/:studentId/logs — auth → authorize(logs, view) → onQueryLogs
+  @UseGuards(AuthGuard('jwt'), AuthorizeGuard)
+  @Authorize('logs', 'view')
   @Get('me/students/:studentId/logs')
-  logs(
+  onQueryLogs(
     @Request() req,
     @Param('studentId') studentId: string,
     @Query('days') days?: string,
   ) {
-    return this.service.getLogsForStudent(
+    return this.service.onQueryLogs(
       req.user.sub,
       studentId,
       days ? parseInt(days, 10) : 7,

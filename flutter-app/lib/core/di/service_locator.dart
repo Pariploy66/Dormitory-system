@@ -4,13 +4,16 @@ import '../api/api_client.dart';
 import '../auth/token_storage.dart';
 import '../../features/auth/data/auth_repository.dart';
 import '../../features/dorm/data/dorm_repository.dart';
+import '../../services/api_service.dart';
+import '../../services/socket_service.dart';
 
 /// Global service locator — company pattern from mobile-flutter/core/di/service_locator.dart
-/// Replaces Riverpod Provider<Dio> and Provider<ApiRepository>.
 late ApiClient apiClient;
 late TokenStorage tokenStorage;
-late AuthRepository authRepository;
-late DormRepository dormRepository;
+late AuthRepository authRepository;   // kept for RegisterScreen
+late DormRepository dormRepository;   // kept for backward compat
+late ApiService apiService;           // centralized API (NewSystem standard)
+late SocketService socketService;     // real-time Socket.IO (NewSystem pattern)
 
 Future<void> setupServiceLocator() async {
   tokenStorage = const TokenStorage(FlutterSecureStorage());
@@ -28,4 +31,7 @@ Future<void> setupServiceLocator() async {
 
   authRepository = AuthRepository(apiClient, tokenStorage);
   dormRepository = DormRepository(apiClient);
+  apiService = ApiService(apiClient, tokenStorage);
+
+  socketService = SocketService()..connect(baseUrl);
 }

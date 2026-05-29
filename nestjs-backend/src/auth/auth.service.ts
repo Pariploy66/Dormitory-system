@@ -15,7 +15,9 @@ export class AuthService {
     private readonly jwt: JwtService,
   ) {}
 
-  async register(dto: RegisterDto) {
+  // ── NewSystem handler: onCreate (POST /) ────────────────────────────────────
+  /** Register a new parent account and return an access token. */
+  async onCreate(dto: RegisterDto) {
     const exists = await this.prisma.parent.findFirst({
       where: { OR: [{ email: dto.email }, { phone: dto.phone }] },
     });
@@ -35,7 +37,9 @@ export class AuthService {
     return this.signToken(parent.id, parent.email);
   }
 
-  async login(dto: LoginDto) {
+  // ── NewSystem handler: onLogin (POST /login — auth-specific, not CRUD) ─────
+  /** Verify credentials and return an access token. */
+  async onLogin(dto: LoginDto) {
     const parent = await this.prisma.parent.findUnique({
       where: { email: dto.email },
     });
@@ -49,8 +53,9 @@ export class AuthService {
     return this.signToken(parent.id, parent.email);
   }
 
-  /** Register or update FCM token for push notifications */
-  async registerDevice(parentId: string, fcmToken: string) {
+  // ── NewSystem handler: onUpdate (PUT / — upsert FCM token) ─────────────────
+  /** Register or update FCM token for push notifications. */
+  async onUpdate(parentId: string, fcmToken: string) {
     return this.prisma.device.upsert({
       where: { fcmToken },
       create: { parentId, fcmToken },
@@ -58,6 +63,7 @@ export class AuthService {
     });
   }
 
+  // ── Private ────────────────────────────────────────────────────────────────
   private signToken(sub: string, email: string) {
     const payload = { sub, email };
     return {

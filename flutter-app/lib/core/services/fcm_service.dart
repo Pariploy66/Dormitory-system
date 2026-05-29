@@ -2,7 +2,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import '../../firebase_options.dart';
+import '../../firebase_options.dart' show DefaultFirebaseOptions;
 import '../../features/auth/data/auth_repository.dart';
 
 /// Firebase Cloud Messaging service.
@@ -12,17 +12,29 @@ import '../../features/auth/data/auth_repository.dart';
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(
     RemoteMessage message) async {
-  if (kIsWeb) {
-    await Firebase.initializeApp(options: firebaseOptions);
-  } else {
-    await Firebase.initializeApp();
+  try {
+    if (Firebase.apps.isEmpty) {
+      if (kIsWeb) {
+        await Firebase.initializeApp(options: DefaultFirebaseOptions.web);
+      } else {
+        await Firebase.initializeApp();
+      }
+    }
+    final plugin = FlutterLocalNotificationsPlugin();
+    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const iosSettings = DarwinInitializationSettings(
+      requestAlertPermission: false,
+      requestBadgePermission: false,
+      requestSoundPermission: false,
+    );
+    await plugin.initialize(const InitializationSettings(
+      android: androidSettings,
+      iOS: iosSettings,
+    ));
+    _showNotification(plugin, message);
+  } catch (e) {
+    debugPrint('[FCM] Background handler error: $e');
   }
-  final plugin = FlutterLocalNotificationsPlugin();
-  const androidSettings =
-      AndroidInitializationSettings('@mipmap/ic_launcher');
-  await plugin.initialize(
-      const InitializationSettings(android: androidSettings));
-  _showNotification(plugin, message);
 }
 
 void _showNotification(

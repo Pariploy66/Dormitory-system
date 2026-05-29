@@ -1,0 +1,49 @@
+# ───────────────────────────────────────────────────────────────
+# Secrets — NEVER commit
+# ───────────────────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+
+# ───────────────────────────────────────────────────────────────
+# Node / NestJS (nestjs-backend)
+# ───────────────────────────────────────────────────────────────
+node_modules/
+dist/
+build/
+*.tsbuildinfo
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm/
+coverage/
+
+# ───────────────────────────────────────────────────────────────
+# Python / FastAPI (fastapi-integration)
+# ───────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+
+# ───────────────────────────────────────────────────────────────
+# Flutter / Dart (flutter-app has its own .gitignore too)
+# ───────────────────────────────────────────────────────────────
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+**/build/
+*.iml
+
+# ───────────────────────────────────────────────────────────────
+# IDE / Editor / OS
+# ───────────────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
