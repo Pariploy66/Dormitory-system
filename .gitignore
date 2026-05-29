@@ -1,9 +1,11 @@
 # ───────────────────────────────────────────────────────────────
-# Secrets — NEVER commit
+# Env files
+# NOTE: .env is intentionally tracked for this team project so everyone
+# shares the same dev config. Do NOT put production secrets here.
+# (Local-only overrides go in .env.local, which stays ignored.)
 # ───────────────────────────────────────────────────────────────
-.env
-.env.*
-!.env.example
+.env.local
+.env.*.local
 
 # ───────────────────────────────────────────────────────────────
 # Node / NestJS (nestjs-backend)
