@@ -3,9 +3,15 @@ import 'package:flutter/material.dart';
 /// Error state shown when a data fetch fails.
 class ErrorView extends StatelessWidget {
   final String message;
+  final String retryLabel;
   final VoidCallback onRetry;
 
-  const ErrorView({super.key, required this.message, required this.onRetry});
+  const ErrorView({
+    super.key,
+    required this.message,
+    required this.retryLabel,
+    required this.onRetry,
+  });
 
   @override
   Widget build(BuildContext context) => Center(
@@ -24,7 +30,7 @@ class ErrorView extends StatelessWidget {
               TextButton.icon(
                 onPressed: onRetry,
                 icon: const Icon(Icons.refresh_rounded),
-                label: const Text('Retry'),
+                label: Text(retryLabel),
                 style: TextButton.styleFrom(
                     foregroundColor: const Color(0xFFD61A22)),
               ),

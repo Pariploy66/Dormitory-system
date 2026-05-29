@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../bloc/dorm_bloc.dart';
+import '../../../locale/bloc/locale_bloc.dart';
 import '../../../../core/theme/mfu_theme.dart';
 import '../components/mfu_custom_app_bar.dart';
 import '../components/dashboard_body.dart';
@@ -63,8 +64,11 @@ class _DashboardPageState extends State<DashboardPage> {
           }
           if (state.status == DormStatus.failure &&
               state.students.isEmpty) {
+            final s = context.read<LocaleBloc>().state.strings;
             return ErrorView(
-              message: 'Failed to load data\n${state.error ?? ''}',
+              message:
+                  '${s.failedToLoad}\n${state.error ?? ''}',
+              retryLabel: s.retry,
               onRetry: () =>
                   context.read<DormBloc>().add(const DormRefreshDashboard()),
             );

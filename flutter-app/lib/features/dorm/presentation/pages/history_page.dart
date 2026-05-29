@@ -102,6 +102,12 @@ class _HistoryPageState extends State<HistoryPage> {
 
   void _showTypeSheet(
       BuildContext ctx, AppStrings s, String currentType) {
+    final options = [
+      (DormState.filterTypeAll, s.allStatus),
+      (DormState.filterTypeEntry, s.entry),
+      (DormState.filterTypeExit, s.exit),
+    ];
+
     showModalBottomSheet(
       context: ctx,
       shape: const RoundedRectangleBorder(
@@ -109,11 +115,7 @@ class _HistoryPageState extends State<HistoryPage> {
               BorderRadius.vertical(top: Radius.circular(16))),
       builder: (_) => Column(
         mainAxisSize: MainAxisSize.min,
-        children: [
-          ('All Status', s.allStatus),
-          ('Entry', s.entry),
-          ('Exit', s.exit),
-        ]
+        children: options
             .map((pair) => ListTile(
                   title: Text(pair.$2),
                   trailing: currentType == pair.$1
@@ -152,9 +154,9 @@ class _HistoryPageState extends State<HistoryPage> {
         final filtered = sourceLogs.where((l) {
           final inRange =
               isTodayView || !l.accessTime.isBefore(cutoff);
-          final matchT = state.filterType == 'All Status' ||
-              (state.filterType == 'Entry' && l.isEntry) ||
-              (state.filterType == 'Exit' && l.isExit);
+          final matchT = state.filterType == DormState.filterTypeAll ||
+              (state.filterType == DormState.filterTypeEntry && l.isEntry) ||
+              (state.filterType == DormState.filterTypeExit && l.isExit);
           return inRange && matchT;
         }).toList();
 
@@ -227,7 +229,11 @@ class _HistoryPageState extends State<HistoryPage> {
                         ),
                         const SizedBox(width: 10),
                         FilterChipWidget(
-                          label: state.filterType,
+                          label: state.filterType == DormState.filterTypeEntry
+                              ? s.entry
+                              : state.filterType == DormState.filterTypeExit
+                                  ? s.exit
+                                  : s.allStatus,
                           isActive: false,
                           hasArrow: true,
                           onTap: () => _showTypeSheet(

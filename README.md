@@ -136,7 +136,7 @@ cp .env.example .env
 # Edit: JWT_SECRET, INTERNAL_API_KEY, FIREBASE_SERVICE_ACCOUNT_PATH
 
 npm run start:dev
-# Listens on http://172.25.63.87:3000
+# Listens on http://172.25.60.196:3000
 ```
 
 ### Key Environment Variables
@@ -180,7 +180,7 @@ source .venv/bin/activate      # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 
 python main.py
-# Listens on http://172.25.63.87:8000
+# Listens on http://172.25.60.196:8000
 ```
 
 ### Key Environment Variables
@@ -189,7 +189,7 @@ python main.py
 |---|---|
 | `EXTERNAL_API_BASE_URL` | Base URL of the access control system API |
 | `EXTERNAL_API_KEY` | Auth token for the external API |
-| `NESTJS_BASE_URL` | http://172.25.63.87:3000 (or internal Docker hostname) |
+| `NESTJS_BASE_URL` | http://172.25.60.196:3000 (or internal Docker hostname) |
 | `INTERNAL_API_KEY` | Must match NestJS `INTERNAL_API_KEY` |
 | `POLL_INTERVAL_SECONDS` | How often to poll (default: 30) |
 
@@ -225,8 +225,8 @@ cd flutter-app
 flutter pub get
 
 # Run (replace URL for physical device)
-flutter run --dart-define=API_BASE_URL=http://10.0.2.2:3000   # Android emulator
-flutter run --dart-define=API_BASE_URL=http://172.25.63.87:3000   # iOS simulator
+flutter run --dart-define=API_BASE_URL=http://172.25.60.196:3000   # Android emulator
+flutter run --dart-define=API_BASE_URL=http://172.25.60.196:3000   # iOS simulator
 flutter run --dart-define=API_BASE_URL=http://YOUR_LAN_IP:3000 # Physical device
 ```
 

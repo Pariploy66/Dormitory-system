@@ -15,14 +15,14 @@ late DormRepository dormRepository;
 Future<void> setupServiceLocator() async {
   tokenStorage = const TokenStorage(FlutterSecureStorage());
 
-  // Platform-aware base URL: Android emulator uses 10.0.2.2, web uses localhost
+  // Platform-aware base URL: Android emulator uses 172.25.60.196, web uses localhost
   const envUrl =
       String.fromEnvironment('API_BASE_URL', defaultValue: '');
   final baseUrl = envUrl.isNotEmpty
       ? envUrl
       : kIsWeb
           ? 'http://localhost:3000'
-          : 'http://10.0.2.2:3000';
+          : 'http://172.25.60.196:3000';
 
   apiClient = ApiClient(baseUrl: baseUrl);
 

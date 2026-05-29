@@ -108,10 +108,10 @@ class _LoginScreenState extends State<LoginScreen> {
                             const SizedBox(height: 14),
 
                             // University name
-                            const Center(
+                            Center(
                               child: Text(
-                                'Mae Fah Luang University',
-                                style: TextStyle(
+                                s.universityName,
+                                style: const TextStyle(
                                   fontSize: 12,
                                   color: Colors.black54,
                                   letterSpacing: 0.3,
@@ -121,9 +121,9 @@ class _LoginScreenState extends State<LoginScreen> {
                             const SizedBox(height: 6),
 
                             // App title
-                            const Center(
-                              child: const Text(
-                                'MFU Dormitory',
+                            Center(
+                              child: Text(
+                                s.loginTitle,
                                 style: const TextStyle(
                                   fontSize: 28,
                                   fontWeight: FontWeight.w900,
@@ -280,10 +280,10 @@ class _LoginScreenState extends State<LoginScreen> {
                             const SizedBox(height: 20),
 
                             // Mae Fah Luang University footer link
-                            const Center(
+                            Center(
                               child: Text(
-                                'Mae Fah Luang University',
-                                style: TextStyle(
+                                s.universityName,
+                                style: const TextStyle(
                                   fontSize: 11,
                                   color: Colors.black45,
                                 ),

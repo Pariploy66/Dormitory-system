@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../bloc/dorm_bloc.dart';
 import '../../../auth/bloc/auth_bloc.dart';
 import '../../../locale/bloc/locale_bloc.dart';
 import '../../../../core/l10n/strings.dart';
@@ -34,10 +33,10 @@ class SettingPage extends StatelessWidget {
                     fontWeight: FontWeight.w800,
                     color: Colors.black87)),
             const SizedBox(height: 30),
-            const Padding(
-              padding: EdgeInsets.only(bottom: 12),
-              child: Text('Account & Security',
-                  style: TextStyle(
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Text(s.accountSecurity,
+                  style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                       color: Colors.black54)),
@@ -74,7 +73,8 @@ class SettingPage extends StatelessWidget {
                   SettingTile(
                     icon: Icons.language_rounded,
                     label: s.language,
-                    subtitle: isThai ? 'ภาษาไทย' : 'English',
+                    subtitle:
+                        isThai ? s.languageThai : s.languageEnglish,
                     onTap: () => _showLangSheet(context, s, isThai),
                   ),
                   const Divider(
@@ -120,8 +120,8 @@ class SettingPage extends StatelessWidget {
             ListTile(
               leading: const Text('🇺🇸',
                   style: TextStyle(fontSize: 24)),
-              title: const Text('English',
-                  style: TextStyle(fontWeight: FontWeight.w500)),
+              title: Text(s.languageEnglish,
+                  style: const TextStyle(fontWeight: FontWeight.w500)),
               trailing: !isThai
                   ? const Icon(Icons.check_circle_rounded,
                       color: Color(0xFFD61A22))
@@ -136,8 +136,8 @@ class SettingPage extends StatelessWidget {
             ListTile(
               leading:
                   const Text('🇹🇭', style: TextStyle(fontSize: 24)),
-              title: const Text('ภาษาไทย',
-                  style: TextStyle(fontWeight: FontWeight.w500)),
+              title: Text(s.languageThai,
+                  style: const TextStyle(fontWeight: FontWeight.w500)),
               trailing: isThai
                   ? const Icon(Icons.check_circle_rounded,
                       color: Color(0xFFD61A22))
@@ -177,7 +177,6 @@ class SettingPage extends StatelessWidget {
             onPressed: () {
               Navigator.pop(context);
               context.read<AuthBloc>().add(const AuthLogoutRequested());
-              context.read<DormBloc>().close();
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFD61A22),
