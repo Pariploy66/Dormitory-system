@@ -3,6 +3,10 @@ part of 'dorm_bloc.dart';
 enum DormStatus { initial, loading, success, failure }
 
 class DormState extends Equatable {
+  static const String filterTypeAll = 'all_status';
+  static const String filterTypeEntry = 'entry';
+  static const String filterTypeExit = 'exit';
+
   final DormStatus status;
   final List<StudentModel> students;
   final List<AccessLogModel> logsToday; // today's logs (filtered from days=2)
@@ -10,7 +14,7 @@ class DormState extends Equatable {
   final DateTime? lastUpdated;
   final String? error;
   final int filterDays; // History filter: 1 | 3 | 7
-  final String filterType; // History filter: 'All Status' | 'Entry' | 'Exit'
+  final String filterType; // History filter code: all_status | entry | exit
   final ParentModel? profile;
   final bool profileLoading;
 
@@ -22,7 +26,7 @@ class DormState extends Equatable {
     this.lastUpdated,
     this.error,
     this.filterDays = 1,
-    this.filterType = 'All Status',
+    this.filterType = filterTypeAll,
     this.profile,
     this.profileLoading = false,
   });

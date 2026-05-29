@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../features/locale/bloc/locale_bloc.dart';
 
 /// MFU-branded white app bar with logo + subtitle.
 /// Shared across Dashboard, History, and Settings screens.
@@ -11,6 +13,7 @@ class MfuCustomAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = context.watch<LocaleBloc>().state.strings;
     return Container(
       padding: EdgeInsets.only(
         top: MediaQuery.of(context).padding.top + 10,
@@ -43,19 +46,19 @@ class MfuCustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                     size: 40, color: Colors.grey),
           ),
           const SizedBox(width: 12),
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('MFU Dormitory',
-                    style: TextStyle(
+                Text(s.loginTitle,
+                    style: const TextStyle(
                         color: Color(0xFFC00000),
                         fontSize: 22,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 0.2)),
-                Text('Dormitory Management System',
-                    style: TextStyle(
+                Text(s.appDescription,
+                    style: const TextStyle(
                         color: Colors.grey,
                         fontSize: 12,
                         fontWeight: FontWeight.w400)),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../features/dorm/bloc/dorm_bloc.dart';
+import '../../features/locale/bloc/locale_bloc.dart';
 import '../../core/theme/mfu_theme.dart';
 import '../../shared/widgets/mfu_custom_app_bar.dart';
 import '../../shared/widgets/empty_view.dart';
@@ -45,6 +46,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
       body: BlocBuilder<DormBloc, DormState>(
         builder: (context, state) {
+          final s = context.watch<LocaleBloc>().state.strings;
           if (state.status == DormStatus.loading &&
               state.students.isEmpty) {
             return const Center(
@@ -53,7 +55,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
           if (state.status == DormStatus.failure &&
               state.students.isEmpty) {
             return ErrorView(
-              message: 'Failed to load data\n${state.error ?? ''}',
+              message: '${s.failedToLoad}\n${state.error ?? ''}',
+              retryLabel: s.retry,
               onRetry: () =>
                   context.read<DormBloc>().add(const DormRefreshDashboard()),
             );

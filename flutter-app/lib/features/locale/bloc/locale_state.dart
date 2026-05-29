@@ -16,5 +16,5 @@ class LocaleState extends Equatable {
       const LocaleState(locale: Locale('th'), strings: AppStrings.th);
 
   @override
-  List<Object?> get props => [locale];
+  List<Object?> get props => [locale, strings];
 }

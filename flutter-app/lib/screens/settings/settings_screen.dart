@@ -34,10 +34,10 @@ class SettingsScreen extends StatelessWidget {
                     fontWeight: FontWeight.w800,
                     color: Colors.black87)),
             const SizedBox(height: 30),
-            const Padding(
-              padding: EdgeInsets.only(bottom: 12),
-              child: Text('Account & Security',
-                  style: TextStyle(
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Text(s.accountSecurity,
+                  style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                       color: Colors.black54)),
@@ -74,7 +74,8 @@ class SettingsScreen extends StatelessWidget {
                   SettingTile(
                     icon: Icons.language_rounded,
                     label: s.language,
-                    subtitle: isThai ? 'ภาษาไทย' : 'English',
+                    subtitle:
+                        isThai ? s.languageThai : s.languageEnglish,
                     onTap: () => _showLangSheet(context, s, isThai),
                   ),
                   const Divider(
@@ -120,8 +121,8 @@ class SettingsScreen extends StatelessWidget {
             ListTile(
               leading:
                   const Text('🇺🇸', style: TextStyle(fontSize: 24)),
-              title: const Text('English',
-                  style: TextStyle(fontWeight: FontWeight.w500)),
+              title: Text(s.languageEnglish,
+                  style: const TextStyle(fontWeight: FontWeight.w500)),
               trailing: !isThai
                   ? const Icon(Icons.check_circle_rounded,
                       color: Color(0xFFD61A22))
@@ -136,8 +137,8 @@ class SettingsScreen extends StatelessWidget {
             ListTile(
               leading:
                   const Text('🇹🇭', style: TextStyle(fontSize: 24)),
-              title: const Text('ภาษาไทย',
-                  style: TextStyle(fontWeight: FontWeight.w500)),
+              title: Text(s.languageThai,
+                  style: const TextStyle(fontWeight: FontWeight.w500)),
               trailing: isThai
                   ? const Icon(Icons.check_circle_rounded,
                       color: Color(0xFFD61A22))

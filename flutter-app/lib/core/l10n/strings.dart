@@ -52,6 +52,13 @@ class AppStrings {
   final String serverError;
   final String validationError;
   final String loginSubtitle;
+  final String universityName;
+  final String appDescription;
+  final String accountSecurity;
+  final String languageEnglish;
+  final String languageThai;
+  final String faceScanLabel;
+  final String liveLabel;
   final String forParentsOnly;
 
   const AppStrings({
@@ -106,6 +113,13 @@ class AppStrings {
     required this.serverError,
     required this.validationError,
     required this.loginSubtitle,
+    required this.universityName,
+    required this.appDescription,
+    required this.accountSecurity,
+    required this.languageEnglish,
+    required this.languageThai,
+    required this.faceScanLabel,
+    required this.liveLabel,
     required this.forParentsOnly,
   });
 
@@ -165,6 +179,13 @@ class AppStrings {
         'Please check your information and try again.',
     loginSubtitle:
         'Real-time monitoring of your child\'s dorm activity',
+    universityName: 'Mae Fah Luang University',
+    appDescription: 'Dormitory Management System',
+    accountSecurity: 'Account & Security',
+    languageEnglish: 'English',
+    languageThai: 'ภาษาไทย',
+    faceScanLabel: 'Face Scan ✓',
+    liveLabel: 'LIVE',
     forParentsOnly:
         'For parents only · secure access system\n© Mae Fah Luang University',
   );
@@ -223,6 +244,13 @@ class AppStrings {
     serverError: 'เกิดข้อผิดพลาดที่เซิร์ฟเวอร์ กรุณาลองใหม่',
     validationError: 'กรุณาตรวจสอบข้อมูลที่กรอก',
     loginSubtitle: 'ติดตามกิจกรรมหอพักบุตรหลานแบบเรียลไทม์',
+    universityName: 'มหาวิทยาลัยแม่ฟ้าหลวง',
+    appDescription: 'ระบบจัดการหอพัก',
+    accountSecurity: 'บัญชีและความปลอดภัย',
+    languageEnglish: 'English',
+    languageThai: 'ภาษาไทย',
+    faceScanLabel: 'สแกนใบหน้า ✓',
+    liveLabel: 'สด',
     forParentsOnly:
         'สำหรับผู้ปกครองเท่านั้น · ระบบเข้าถึงที่ปลอดภัย\n© มหาวิทยาลัยแม่ฟ้าหลวง',
   );

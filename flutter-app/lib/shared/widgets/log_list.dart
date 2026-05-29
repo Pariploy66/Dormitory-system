@@ -165,8 +165,8 @@ class HistoryTile extends StatelessWidget {
                           fontSize: 12, color: Colors.black54)),
                   if (log.isEntry) ...[
                     const SizedBox(height: 4),
-                    const Text('Face Scan ✓',
-                        style: TextStyle(
+                    Text(s.faceScanLabel,
+                        style: const TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
                             color: Colors.green)),
