@@ -1,6 +1,8 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as admin from 'firebase-admin';
+import { existsSync } from 'fs';
+import { isAbsolute, resolve } from 'path';
 import { PrismaService } from '../common/prisma.service';
 
 @Injectable()
@@ -14,20 +16,36 @@ export class NotificationsService implements OnModuleInit {
   ) {}
 
   onModuleInit() {
-    const serviceAccountPath = this.config.get<string>(
-      'FIREBASE_SERVICE_ACCOUNT_PATH',
-    );
-    if (!serviceAccountPath) {
+    const configured = this.config.get<string>('FIREBASE_SERVICE_ACCOUNT_PATH');
+    if (!configured) {
       this.logger.warn('FIREBASE_SERVICE_ACCOUNT_PATH not set — FCM disabled');
       return;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const serviceAccount = require(serviceAccountPath);
-    this.firebaseApp = admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount),
-    });
-    this.logger.log('Firebase Admin SDK initialised');
+    // Resolve relative to the process working dir (nestjs-backend/) so it works
+    // the same in dev (ts-node) and prod (dist), regardless of module location.
+    const path = isAbsolute(configured)
+      ? configured
+      : resolve(process.cwd(), configured);
+
+    // Crash-safe: a missing/invalid key disables FCM instead of failing
+    // bootstrap (the app must still start for teammates without the key).
+    if (!existsSync(path)) {
+      this.logger.warn(
+        `Firebase service account not found at ${path} — FCM disabled`,
+      );
+      return;
+    }
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const serviceAccount = require(path);
+      this.firebaseApp = admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount),
+      });
+      this.logger.log('Firebase Admin SDK initialised');
+    } catch (e) {
+      this.logger.warn(`Firebase init failed — FCM disabled: ${e}`);
+    }
   }
 
   /**
