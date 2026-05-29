@@ -36,3 +36,9 @@ class DormSetFilterType extends DormEvent {
 class DormFetchProfile extends DormEvent {
   const DormFetchProfile();
 }
+
+/// Clear all dorm data on logout — stops polling and resets to initial state.
+/// The BLoC stays alive (it is owned by the app shell, not the screen).
+class DormReset extends DormEvent {
+  const DormReset();
+}

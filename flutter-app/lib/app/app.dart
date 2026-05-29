@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../core/di/service_locator.dart' show apiService, socketService;
 import '../core/services/fcm_service.dart';
@@ -65,6 +66,11 @@ class _StudentAccessAppState extends State<StudentAccessApp> {
               routerConfig: router,
               locale: localeState.locale,
               supportedLocales: const [Locale('en'), Locale('th')],
+              localizationsDelegates: const [
+                GlobalMaterialLocalizations.delegate,
+                GlobalWidgetsLocalizations.delegate,
+                GlobalCupertinoLocalizations.delegate,
+              ],
             );
           },
         ),

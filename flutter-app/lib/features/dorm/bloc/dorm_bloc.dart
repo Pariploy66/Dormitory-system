@@ -25,6 +25,7 @@ class DormBloc extends Bloc<DormEvent, DormState> {
     on<DormSetFilterDays>(_onSetFilterDays);
     on<DormSetFilterType>(_onSetFilterType);
     on<DormFetchProfile>(_onFetchProfile);
+    on<DormReset>(_onReset);
 
     _socketSub = _socket.logCreatedStream.listen((studentId) {
       final tracked = state.students.any((s) => s.id == studentId);
@@ -125,5 +126,14 @@ class DormBloc extends Bloc<DormEvent, DormState> {
           profileLoading: false,
           error: e.toString().replaceFirst('Exception: ', '')));
     }
+  }
+
+  // ── Logout reset ─────────────────────────────────────────────
+  /// Stop polling and clear all data so the next user starts clean.
+  /// Nulls the timer so it lazily restarts on the next dashboard load.
+  void _onReset(DormReset event, Emitter<DormState> emit) {
+    _pollTimer?.cancel();
+    _pollTimer = null;
+    emit(const DormState());
   }
 }

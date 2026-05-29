@@ -177,7 +177,7 @@ class SettingsScreen extends StatelessWidget {
             onPressed: () {
               Navigator.pop(context);
               context.read<AuthBloc>().add(const AuthLogoutRequested());
-              context.read<DormBloc>().close();
+              context.read<DormBloc>().add(const DormReset());
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFD61A22),
