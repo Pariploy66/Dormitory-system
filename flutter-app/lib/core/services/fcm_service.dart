@@ -3,10 +3,10 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import '../../firebase_options.dart' show DefaultFirebaseOptions;
-import '../../features/auth/data/auth_repository.dart';
+import '../../services/api_service.dart';
 
 /// Firebase Cloud Messaging service.
-/// De-coupled from Riverpod — takes AuthRepository directly.
+/// Registers the device token through the centralized ApiService (NewSystem).
 /// Company pattern: core/services/ for cross-cutting infrastructure.
 
 @pragma('vm:entry-point')
@@ -63,33 +63,45 @@ void _showNotification(
 }
 
 class FcmService {
-  FcmService(this._authRepository);
-  final AuthRepository _authRepository;
+  FcmService(this._api);
+  final ApiService _api;
 
   final _messaging = FirebaseMessaging.instance;
   final _localNotifications = FlutterLocalNotificationsPlugin();
 
+  bool _initialised = false;
+
+  /// Idempotent + crash-safe. Call after login (JWT must exist before the
+  /// token can be registered to the backend). No-ops gracefully if Firebase
+  /// is unavailable (web placeholder config, emulator AUTHENTICATION_FAILED).
   Future<void> init() async {
-    await _messaging.requestPermission(
-        alert: true, badge: true, sound: true);
+    if (_initialised) return;
+    _initialised = true;
+    try {
+      await _messaging.requestPermission(
+          alert: true, badge: true, sound: true);
 
-    await _localNotifications.initialize(
-      const InitializationSettings(
-        android: AndroidInitializationSettings('@mipmap/ic_launcher'),
-        iOS: DarwinInitializationSettings(),
-      ),
-    );
+      await _localNotifications.initialize(
+        const InitializationSettings(
+          android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+          iOS: DarwinInitializationSettings(),
+        ),
+      );
 
-    FirebaseMessaging.onMessage
-        .listen((msg) => _showNotification(_localNotifications, msg));
+      FirebaseMessaging.onMessage
+          .listen((msg) => _showNotification(_localNotifications, msg));
 
-    final token = await _messaging.getToken();
-    if (token != null) {
-      await _authRepository.registerFcmToken(token);
+      final token = await _messaging.getToken();
+      if (token != null) {
+        await _api.registerFcmToken(token);
+      }
+
+      _messaging.onTokenRefresh.listen((newToken) async {
+        await _api.registerFcmToken(newToken);
+      });
+    } catch (e) {
+      _initialised = false; // allow retry on next login
+      debugPrint('[FCM] init skipped: $e');
     }
-
-    _messaging.onTokenRefresh.listen((newToken) async {
-      await _authRepository.registerFcmToken(newToken);
-    });
   }
 }

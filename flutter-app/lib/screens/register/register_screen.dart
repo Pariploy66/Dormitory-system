@@ -5,9 +5,9 @@ import '../../features/locale/bloc/locale_bloc.dart';
 import '../../core/theme/mfu_theme.dart';
 import '../../core/di/service_locator.dart';
 
-/// Register screen — BLoC pattern.
-/// Uses authRepository directly for register (no AuthBloc event needed
-/// since registration doesn't change auth state — user must login after).
+/// Register screen.
+/// Uses apiService.register directly (no AuthBloc event needed since
+/// registration doesn't change auth state — user must login after).
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
 
@@ -41,7 +41,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       _error = null;
     });
     try {
-      await authRepository.register(
+      await apiService.register(
         name: _nameCtrl.text.trim(),
         phone: _phoneCtrl.text.trim(),
         email: _emailCtrl.text.trim(),

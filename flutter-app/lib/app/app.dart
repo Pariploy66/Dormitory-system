@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../core/di/service_locator.dart' show apiService, socketService;
+import '../core/services/fcm_service.dart';
 import '../core/theme/mfu_theme.dart';
 import '../features/auth/bloc/auth_bloc.dart';
 import '../features/dorm/bloc/dorm_bloc.dart';
@@ -20,6 +21,7 @@ class _StudentAccessAppState extends State<StudentAccessApp> {
   late final AuthBloc _authBloc;
   late final DormBloc _dormBloc;
   late final LocaleBloc _localeBloc;
+  late final FcmService _fcmService;
 
   @override
   void initState() {
@@ -28,6 +30,7 @@ class _StudentAccessAppState extends State<StudentAccessApp> {
       ..add(const AuthCheckRequested());
     _dormBloc = DormBloc(apiService, socketService);
     _localeBloc = LocaleBloc();
+    _fcmService = FcmService(apiService);
   }
 
   @override
@@ -46,17 +49,25 @@ class _StudentAccessAppState extends State<StudentAccessApp> {
         BlocProvider.value(value: _dormBloc),
         BlocProvider.value(value: _localeBloc),
       ],
-      child: BlocBuilder<LocaleBloc, LocaleState>(
-        builder: (context, localeState) {
-          final router = buildRouter(_authBloc);
-          return MaterialApp.router(
-            title: 'MFU Dormitory',
-            theme: MfuTheme.theme,
-            routerConfig: router,
-            locale: localeState.locale,
-            supportedLocales: const [Locale('en'), Locale('th')],
-          );
-        },
+      // Register FCM token to the backend once the user is authenticated
+      // (JWT must exist first). Crash-safe + idempotent inside FcmService.
+      child: BlocListener<AuthBloc, AuthState>(
+        listenWhen: (prev, curr) =>
+            prev.status != curr.status &&
+            curr.status == AuthStatus.authenticated,
+        listener: (_, __) => _fcmService.init(),
+        child: BlocBuilder<LocaleBloc, LocaleState>(
+          builder: (context, localeState) {
+            final router = buildRouter(_authBloc);
+            return MaterialApp.router(
+              title: 'MFU Dormitory',
+              theme: MfuTheme.theme,
+              routerConfig: router,
+              locale: localeState.locale,
+              supportedLocales: const [Locale('en'), Locale('th')],
+            );
+          },
+        ),
       ),
     );
   }

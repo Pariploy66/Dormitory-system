@@ -14,7 +14,7 @@ class MockApiService extends Mock implements ApiService {}
 
 class MockSocketService extends Mock implements SocketService {
   @override
-  Stream<String> get logCreatedStream => Stream<String>.empty();
+  Stream<String> get logCreatedStream => const Stream<String>.empty();
 }
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────

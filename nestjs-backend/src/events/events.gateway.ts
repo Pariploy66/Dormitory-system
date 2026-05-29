@@ -4,12 +4,15 @@ import {
   OnGatewayConnection,
   OnGatewayDisconnect,
 } from '@nestjs/websockets';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
 
 // ── NewSystem pattern: socket.js → events.gateway.ts ──────────────────────────
 // Follows the same io.on('connection') lifecycle from backend-node/server/routes/socket.js
-@WebSocketGateway({ cors: { origin: '*' } })
+// CORS origin mirrors the HTTP layer (CORS_ORIGIN env) so production locks it down.
+@WebSocketGateway({
+  cors: { origin: process.env.CORS_ORIGIN ?? true, credentials: true },
+})
 @Injectable()
 export class EventsGateway
   implements OnGatewayConnection, OnGatewayDisconnect
@@ -17,12 +20,14 @@ export class EventsGateway
   @WebSocketServer()
   server: Server;
 
+  private readonly logger = new Logger(EventsGateway.name);
+
   handleConnection(client: Socket) {
-    console.log(`[WS] client connected: ${client.id}`);
+    this.logger.log(`client connected: ${client.id}`);
   }
 
   handleDisconnect(client: Socket) {
-    console.log(`[WS] client disconnected: ${client.id}`);
+    this.logger.log(`client disconnected: ${client.id}`);
   }
 
   /** Broadcast to all connected clients that a new access log was created. */
