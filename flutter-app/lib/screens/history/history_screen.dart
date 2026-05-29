@@ -84,9 +84,9 @@ class HistoryScreen extends StatelessWidget {
       builder: (_) => Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          ('All Status', s.allStatus),
-          ('Entry', s.entry),
-          ('Exit', s.exit),
+          (DormState.filterTypeAll, s.allStatus),
+          (DormState.filterTypeEntry, s.entry),
+          (DormState.filterTypeExit, s.exit),
         ]
             .map((pair) => ListTile(
                   title: Text(pair.$2),
@@ -126,9 +126,9 @@ class HistoryScreen extends StatelessWidget {
         final filtered = sourceLogs.where((l) {
           final inRange =
               isTodayView || !l.accessTime.isBefore(cutoff);
-          final matchT = state.filterType == 'All Status' ||
-              (state.filterType == 'Entry' && l.isEntry) ||
-              (state.filterType == 'Exit' && l.isExit);
+          final matchT = state.filterType == DormState.filterTypeAll ||
+              (state.filterType == DormState.filterTypeEntry && l.isEntry) ||
+              (state.filterType == DormState.filterTypeExit && l.isExit);
           return inRange && matchT;
         }).toList();
 
@@ -144,6 +144,17 @@ class HistoryScreen extends StatelessWidget {
           if (state.filterDays == 1) return s.today;
           if (state.filterDays == 3) return s.last3Days;
           return s.last7Days;
+        }
+
+        String typeLabel() {
+          switch (state.filterType) {
+            case DormState.filterTypeEntry:
+              return s.entry;
+            case DormState.filterTypeExit:
+              return s.exit;
+            default:
+              return s.allStatus;
+          }
         }
 
         return Scaffold(
@@ -164,7 +175,7 @@ class HistoryScreen extends StatelessWidget {
             children: [
               HistoryFilterBar(
                 periodLabel: periodLabel(),
-                filterType: state.filterType,
+                filterType: typeLabel(),
                 lastUpdated: state.lastUpdated,
                 onPeriodTap: () =>
                     _showPeriodSheet(context, s, state.filterDays),

@@ -168,18 +168,22 @@ void main() {
       blocTest<DormBloc, DormState>(
         'updates filterType to Entry',
         build: () => DormBloc(mockApi, mockSocket),
-        act: (bloc) => bloc.add(const DormSetFilterType('Entry')),
+        act: (bloc) =>
+            bloc.add(const DormSetFilterType(DormState.filterTypeEntry)),
         expect: () => [
-          predicate<DormState>((s) => s.filterType == 'Entry'),
+          predicate<DormState>(
+              (s) => s.filterType == DormState.filterTypeEntry),
         ],
       );
 
       blocTest<DormBloc, DormState>(
         'updates filterType to Exit',
         build: () => DormBloc(mockApi, mockSocket),
-        act: (bloc) => bloc.add(const DormSetFilterType('Exit')),
+        act: (bloc) =>
+            bloc.add(const DormSetFilterType(DormState.filterTypeExit)),
         expect: () => [
-          predicate<DormState>((s) => s.filterType == 'Exit'),
+          predicate<DormState>(
+              (s) => s.filterType == DormState.filterTypeExit),
         ],
       );
     });

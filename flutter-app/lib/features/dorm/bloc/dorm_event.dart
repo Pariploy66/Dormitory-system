@@ -24,7 +24,8 @@ class DormSetFilterDays extends DormEvent {
   List<Object?> get props => [days];
 }
 
-/// Set the type filter for history ('All Status' | 'Entry' | 'Exit').
+/// Set the type filter for history (DormState.filterType{All,Entry,Exit}:
+/// 'all_status' | 'entry' | 'exit').
 class DormSetFilterType extends DormEvent {
   final String filterType;
   const DormSetFilterType(this.filterType);
