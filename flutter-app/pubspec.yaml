@@ -29,6 +29,9 @@ dependencies:
   # Routing
   go_router: ^13.2.1
 
+  # ThaID sign-in (in-app webview to capture the authorization code)
+  webview_flutter: ^4.7.0
+
   # Storage (JWT token persistence)
   flutter_secure_storage: ^9.0.0
 

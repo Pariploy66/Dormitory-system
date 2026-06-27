@@ -3,7 +3,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import '../../firebase_options.dart' show DefaultFirebaseOptions;
-import '../../services/api_service.dart';
+import './api_service.dart';
 
 /// Firebase Cloud Messaging service.
 /// Registers the device token through the centralized ApiService (NewSystem).

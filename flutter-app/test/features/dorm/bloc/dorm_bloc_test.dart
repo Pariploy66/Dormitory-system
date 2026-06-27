@@ -5,8 +5,8 @@ import 'package:student_access_app/features/auth/domain/parent_model.dart';
 import 'package:student_access_app/features/dorm/bloc/dorm_bloc.dart';
 import 'package:student_access_app/features/dorm/domain/access_log_model.dart';
 import 'package:student_access_app/features/dorm/domain/student_model.dart';
-import 'package:student_access_app/services/api_service.dart';
-import 'package:student_access_app/services/socket_service.dart';
+import 'package:student_access_app/core/services/api_service.dart';
+import 'package:student_access_app/core/services/socket_service.dart';
 
 // ── Mocks ─────────────────────────────────────────────────────────────────────
 
@@ -38,8 +38,7 @@ final _log = AccessLogModel(
 const _profile = ParentModel(
   id: 'par-001',
   name: 'Test Parent',
-  phone: '0812345678',
-  email: 'parent@test.com',
+  citizenId: '1234567890123',
 );
 
 // ── Tests ─────────────────────────────────────────────────────────────────────

@@ -1,11 +1,22 @@
 # ───────────────────────────────────────────────────────────────
 # Env files
-# NOTE: .env is intentionally tracked for this team project so everyone
-# shares the same dev config. Do NOT put production secrets here.
-# (Local-only overrides go in .env.local, which stays ignored.)
+# NOTE: This project is still mockup stage (pre-production), so each
+# service only uses .env.local (gitignored, per-developer dev config).
+# When this goes to production, reintroduce a tracked .env baseline
+# plus .env.preprod / .env.prod tiers.
 # ───────────────────────────────────────────────────────────────
+.env
 .env.local
 .env.*.local
+.env.preprod
+.env.prod
+
+# ───────────────────────────────────────────────────────────────
+# Secrets — NEVER commit (Firebase Admin private key, service accounts)
+# ───────────────────────────────────────────────────────────────
+firebase-service-account.json
+*-service-account.json
+*serviceAccountKey*.json
 
 # ───────────────────────────────────────────────────────────────
 # Node / NestJS (nestjs-backend)

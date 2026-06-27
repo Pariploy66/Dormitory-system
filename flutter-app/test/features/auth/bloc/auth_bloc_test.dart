@@ -2,7 +2,7 @@ import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:student_access_app/features/auth/bloc/auth_bloc.dart';
-import 'package:student_access_app/services/api_service.dart';
+import 'package:student_access_app/core/services/api_service.dart';
 
 // ── Mock ──────────────────────────────────────────────────────────────────────
 
@@ -48,18 +48,16 @@ void main() {
       );
     });
 
-    // ── AuthLoginRequested ───────────────────────────────────────────────────
+    // ── AuthThaidLoginRequested ──────────────────────────────────────────────
 
-    group('AuthLoginRequested', () {
+    group('AuthThaidLoginRequested', () {
       blocTest<AuthBloc, AuthState>(
-        'emits [loading, authenticated] on successful login',
+        'emits [loading, authenticated] on successful ThaID login',
         build: () {
-          when(() => mockApi.login(any(), any()))
-              .thenAnswer((_) async {});
+          when(() => mockApi.thaidLogin(any())).thenAnswer((_) async {});
           return AuthBloc(mockApi);
         },
-        act: (bloc) =>
-            bloc.add(const AuthLoginRequested('user@test.com', 'pass123')),
+        act: (bloc) => bloc.add(const AuthThaidLoginRequested('auth-code')),
         expect: () => const [
           AuthState(status: AuthStatus.loading),
           AuthState(status: AuthStatus.authenticated),
@@ -67,30 +65,27 @@ void main() {
       );
 
       blocTest<AuthBloc, AuthState>(
-        'emits [loading, failure] with WRONG_CREDENTIALS on bad login',
+        'emits [loading, failure] with SERVER_ERROR when exchange fails',
         build: () {
-          when(() => mockApi.login(any(), any()))
-              .thenThrow(Exception('WRONG_CREDENTIALS'));
+          when(() => mockApi.thaidLogin(any()))
+              .thenThrow(Exception('SERVER_ERROR'));
           return AuthBloc(mockApi);
         },
-        act: (bloc) =>
-            bloc.add(const AuthLoginRequested('user@test.com', 'wrong')),
+        act: (bloc) => bloc.add(const AuthThaidLoginRequested('bad-code')),
         expect: () => const [
           AuthState(status: AuthStatus.loading),
-          AuthState(
-              status: AuthStatus.failure, error: 'WRONG_CREDENTIALS'),
+          AuthState(status: AuthStatus.failure, error: 'SERVER_ERROR'),
         ],
       );
 
       blocTest<AuthBloc, AuthState>(
         'emits [loading, failure] with NETWORK_ERROR on connection failure',
         build: () {
-          when(() => mockApi.login(any(), any()))
+          when(() => mockApi.thaidLogin(any()))
               .thenThrow(Exception('NETWORK_ERROR'));
           return AuthBloc(mockApi);
         },
-        act: (bloc) =>
-            bloc.add(const AuthLoginRequested('user@test.com', 'pass')),
+        act: (bloc) => bloc.add(const AuthThaidLoginRequested('code')),
         expect: () => const [
           AuthState(status: AuthStatus.loading),
           AuthState(status: AuthStatus.failure, error: 'NETWORK_ERROR'),

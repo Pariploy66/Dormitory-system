@@ -9,17 +9,16 @@ datasource db {
 
 model Parent {
   id               String                 @id @default(uuid())
-  name             String
-  phone            String                 @unique
-  email            String                 @unique
-  passwordHash     String?                @map("password_hash")
+  citizenId        String                 @unique @map("citizen_id")
   thaidSub         String?                @unique @map("thaid_sub")
-  identityProvider IdentityProvider       @default(LOCAL) @map("identity_provider")
+  name             String
+  identityProvider IdentityProvider       @default(THAID) @map("identity_provider")
   isVerified       Boolean                @default(false) @map("is_verified")
   createdAt        DateTime               @default(now()) @map("created_at")
   updatedAt        DateTime               @updatedAt @map("updated_at")
   devices          Device[]
   mappings         ParentStudentMapping[]
+  authLogs         AuthLog[]
 
   @@map("parents")
 }
@@ -74,9 +73,27 @@ model Device {
   @@map("devices")
 }
 
+model AuthLog {
+  id        String    @id @default(uuid())
+  parentId  String    @map("parent_id")
+  event     AuthEvent
+  ipAddress String?   @map("ip_address")
+  userAgent String?   @map("user_agent")
+  createdAt DateTime  @default(now()) @map("created_at")
+  parent    Parent    @relation(fields: [parentId], references: [id], onDelete: Cascade)
+
+  @@index([parentId, createdAt(sort: Desc)])
+  @@map("auth_logs")
+}
+
 enum IdentityProvider {
   LOCAL
   THAID
+}
+
+enum AuthEvent {
+  LOGIN
+  LOGOUT
 }
 
 enum AccessType {

@@ -2,8 +2,8 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../api/api_client.dart';
 import '../auth/token_storage.dart';
-import '../../services/api_service.dart';
-import '../../services/socket_service.dart';
+import '../services/api_service.dart';
+import '../services/socket_service.dart';
 
 /// Global service locator — company pattern from mobile-flutter/core/di/service_locator.dart
 late ApiClient apiClient;

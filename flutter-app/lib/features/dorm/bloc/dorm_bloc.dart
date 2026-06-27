@@ -4,8 +4,8 @@ import 'package:equatable/equatable.dart';
 import '../domain/student_model.dart';
 import '../domain/access_log_model.dart';
 import '../../auth/domain/parent_model.dart';
-import '../../../services/api_service.dart';
-import '../../../services/socket_service.dart';
+import '../../../core/services/api_service.dart';
+import '../../../core/services/socket_service.dart';
 
 part 'dorm_event.dart';
 part 'dorm_state.dart';

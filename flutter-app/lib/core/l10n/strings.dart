@@ -10,6 +10,7 @@ class AppStrings {
   final String passwordHint;
   final String name;
   final String phone;
+  final String citizenId;
   final String dashboard;
   final String history;
   final String setting;
@@ -71,6 +72,7 @@ class AppStrings {
     required this.passwordHint,
     required this.name,
     required this.phone,
+    required this.citizenId,
     required this.dashboard,
     required this.history,
     required this.setting,
@@ -133,6 +135,7 @@ class AppStrings {
     passwordHint: 'Password (≥ 8 chars)',
     name: 'Full Name',
     phone: 'Phone',
+    citizenId: 'Citizen ID',
     dashboard: 'Dashboard',
     history: 'History',
     setting: 'Setting',
@@ -200,6 +203,7 @@ class AppStrings {
     passwordHint: 'รหัสผ่าน (≥ 8 ตัว)',
     name: 'ชื่อ-นามสกุล',
     phone: 'เบอร์โทร',
+    citizenId: 'เลขบัตรประชาชน',
     dashboard: 'หน้าหลัก',
     history: 'ประวัติ',
     setting: 'ตั้งค่า',

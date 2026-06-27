@@ -11,13 +11,12 @@ class AuthCheckRequested extends AuthEvent {
   const AuthCheckRequested();
 }
 
-/// Login with email + password.
-class AuthLoginRequested extends AuthEvent {
-  final String email;
-  final String password;
-  const AuthLoginRequested(this.email, this.password);
+/// Complete ThaID login with the authorization code captured from the webview.
+class AuthThaidLoginRequested extends AuthEvent {
+  final String code;
+  const AuthThaidLoginRequested(this.code);
   @override
-  List<Object?> get props => [email, password];
+  List<Object?> get props => [code];
 }
 
 /// Logout and clear tokens.

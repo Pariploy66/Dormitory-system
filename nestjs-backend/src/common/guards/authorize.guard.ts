@@ -36,7 +36,7 @@ export class AuthorizeGuard implements CanActivate {
     // Endpoint not decorated with @Authorize → skip guard (public route)
     if (!options) return true;
 
-    const request = context.switchToHttp().getRequest<{ user?: { sub: string; email: string } }>();
+    const request = context.switchToHttp().getRequest<{ user?: { sub: string } }>();
     const user = request.user;
 
     if (!user?.sub) {
