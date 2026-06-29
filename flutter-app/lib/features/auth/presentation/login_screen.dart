@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -24,6 +25,21 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   Future<void> _loginWithThaid() async {
     final s = context.read<LocaleBloc>().state.strings;
+
+    // ThaID sign-in uses an in-app webview (webview_flutter), which only works
+    // on Android/iOS. On web, fail gracefully instead of crashing.
+    if (kIsWeb) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'ThaID login รองรับเฉพาะแอปมือถือ (Android/iOS)\n'
+            'กรุณารันบน emulator หรืออุปกรณ์จริง',
+          ),
+        ),
+      );
+      return;
+    }
+
     try {
       final url = await apiService.getThaidLoginUrl();
       if (!mounted) return;
