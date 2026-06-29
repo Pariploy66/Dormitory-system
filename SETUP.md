@@ -18,13 +18,17 @@ cd fastapi-integration && pip install -r requirements.txt && cd ..
 
 The latest database (schema + data + migration history) is committed at
 `nestjs-backend/prisma/db-snapshot.sql`. It uses `--clean`, so restoring it
-**drops the old objects and replaces them** with the current state.
+**drops the old objects and replaces them** with the current state. The file is
+plain `CREATE` + `INSERT` SQL, so it runs in either pgAdmin or psql.
 
+**Option A — pgAdmin (GUI):**
+1. Right-click *Databases* → *Create* → *Database* → name it `student`.
+2. Click the `student` database → open *Query Tool*.
+3. Open file 📁 → select `nestjs-backend/prisma/db-snapshot.sql` → Run (F5).
+
+**Option B — psql (command line):**
 ```bash
-# create an empty database named "student" (once)
 psql -U postgres -c "CREATE DATABASE student;"
-
-# restore the snapshot
 psql -U postgres -d student -f nestjs-backend/prisma/db-snapshot.sql
 ```
 
