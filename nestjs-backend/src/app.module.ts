@@ -13,7 +13,7 @@ import { EventsModule } from './modules/events/events.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: '.env.local',
+      envFilePath: '.env',
     }),
     ThrottlerModule.forRoot([{ ttl: 60_000, limit: 30 }]),
     CommonModule,

@@ -39,31 +39,35 @@ psql -U postgres -d student -f nestjs-backend/prisma/db-snapshot.sql
 
 ## 3. Secrets (not in git)
 
-Copy each `.env.example` → `.env.local` and fill in real values:
+Each service uses a single `.env` file (gitignored). Copy the template and fill
+in real values:
 
 ```bash
-cp nestjs-backend/.env.example       nestjs-backend/.env.local
-cp fastapi-integration/.env.example  fastapi-integration/.env.local
-cp flutter-app/.env.example          flutter-app/.env.local
+cp nestjs-backend/.env.example       nestjs-backend/.env
+cp fastapi-integration/.env.example  fastapi-integration/.env
+cp flutter-app/.env.example          flutter-app/.env
 ```
 
 Then set:
-- `DATABASE_URL` — your local Postgres password
-- `THAID_CLIENT_ID` / `THAID_CLIENT_SECRET` / `THAID_API_KEY` — from `key_sandbox.pdf` (ask the supervisor)
+- `DATABASE_URL` (nestjs-backend/.env) — your local Postgres password
+- `THAID_CLIENT_ID` / `THAID_CLIENT_SECRET` / `THAID_API_KEY` — ask the team (sandbox creds)
 - `INTERNAL_API_KEY` — keep identical in nestjs-backend **and** fastapi-integration
 - `firebase-service-account.json` — get from the team, place in `nestjs-backend/` (gitignored)
+
+> The team lead sends the real secret values separately (chat) — they are never
+> committed. Everything else you need is already in this repo.
 
 ## 4. Run
 
 ```bash
-# 1) NestJS backend (reads .env.local automatically)
+# 1) NestJS backend (reads .env automatically)
 cd nestjs-backend && npm run start:dev
 
 # 2) FastAPI integration
 cd fastapi-integration && python main.py
 
 # 3) Flutter app
-cd flutter-app && flutter run --dart-define-from-file=.env.local
+cd flutter-app && flutter run --dart-define-from-file=.env
 ```
 
 Open Prisma Studio to inspect the DB: `cd nestjs-backend && npm run prisma:studio`.
@@ -71,6 +75,11 @@ Open Prisma Studio to inspect the DB: `cd nestjs-backend && npm run prisma:studi
 ## Auth
 
 Login is **ThaID only** (no username/password). On the ThaID sandbox login page,
-enter a 13-digit national ID to sign in. A parent record is created/updated on
-first login (keyed by `citizen_id`); link a student to a parent via
-`POST /internal/students/link` with `parentCitizenId` + `studentCode`.
+enter a 13-digit national ID to sign in. Access is allowed only for a registered
+guardian of an ACTIVE student. A parent record is created/updated on first login
+(keyed by `citizen_id`).
+
+Load the registrar registry (students + guardians) in one call:
+`POST /internal/registry/sync` (header `X-Internal-API-Key`) with
+`{ students: [...], guardians: [{ parentCitizenId, studentCode, relationship }] }`.
+The seeded snapshot already contains mock data, so this is only needed to refresh it.

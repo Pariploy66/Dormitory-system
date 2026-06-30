@@ -7,10 +7,10 @@
     "start": "node dist/main",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
-    "prisma:migrate": "dotenv -e .env.local -- prisma migrate dev",
-    "prisma:generate": "dotenv -e .env.local -- prisma generate",
-    "prisma:deploy": "dotenv -e .env.local -- prisma migrate deploy",
-    "prisma:studio": "dotenv -e .env.local -- prisma studio",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:generate": "prisma generate",
+    "prisma:deploy": "prisma migrate deploy",
+    "prisma:studio": "prisma studio",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\""
   },
   "dependencies": {

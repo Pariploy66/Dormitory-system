@@ -2,7 +2,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env.local", extra="ignore")
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     external_api_base_url: str
     external_api_key: str
