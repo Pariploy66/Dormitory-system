@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../locale/bloc/locale_bloc.dart';
+import '../bloc/dorm_bloc.dart';
+import 'child_selection_screen.dart';
 import 'pages/dashboard_page.dart';
 import 'pages/history_page.dart';
 import 'pages/settings_page.dart';
@@ -28,6 +30,12 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final s = context.watch<LocaleBloc>().state.strings;
+
+    // Multi-child parent who has not picked a child yet → show the picker.
+    final needsSelection = context.select<DormBloc, bool>(
+      (b) => b.state.needsChildSelection,
+    );
+    if (needsSelection) return const ChildSelectionScreen();
 
     return Scaffold(
       backgroundColor: const Color(0xFFFDFBF7),

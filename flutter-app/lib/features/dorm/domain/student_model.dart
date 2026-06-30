@@ -8,6 +8,7 @@ class StudentModel extends Equatable {
   final String studentCode;
   final String dormitory;
   final String roomNumber;
+  final String relationship; // FATHER | MOTHER | GUARDIAN | OTHER (from registry)
 
   const StudentModel({
     required this.id,
@@ -15,6 +16,7 @@ class StudentModel extends Equatable {
     required this.studentCode,
     required this.dormitory,
     required this.roomNumber,
+    this.relationship = '',
   });
 
   String get locationLabel {
@@ -31,9 +33,10 @@ class StudentModel extends Equatable {
         studentCode: json['studentCode'] as String? ?? '',
         dormitory: json['dormitory'] as String? ?? '',
         roomNumber: json['roomNumber'] as String? ?? '',
+        relationship: json['relationship'] as String? ?? '',
       );
 
   @override
   List<Object?> get props =>
-      [id, name, studentCode, dormitory, roomNumber];
+      [id, name, studentCode, dormitory, roomNumber, relationship];
 }

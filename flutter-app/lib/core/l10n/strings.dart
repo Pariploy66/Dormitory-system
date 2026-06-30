@@ -61,6 +61,10 @@ class AppStrings {
   final String faceScanLabel;
   final String liveLabel;
   final String forParentsOnly;
+  final String noAccess;
+  final String selectChild;
+  final String selectChildSub;
+  final String switchChild;
 
   const AppStrings({
     required this.loginTitle,
@@ -123,6 +127,10 @@ class AppStrings {
     required this.faceScanLabel,
     required this.liveLabel,
     required this.forParentsOnly,
+    required this.noAccess,
+    required this.selectChild,
+    required this.selectChildSub,
+    required this.switchChild,
   });
 
   static const en = AppStrings(
@@ -191,6 +199,11 @@ class AppStrings {
     liveLabel: 'LIVE',
     forParentsOnly:
         'For parents only · secure access system\n© Mae Fah Luang University',
+    noAccess:
+        'Access denied. This account is not a guardian of any student currently living in the dorm.',
+    selectChild: 'Select Child',
+    selectChildSub: 'Choose a child to view their records',
+    switchChild: 'Switch Child',
   );
 
   static const th = AppStrings(
@@ -257,5 +270,10 @@ class AppStrings {
     liveLabel: 'สด',
     forParentsOnly:
         'สำหรับผู้ปกครองเท่านั้น · ระบบเข้าถึงที่ปลอดภัย\n© มหาวิทยาลัยแม่ฟ้าหลวง',
+    noAccess:
+        'ไม่มีสิทธิ์เข้าถึง บัญชีนี้ไม่ใช่ผู้ปกครองของนักศึกษาที่พักในหอ',
+    selectChild: 'เลือกบุตรหลาน',
+    selectChildSub: 'เลือกบุตรหลานที่ต้องการดูข้อมูล',
+    switchChild: 'เปลี่ยนบุตรหลาน',
   );
 }

@@ -62,6 +62,8 @@ class _LoginScreenState extends State<LoginScreen> {
     switch (code) {
       case 'NETWORK_ERROR':
         return s.networkError;
+      case 'NO_ACCESS':
+        return s.noAccess;
       default:
         return s.serverError;
     }

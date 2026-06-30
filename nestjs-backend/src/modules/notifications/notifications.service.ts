@@ -58,18 +58,21 @@ export class NotificationsService implements OnModuleInit {
   ) {
     if (!this.firebaseApp) return;
 
-    // Fetch all FCM tokens of parents linked to this student
-    const mappings = await this.prisma.parentStudentMapping.findMany({
+    // Find guardians (by citizen ID) registered for this student via the
+    // registry, then collect the FCM tokens of any that have logged in.
+    const entries = await this.prisma.parentStudentRegistry.findMany({
       where: { studentId: student.id },
-      include: {
-        parent: {
-          include: { devices: { select: { fcmToken: true } } },
-        },
-      },
+      select: { parentCitizenId: true },
     });
+    const citizenIds = entries.map((e) => e.parentCitizenId);
+    if (!citizenIds.length) return;
 
-    const tokens: string[] = mappings.flatMap((m) =>
-      m.parent.devices.map((d) => d.fcmToken),
+    const parents = await this.prisma.parent.findMany({
+      where: { citizenId: { in: citizenIds } },
+      include: { devices: { select: { fcmToken: true } } },
+    });
+    const tokens: string[] = parents.flatMap((p) =>
+      p.devices.map((d) => d.fcmToken),
     );
     if (!tokens.length) return;
 

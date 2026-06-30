@@ -38,6 +38,19 @@ class DormFetchProfile extends DormEvent {
   const DormFetchProfile();
 }
 
+/// Pick which child to view (multi-child parents). Loads that child's logs.
+class DormSelectStudent extends DormEvent {
+  final String studentId;
+  const DormSelectStudent(this.studentId);
+  @override
+  List<Object?> get props => [studentId];
+}
+
+/// Go back to the child picker (multi-child parents).
+class DormClearSelection extends DormEvent {
+  const DormClearSelection();
+}
+
 /// Clear all dorm data on logout — stops polling and resets to initial state.
 /// The BLoC stays alive (it is owned by the app shell, not the screen).
 class DormReset extends DormEvent {

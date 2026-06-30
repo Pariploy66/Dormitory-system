@@ -151,6 +151,8 @@ class ApiService {
         e.type == DioExceptionType.connectionError ||
         e.type == DioExceptionType.unknown;
     if (isNetworkError) return Exception('NETWORK_ERROR');
+    // 403 = ThaID identity is not a registered guardian of an active student.
+    if (e.response?.statusCode == 403) return Exception('NO_ACCESS');
     return Exception('SERVER_ERROR');
   }
 

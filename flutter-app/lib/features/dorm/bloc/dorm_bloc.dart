@@ -25,6 +25,8 @@ class DormBloc extends Bloc<DormEvent, DormState> {
     on<DormSetFilterDays>(_onSetFilterDays);
     on<DormSetFilterType>(_onSetFilterType);
     on<DormFetchProfile>(_onFetchProfile);
+    on<DormSelectStudent>(_onSelectStudent);
+    on<DormClearSelection>(_onClearSelection);
     on<DormReset>(_onReset);
 
     _socketSub = _socket.logCreatedStream.listen((studentId) {
@@ -55,19 +57,34 @@ class DormBloc extends Bloc<DormEvent, DormState> {
     }
     try {
       final students = await _api.getStudents();
-      if (students.isEmpty) {
+
+      // Resolve which child to load: keep the current selection if still valid,
+      // auto-select when there is exactly one child.
+      String? activeId;
+      if (state.selectedStudentId != null &&
+          students.any((s) => s.id == state.selectedStudentId)) {
+        activeId = state.selectedStudentId;
+      } else if (students.length == 1) {
+        activeId = students.first.id;
+      }
+
+      // No students, or multi-child parent awaiting selection → no logs to load.
+      if (activeId == null) {
         emit(state.copyWith(
-            status: DormStatus.success,
-            students: students,
-            lastUpdated: DateTime.now()));
+          status: DormStatus.success,
+          students: students,
+          selectedStudentId: students.length == 1 ? students.first.id : null,
+          lastUpdated: DateTime.now(),
+        ));
         return;
       }
-      final id = students.first.id;
-      final logsToday = await _api.getLogsToday(id);
-      final logs = await _api.getLogs(id);
+
+      final logsToday = await _api.getLogsToday(activeId);
+      final logs = await _api.getLogs(activeId);
       emit(state.copyWith(
         status: DormStatus.success,
         students: students,
+        selectedStudentId: activeId,
         logsToday: logsToday,
         logs: logs,
         lastUpdated: DateTime.now(),
@@ -126,6 +143,25 @@ class DormBloc extends Bloc<DormEvent, DormState> {
           profileLoading: false,
           error: e.toString().replaceFirst('Exception: ', '')));
     }
+  }
+
+  // ── Child selection (multi-child parents) ────────────────────
+
+  void _onSelectStudent(DormSelectStudent event, Emitter<DormState> emit) {
+    emit(state.copyWith(
+      selectedStudentId: event.studentId,
+      logsToday: const [],
+      logs: const [],
+    ));
+    add(const DormRefreshDashboard()); // load the chosen child's logs
+  }
+
+  void _onClearSelection(DormClearSelection event, Emitter<DormState> emit) {
+    emit(state.copyWith(
+      selectedStudentId: null,
+      logsToday: const [],
+      logs: const [],
+    ));
   }
 
   // ── Logout reset ─────────────────────────────────────────────

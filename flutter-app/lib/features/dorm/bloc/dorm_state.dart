@@ -2,6 +2,10 @@ part of 'dorm_bloc.dart';
 
 enum DormStatus { initial, loading, success, failure }
 
+// Sentinel so copyWith can distinguish "keep" from "set to null" for
+// selectedStudentId (needed to clear the selection / go back to the picker).
+const Object _keep = Object();
+
 class DormState extends Equatable {
   static const String filterTypeAll = 'all_status';
   static const String filterTypeEntry = 'entry';
@@ -17,6 +21,7 @@ class DormState extends Equatable {
   final String filterType; // History filter code: all_status | entry | exit
   final ParentModel? profile;
   final bool profileLoading;
+  final String? selectedStudentId; // chosen child (multi-child parents)
 
   const DormState({
     this.status = DormStatus.initial,
@@ -29,23 +34,36 @@ class DormState extends Equatable {
     this.filterType = filterTypeAll,
     this.profile,
     this.profileLoading = false,
+    this.selectedStudentId,
   });
 
   // ── Computed getters ─────────────────────────────────────────
-  StudentModel? get activeStudent =>
-      students.isNotEmpty ? students.first : null;
+  /// The child currently being viewed:
+  ///   - explicit selection if set,
+  ///   - the only child if there is exactly one,
+  ///   - null when a multi-child parent has not chosen yet (→ show picker).
+  StudentModel? get activeStudent {
+    if (students.isEmpty) return null;
+    if (selectedStudentId != null) {
+      for (final s in students) {
+        if (s.id == selectedStudentId) return s;
+      }
+    }
+    return students.length == 1 ? students.first : null;
+  }
+
+  /// Multi-child parent who has not picked a child yet.
+  bool get needsChildSelection =>
+      students.length >= 2 && activeStudent == null;
 
   AccessLogModel? get latestLogToday =>
       logsToday.isNotEmpty ? logsToday.first : null;
 
-  AccessLogModel? get latestLog =>
-      logs.isNotEmpty ? logs.first : null;
+  AccessLogModel? get latestLog => logs.isNotEmpty ? logs.first : null;
 
-  int get todayInCount =>
-      logsToday.where((l) => l.type == 'IN').length;
+  int get todayInCount => logsToday.where((l) => l.type == 'IN').length;
 
-  int get todayOutCount =>
-      logsToday.where((l) => l.type == 'OUT').length;
+  int get todayOutCount => logsToday.where((l) => l.type == 'OUT').length;
 
   DormState copyWith({
     DormStatus? status,
@@ -58,6 +76,7 @@ class DormState extends Equatable {
     String? filterType,
     ParentModel? profile,
     bool? profileLoading,
+    Object? selectedStudentId = _keep,
   }) =>
       DormState(
         status: status ?? this.status,
@@ -70,6 +89,9 @@ class DormState extends Equatable {
         filterType: filterType ?? this.filterType,
         profile: profile ?? this.profile,
         profileLoading: profileLoading ?? this.profileLoading,
+        selectedStudentId: identical(selectedStudentId, _keep)
+            ? this.selectedStudentId
+            : selectedStudentId as String?,
       );
 
   @override
@@ -84,5 +106,6 @@ class DormState extends Equatable {
         filterType,
         profile,
         profileLoading,
+        selectedStudentId,
       ];
 }

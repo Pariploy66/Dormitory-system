@@ -93,10 +93,23 @@ export class AccessLogsService {
   }
 
   // ── NewSystem handler: onQuerys (GET /me/students) ─────────────────────────
-  /** Return all students linked to a parent. */
+  /**
+   * Return the parent's ACTIVE (in-dorm) students via the registry, keyed by
+   * the parent's citizen ID. Graduated/moved-out students are filtered out.
+   * Each result includes the guardian relationship (FATHER/MOTHER/GUARDIAN).
+   */
   async onQuerys(parentId: string) {
-    const mappings = await this.prisma.parentStudentMapping.findMany({
-      where: { parentId },
+    const parent = await this.prisma.parent.findUnique({
+      where: { id: parentId },
+      select: { citizenId: true },
+    });
+    if (!parent) return [];
+
+    const entries = await this.prisma.parentStudentRegistry.findMany({
+      where: {
+        parentCitizenId: parent.citizenId,
+        student: { status: 'ACTIVE' },
+      },
       include: {
         student: {
           select: {
@@ -109,7 +122,7 @@ export class AccessLogsService {
         },
       },
     });
-    return mappings.map((m) => m.student);
+    return entries.map((e) => ({ ...e.student, relationship: e.relationship }));
   }
 
   // ── NewSystem handler: onQueryLogs (GET /me/students/:id/logs) ─────────────
@@ -122,11 +135,22 @@ export class AccessLogsService {
    *   - "ontime" → all other IN entries and all OUT entries
    */
   async onQueryLogs(parentId: string, studentId: string, days = 7) {
-    // Security: verify parent owns this student
-    const mapping = await this.prisma.parentStudentMapping.findFirst({
-      where: { parentId, studentId },
+    // Security: verify (via registry) that this parent is a guardian of this
+    // student AND the student is still ACTIVE (in dorm).
+    const parent = await this.prisma.parent.findUnique({
+      where: { id: parentId },
+      select: { citizenId: true },
     });
-    if (!mapping) {
+    const entry = parent
+      ? await this.prisma.parentStudentRegistry.findFirst({
+          where: {
+            parentCitizenId: parent.citizenId,
+            studentId,
+            student: { status: 'ACTIVE' },
+          },
+        })
+      : null;
+    if (!entry) {
       throw new ForbiddenException(
         'You do not have access to this student\'s records',
       );

@@ -1,4 +1,8 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { randomUUID } from 'crypto';
 import { PrismaService } from '../../common/prisma.service';
@@ -52,13 +56,26 @@ export class AuthService {
       throw new UnauthorizedException('ThaID ไม่ส่งข้อมูลที่จำเป็น (pid/sub)');
     }
 
+    // ── Access control ──────────────────────────────────────────────────────
+    // Only a registered guardian of at least one ACTIVE (in-dorm) student may
+    // enter. Covers both "not a parent" and "all children graduated/moved out".
+    const activeCount = await this.prisma.parentStudentRegistry.count({
+      where: { parentCitizenId: citizenId, student: { status: 'ACTIVE' } },
+    });
+    if (activeCount === 0) {
+      await this.writeAuthLog(null, 'DENIED', meta, citizenId);
+      throw new ForbiddenException(
+        'ไม่มีสิทธิ์เข้าถึง: บัญชีนี้ไม่ใช่ผู้ปกครองของนักศึกษาที่พักในหอ',
+      );
+    }
+
     const parent = await this.prisma.parent.upsert({
       where: { citizenId },
       create: { citizenId, thaidSub: sub, name, isVerified: true },
       update: { thaidSub: sub, name: name || undefined, isVerified: true },
     });
 
-    await this.writeAuthLog(parent.id, 'LOGIN', meta);
+    await this.writeAuthLog(parent.id, 'LOGIN', meta, citizenId);
     return this.signToken(parent.id);
   }
 
@@ -101,15 +118,21 @@ export class AuthService {
     };
   }
 
-  /** Append an app sign-in/out event to auth_logs (never blocks the request). */
+  /**
+   * Append an app sign-in/out event to auth_logs.
+   * parentId is null for DENIED attempts (no parent record exists yet);
+   * citizenId records who attempted, which is essential for the DENIED case.
+   */
   private async writeAuthLog(
-    parentId: string,
-    event: 'LOGIN' | 'LOGOUT',
+    parentId: string | null,
+    event: 'LOGIN' | 'LOGOUT' | 'DENIED',
     meta?: AuthLogMeta,
+    citizenId?: string,
   ) {
     await this.prisma.authLog.create({
       data: {
         parentId,
+        citizenId,
         event,
         ipAddress: meta?.ipAddress,
         userAgent: meta?.userAgent,

@@ -18,8 +18,7 @@ SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
 
-ALTER TABLE IF EXISTS ONLY public.parent_student_mapping DROP CONSTRAINT IF EXISTS parent_student_mapping_student_id_fkey;
-ALTER TABLE IF EXISTS ONLY public.parent_student_mapping DROP CONSTRAINT IF EXISTS parent_student_mapping_parent_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.parent_student_registry DROP CONSTRAINT IF EXISTS parent_student_registry_student_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.devices DROP CONSTRAINT IF EXISTS devices_parent_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.auth_logs DROP CONSTRAINT IF EXISTS auth_logs_parent_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.access_logs DROP CONSTRAINT IF EXISTS access_logs_student_id_fkey;
@@ -27,25 +26,28 @@ DROP INDEX IF EXISTS public.students_student_code_key;
 DROP INDEX IF EXISTS public.students_external_student_id_key;
 DROP INDEX IF EXISTS public.parents_thaid_sub_key;
 DROP INDEX IF EXISTS public.parents_citizen_id_key;
-DROP INDEX IF EXISTS public.parent_student_mapping_parent_id_student_id_key;
+DROP INDEX IF EXISTS public.parent_student_registry_parent_citizen_id_student_id_key;
+DROP INDEX IF EXISTS public.parent_student_registry_parent_citizen_id_idx;
 DROP INDEX IF EXISTS public.devices_fcm_token_key;
 DROP INDEX IF EXISTS public.auth_logs_parent_id_created_at_idx;
 DROP INDEX IF EXISTS public.access_logs_student_id_access_time_type_key;
 DROP INDEX IF EXISTS public.access_logs_student_id_access_time_idx;
 ALTER TABLE IF EXISTS ONLY public.students DROP CONSTRAINT IF EXISTS students_pkey;
 ALTER TABLE IF EXISTS ONLY public.parents DROP CONSTRAINT IF EXISTS parents_pkey;
-ALTER TABLE IF EXISTS ONLY public.parent_student_mapping DROP CONSTRAINT IF EXISTS parent_student_mapping_pkey;
+ALTER TABLE IF EXISTS ONLY public.parent_student_registry DROP CONSTRAINT IF EXISTS parent_student_registry_pkey;
 ALTER TABLE IF EXISTS ONLY public.devices DROP CONSTRAINT IF EXISTS devices_pkey;
 ALTER TABLE IF EXISTS ONLY public.auth_logs DROP CONSTRAINT IF EXISTS auth_logs_pkey;
 ALTER TABLE IF EXISTS ONLY public.access_logs DROP CONSTRAINT IF EXISTS access_logs_pkey;
 ALTER TABLE IF EXISTS ONLY public._prisma_migrations DROP CONSTRAINT IF EXISTS _prisma_migrations_pkey;
 DROP TABLE IF EXISTS public.students;
 DROP TABLE IF EXISTS public.parents;
-DROP TABLE IF EXISTS public.parent_student_mapping;
+DROP TABLE IF EXISTS public.parent_student_registry;
 DROP TABLE IF EXISTS public.devices;
 DROP TABLE IF EXISTS public.auth_logs;
 DROP TABLE IF EXISTS public.access_logs;
 DROP TABLE IF EXISTS public._prisma_migrations;
+DROP TYPE IF EXISTS public."StudentStatus";
+DROP TYPE IF EXISTS public."Relationship";
 DROP TYPE IF EXISTS public."IdentityProvider";
 DROP TYPE IF EXISTS public."AuthEvent";
 DROP TYPE IF EXISTS public."AccessType";
@@ -65,7 +67,8 @@ CREATE TYPE public."AccessType" AS ENUM (
 
 CREATE TYPE public."AuthEvent" AS ENUM (
     'LOGIN',
-    'LOGOUT'
+    'LOGOUT',
+    'DENIED'
 );
 
 
@@ -76,6 +79,29 @@ CREATE TYPE public."AuthEvent" AS ENUM (
 CREATE TYPE public."IdentityProvider" AS ENUM (
     'LOCAL',
     'THAID'
+);
+
+
+--
+-- Name: Relationship; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public."Relationship" AS ENUM (
+    'FATHER',
+    'MOTHER',
+    'GUARDIAN',
+    'OTHER'
+);
+
+
+--
+-- Name: StudentStatus; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public."StudentStatus" AS ENUM (
+    'ACTIVE',
+    'GRADUATED',
+    'MOVED_OUT'
 );
 
 
@@ -119,11 +145,12 @@ CREATE TABLE public.access_logs (
 
 CREATE TABLE public.auth_logs (
     id text NOT NULL,
-    parent_id text NOT NULL,
+    parent_id text,
     event public."AuthEvent" NOT NULL,
     ip_address text,
     user_agent text,
-    created_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
+    created_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    citizen_id text
 );
 
 
@@ -141,13 +168,16 @@ CREATE TABLE public.devices (
 
 
 --
--- Name: parent_student_mapping; Type: TABLE; Schema: public; Owner: -
+-- Name: parent_student_registry; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.parent_student_mapping (
+CREATE TABLE public.parent_student_registry (
     id text NOT NULL,
-    parent_id text NOT NULL,
-    student_id text NOT NULL
+    parent_citizen_id text NOT NULL,
+    student_id text NOT NULL,
+    relationship public."Relationship" DEFAULT 'GUARDIAN'::public."Relationship" NOT NULL,
+    created_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at timestamp(3) without time zone NOT NULL
 );
 
 
@@ -178,7 +208,10 @@ CREATE TABLE public.students (
     name text NOT NULL,
     created_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
     dormitory text,
-    room_number text
+    room_number text,
+    left_at timestamp(3) without time zone,
+    status public."StudentStatus" DEFAULT 'ACTIVE'::public."StudentStatus" NOT NULL,
+    updated_at timestamp(3) without time zone NOT NULL
 );
 
 
@@ -189,82 +222,64 @@ CREATE TABLE public.students (
 INSERT INTO public._prisma_migrations (id, checksum, finished_at, migration_name, logs, rolled_back_at, started_at, applied_steps_count) VALUES ('fd8600e2-8e53-47b2-9724-cae51a468fac', '1ecad857993dade27aecf175a695d982fec17152527c1b70bbb8b6131684d58d', '2026-06-26 23:21:31.433761-07', '20260418050346_init', '', NULL, '2026-06-26 23:21:31.433761-07', 0);
 INSERT INTO public._prisma_migrations (id, checksum, finished_at, migration_name, logs, rolled_back_at, started_at, applied_steps_count) VALUES ('93a78d05-77bb-4dba-b5e6-7e8fb35c129b', '5ea903cd0b672aa092d1e1c5e0efa52ba81ba7b562ded5538799f8645b0e8e7d', '2026-06-27 00:15:08.225205-07', '20260627141456_thaid_only_auth', NULL, NULL, '2026-06-27 00:15:08.199621-07', 1);
 INSERT INTO public._prisma_migrations (id, checksum, finished_at, migration_name, logs, rolled_back_at, started_at, applied_steps_count) VALUES ('63d2eff3-5b51-4e6d-9803-26a7638a03f1', '0e715ca874fea2fc8fa15edee0ee43ad7092d85c7d9d6e84a17383caaebc2d99', '2026-06-27 00:26:04.398708-07', '20260627142600_add_auth_logs', NULL, NULL, '2026-06-27 00:26:04.364189-07', 1);
+INSERT INTO public._prisma_migrations (id, checksum, finished_at, migration_name, logs, rolled_back_at, started_at, applied_steps_count) VALUES ('f7e19154-b0de-4f1a-b826-6d0f40ef5f98', '330b31031ff2c2865b8c6d2c5c525b7b36db7feffa281a4419e3b207c478cb57', '2026-06-30 02:36:22.515619-07', '20260630163618_registry_status_relationship', NULL, NULL, '2026-06-30 02:36:22.378568-07', 1);
 
 
 --
 -- Data for Name: access_logs; Type: TABLE DATA; Schema: public; Owner: -
 --
 
-INSERT INTO public.access_logs (id, student_id, access_time, type, gate_name, created_at) VALUES ('4d88b174-cda5-4e1d-82d8-2b34b9673e33', '051d442b-6927-4a35-9f80-9d94a0c524cc', '2026-05-20 05:55:00', 'IN', 'Main Entrance', '2026-05-20 15:35:49.957');
-INSERT INTO public.access_logs (id, student_id, access_time, type, gate_name, created_at) VALUES ('30e9a35a-87b8-4c87-bb16-52193de740de', '051d442b-6927-4a35-9f80-9d94a0c524cc', '2026-05-20 16:55:00', 'IN', 'Main Entrance', '2026-05-20 15:54:14.988');
-INSERT INTO public.access_logs (id, student_id, access_time, type, gate_name, created_at) VALUES ('84e7a781-9f3a-485d-b45a-f0a1f0d75290', '051d442b-6927-4a35-9f80-9d94a0c524cc', '2026-05-23 05:55:00', 'IN', 'Main Entrance', '2026-05-23 06:32:31.484');
-INSERT INTO public.access_logs (id, student_id, access_time, type, gate_name, created_at) VALUES ('d91c249c-c8cf-483d-b31a-ecc08199da15', '7e1aa157-6c06-4c54-9fd2-25b5f6008e83', '2026-05-23 10:40:19', 'IN', 'Main Gate', '2026-05-23 10:40:19.119');
-INSERT INTO public.access_logs (id, student_id, access_time, type, gate_name, created_at) VALUES ('4dd2abf0-b445-4a4c-81da-fcbeeca2fc9a', '7e1aa157-6c06-4c54-9fd2-25b5f6008e83', '2026-05-23 10:41:20', 'OUT', 'Main Gate', '2026-05-23 10:41:20.35');
-INSERT INTO public.access_logs (id, student_id, access_time, type, gate_name, created_at) VALUES ('4b6819b6-1588-4b45-9167-9db63cf58677', '7e1aa157-6c06-4c54-9fd2-25b5f6008e83', '2026-05-23 10:46:38', 'IN', 'Main Gate', '2026-05-23 10:46:38.901');
-INSERT INTO public.access_logs (id, student_id, access_time, type, gate_name, created_at) VALUES ('4108fabc-3b1d-42ff-b876-d5c79ca55d50', '7e1aa157-6c06-4c54-9fd2-25b5f6008e83', '2026-05-23 11:00:55', 'IN', 'Main Gate', '2026-05-23 11:00:55.309');
-INSERT INTO public.access_logs (id, student_id, access_time, type, gate_name, created_at) VALUES ('a65af08c-3d02-4ddb-9b0f-98ddbce3ff00', '7e1aa157-6c06-4c54-9fd2-25b5f6008e83', '2026-05-24 07:21:32', 'IN', 'Main Gate', '2026-05-24 07:21:32.536');
-INSERT INTO public.access_logs (id, student_id, access_time, type, gate_name, created_at) VALUES ('62dc7f25-40dc-4f4a-89cb-2a1865495500', '7e1aa157-6c06-4c54-9fd2-25b5f6008e83', '2026-05-24 07:22:33', 'OUT', 'Main Gate', '2026-05-24 07:22:33.392');
-INSERT INTO public.access_logs (id, student_id, access_time, type, gate_name, created_at) VALUES ('bbf295fe-f724-4105-a529-23c8f54a91e0', '7e1aa157-6c06-4c54-9fd2-25b5f6008e83', '2026-05-24 07:23:33', 'IN', 'Main Gate', '2026-05-24 07:23:33.883');
-INSERT INTO public.access_logs (id, student_id, access_time, type, gate_name, created_at) VALUES ('54afe9f1-af11-4799-99fc-4ff5f817b1d7', '412c85e6-b25b-4759-9bee-87995b5d918b', '2026-05-27 07:58:21', 'IN', 'Main Gate', '2026-05-27 07:58:22.024');
-INSERT INTO public.access_logs (id, student_id, access_time, type, gate_name, created_at) VALUES ('9d569c89-03c6-4d41-8bcd-256425989f60', '412c85e6-b25b-4759-9bee-87995b5d918b', '2026-05-27 07:59:25', 'OUT', 'Main Gate', '2026-05-27 07:59:25.126');
-INSERT INTO public.access_logs (id, student_id, access_time, type, gate_name, created_at) VALUES ('b4595b81-0c9a-4c46-9a44-5fa59f83749c', '051d442b-6927-4a35-9f80-9d94a0c524cc', '2026-05-27 07:59:29', 'IN', 'Main Gate', '2026-05-27 07:59:29.124');
-INSERT INTO public.access_logs (id, student_id, access_time, type, gate_name, created_at) VALUES ('dfe5d61d-9ac5-41d9-bc8f-eeddd42a7a10', '7e1aa157-6c06-4c54-9fd2-25b5f6008e83', '2026-05-28 05:55:00', 'IN', 'Main Entrance', '2026-05-28 10:39:57.807');
-INSERT INTO public.access_logs (id, student_id, access_time, type, gate_name, created_at) VALUES ('2df36325-f052-4154-9fb7-30a8186056f1', '7e1aa157-6c06-4c54-9fd2-25b5f6008e83', '2026-05-29 04:50:00', 'IN', 'Main Entrance', '2026-05-29 08:15:43.346');
-INSERT INTO public.access_logs (id, student_id, access_time, type, gate_name, created_at) VALUES ('deeed719-69f0-49fc-8777-fab8a2483e6e', '7e1aa157-6c06-4c54-9fd2-25b5f6008e83', '2026-05-29 11:32:00', 'IN', 'Main Entrance', '2026-05-29 13:07:45.367');
-INSERT INTO public.access_logs (id, student_id, access_time, type, gate_name, created_at) VALUES ('e3576e7e-4e13-43a0-b472-83386241796e', '7e1aa157-6c06-4c54-9fd2-25b5f6008e83', '2026-05-29 16:32:00', 'IN', 'Main Entrance', '2026-05-29 13:51:56.359');
-INSERT INTO public.access_logs (id, student_id, access_time, type, gate_name, created_at) VALUES ('176e9906-9915-4dfd-94f3-e7a86f0871ba', '7e1aa157-6c06-4c54-9fd2-25b5f6008e83', '2026-05-29 16:34:00', 'IN', 'Main Entrance', '2026-05-29 14:24:57.722');
-INSERT INTO public.access_logs (id, student_id, access_time, type, gate_name, created_at) VALUES ('77f6ed93-b5e4-4bc5-806c-9bedf02a6827', '7e1aa157-6c06-4c54-9fd2-25b5f6008e83', '2026-05-29 16:35:00', 'IN', 'Main Entrance', '2026-05-29 14:33:44.521');
-INSERT INTO public.access_logs (id, student_id, access_time, type, gate_name, created_at) VALUES ('da97288f-002c-48f1-acbf-7e33d460eee0', '7e1aa157-6c06-4c54-9fd2-25b5f6008e83', '2026-05-29 15:02:59', 'IN', 'Main Gate', '2026-05-29 15:02:59.688');
-INSERT INTO public.access_logs (id, student_id, access_time, type, gate_name, created_at) VALUES ('e0245280-befa-425b-aba6-83e7da1b9799', '956df20d-3784-4e47-a10d-0dd85bc7c9e7', '2026-06-17 05:55:00', 'IN', 'Main Entrance', '2026-06-17 08:09:27.783');
-INSERT INTO public.access_logs (id, student_id, access_time, type, gate_name, created_at) VALUES ('643dbcd6-3d89-4fbb-a237-cdcbe535785a', '7e1aa157-6c06-4c54-9fd2-25b5f6008e83', '2026-06-18 05:55:00', 'IN', 'Main Entrance', '2026-06-18 02:32:20.789');
-INSERT INTO public.access_logs (id, student_id, access_time, type, gate_name, created_at) VALUES ('902d15e6-ee1f-4f97-8cc3-029b38faa493', '7e1aa157-6c06-4c54-9fd2-25b5f6008e83', '2026-06-27 05:55:00', 'IN', 'Main Entrance', '2026-06-27 12:33:35.562');
-INSERT INTO public.access_logs (id, student_id, access_time, type, gate_name, created_at) VALUES ('b8b7b566-2610-44e4-a9aa-52def4a2d6e9', '7e1aa157-6c06-4c54-9fd2-25b5f6008e83', '2026-06-21 05:55:00', 'IN', 'Main Entrance', '2026-06-27 12:35:34.443');
-INSERT INTO public.access_logs (id, student_id, access_time, type, gate_name, created_at) VALUES ('70eda661-1de9-4688-a55f-3f84cd3a9abb', '7e1aa157-6c06-4c54-9fd2-25b5f6008e83', '2026-06-20 05:55:00', 'IN', 'Main Entrance', '2026-06-27 12:35:52.875');
+INSERT INTO public.access_logs (id, student_id, access_time, type, gate_name, created_at) VALUES ('0eefe8f0-dfc3-44cc-a574-fbd41747f493', '4cf6f324-9736-408c-9315-93fe9a37692d', '2026-06-30 00:30:00', 'IN', 'F1 Main Gate', '2026-06-30 09:42:25.184');
+INSERT INTO public.access_logs (id, student_id, access_time, type, gate_name, created_at) VALUES ('bd257f27-7171-4861-aad0-f2581bfcb5ad', '4cf6f324-9736-408c-9315-93fe9a37692d', '2026-06-30 10:45:00', 'OUT', 'F1 Main Gate', '2026-06-30 09:42:25.192');
+INSERT INTO public.access_logs (id, student_id, access_time, type, gate_name, created_at) VALUES ('66edfe13-67cb-4446-bb6b-3b58cf6d7958', '4cf6f324-9736-408c-9315-93fe9a37692d', '2026-06-29 01:00:00', 'IN', 'F1 Main Gate', '2026-06-30 09:42:25.194');
+INSERT INTO public.access_logs (id, student_id, access_time, type, gate_name, created_at) VALUES ('ce24b7da-32db-4a04-b702-1042d2feef69', '4cf6f324-9736-408c-9315-93fe9a37692d', '2026-06-29 15:50:00', 'IN', 'F1 Main Gate', '2026-06-30 09:42:25.197');
+INSERT INTO public.access_logs (id, student_id, access_time, type, gate_name, created_at) VALUES ('5addd05b-b64c-48c4-974e-b5b7f9f69bad', '4cf6f324-9736-408c-9315-93fe9a37692d', '2026-06-28 11:00:00', 'OUT', 'F1 Main Gate', '2026-06-30 09:42:25.199');
+INSERT INTO public.access_logs (id, student_id, access_time, type, gate_name, created_at) VALUES ('8ad415f6-a880-4d75-996c-105446c13e15', 'd6760e2e-5eb3-4bc9-9d33-507774b3a7bd', '2026-06-30 01:15:00', 'IN', 'F1 Main Gate', '2026-06-30 09:42:25.201');
+INSERT INTO public.access_logs (id, student_id, access_time, type, gate_name, created_at) VALUES ('8078bd1a-7ba5-4b6d-b094-ba351e4b4df0', 'd6760e2e-5eb3-4bc9-9d33-507774b3a7bd', '2026-06-30 12:00:00', 'OUT', 'F1 Main Gate', '2026-06-30 09:42:25.204');
+INSERT INTO public.access_logs (id, student_id, access_time, type, gate_name, created_at) VALUES ('e3ad846c-d94c-40b9-bf75-86205a2554c8', 'd6760e2e-5eb3-4bc9-9d33-507774b3a7bd', '2026-06-29 02:05:00', 'IN', 'F1 Main Gate', '2026-06-30 09:42:25.206');
 
 
 --
 -- Data for Name: auth_logs; Type: TABLE DATA; Schema: public; Owner: -
 --
 
-INSERT INTO public.auth_logs (id, parent_id, event, ip_address, user_agent, created_at) VALUES ('db800821-28f8-4859-855b-1ae04a9b66d3', 'c3d7a169-2ef5-40a1-b731-43b8170ef2f7', 'LOGIN', '::ffff:127.0.0.1', 'Dart/3.11 (dart:io)', '2026-06-27 12:30:44.036');
-INSERT INTO public.auth_logs (id, parent_id, event, ip_address, user_agent, created_at) VALUES ('771675cf-df33-4b6c-8db6-920be7d5192d', 'c3d7a169-2ef5-40a1-b731-43b8170ef2f7', 'LOGOUT', '::ffff:127.0.0.1', 'Dart/3.11 (dart:io)', '2026-06-27 12:33:50.447');
-INSERT INTO public.auth_logs (id, parent_id, event, ip_address, user_agent, created_at) VALUES ('f7a04d69-6a1b-4dfa-b626-a00beca53503', 'c3d7a169-2ef5-40a1-b731-43b8170ef2f7', 'LOGIN', '::ffff:127.0.0.1', 'Dart/3.11 (dart:io)', '2026-06-27 12:35:00.79');
-INSERT INTO public.auth_logs (id, parent_id, event, ip_address, user_agent, created_at) VALUES ('23541cdd-74bd-4fa1-8b1e-85a8dd149057', 'c3d7a169-2ef5-40a1-b731-43b8170ef2f7', 'LOGOUT', '::ffff:127.0.0.1', 'Dart/3.11 (dart:io)', '2026-06-27 12:49:52.12');
-INSERT INTO public.auth_logs (id, parent_id, event, ip_address, user_agent, created_at) VALUES ('cd2002aa-8bf6-4675-a5c7-455abf7c0642', 'c3d7a169-2ef5-40a1-b731-43b8170ef2f7', 'LOGIN', '::ffff:127.0.0.1', 'Dart/3.11 (dart:io)', '2026-06-27 12:50:00.663');
-INSERT INTO public.auth_logs (id, parent_id, event, ip_address, user_agent, created_at) VALUES ('e3d20e84-3213-4c67-af52-f919cb3266cb', 'c3d7a169-2ef5-40a1-b731-43b8170ef2f7', 'LOGOUT', '::ffff:127.0.0.1', 'Dart/3.11 (dart:io)', '2026-06-27 13:22:00.286');
-INSERT INTO public.auth_logs (id, parent_id, event, ip_address, user_agent, created_at) VALUES ('7660d6b8-ddec-40d3-8455-cabac40143f1', 'c3d7a169-2ef5-40a1-b731-43b8170ef2f7', 'LOGIN', '::ffff:127.0.0.1', 'Dart/3.11 (dart:io)', '2026-06-27 13:22:21.495');
 
 
 --
 -- Data for Name: devices; Type: TABLE DATA; Schema: public; Owner: -
 --
 
-INSERT INTO public.devices (id, parent_id, fcm_token, created_at, updated_at) VALUES ('97552ee3-1d4b-491b-912c-96f85320acc1', 'c3d7a169-2ef5-40a1-b731-43b8170ef2f7', 'epPlQ_O_TKWsdiEaXBSMG8:APA91bFU2qF2ihuleHmjkPmIX4BWwD36obrJmrQn1rOj9mfFwPZzisLz0CStFeMkzwEuBCCxSxv_Ikql7kgdaasSF-_RPtKnIyG3quhHgbJ3TRAtBF76k8s', '2026-06-27 12:30:44.826', '2026-06-27 13:21:56.149');
 
 
 --
--- Data for Name: parent_student_mapping; Type: TABLE DATA; Schema: public; Owner: -
+-- Data for Name: parent_student_registry; Type: TABLE DATA; Schema: public; Owner: -
 --
 
-INSERT INTO public.parent_student_mapping (id, parent_id, student_id) VALUES ('25de0138-5697-4e51-bcac-541355cfb63c', 'c3d7a169-2ef5-40a1-b731-43b8170ef2f7', '7e1aa157-6c06-4c54-9fd2-25b5f6008e83');
+INSERT INTO public.parent_student_registry (id, parent_citizen_id, student_id, relationship, created_at, updated_at) VALUES ('afaad28e-5e0f-44bd-9cd1-899391c75578', '1149900859119', '4cf6f324-9736-408c-9315-93fe9a37692d', 'FATHER', '2026-06-30 09:42:25.169', '2026-06-30 09:42:25.169');
+INSERT INTO public.parent_student_registry (id, parent_citizen_id, student_id, relationship, created_at, updated_at) VALUES ('0c30b760-8337-4e46-a2bf-3c65567d4291', '1149900859119', 'd6760e2e-5eb3-4bc9-9d33-507774b3a7bd', 'FATHER', '2026-06-30 09:42:25.175', '2026-06-30 09:42:25.175');
+INSERT INTO public.parent_student_registry (id, parent_citizen_id, student_id, relationship, created_at, updated_at) VALUES ('53b09dde-abb3-44b7-9594-c74df6549c4e', '1100200300400', '4cf6f324-9736-408c-9315-93fe9a37692d', 'MOTHER', '2026-06-30 09:42:25.176', '2026-06-30 09:42:25.176');
+INSERT INTO public.parent_student_registry (id, parent_citizen_id, student_id, relationship, created_at, updated_at) VALUES ('21487962-c535-4d2b-950f-79aad052756f', '3301201232653', '1542dfaf-961a-45fa-8919-8cee743affdc', 'MOTHER', '2026-06-30 09:42:25.178', '2026-06-30 09:42:25.178');
+INSERT INTO public.parent_student_registry (id, parent_citizen_id, student_id, relationship, created_at, updated_at) VALUES ('93980407-311f-4520-84cf-e330cc091add', '3640400263229', '9ac11cfd-0e8e-4bcd-a10d-f3f51fead82c', 'FATHER', '2026-06-30 09:42:25.179', '2026-06-30 09:42:25.179');
+INSERT INTO public.parent_student_registry (id, parent_citizen_id, student_id, relationship, created_at, updated_at) VALUES ('85fa7e25-8b4e-45f1-9f29-d452d3cd02de', '3101401511876', '1ecb27a8-9e4b-420e-8c73-a3092564d2c3', 'GUARDIAN', '2026-06-30 09:42:25.181', '2026-06-30 09:42:25.181');
+INSERT INTO public.parent_student_registry (id, parent_citizen_id, student_id, relationship, created_at, updated_at) VALUES ('6c07b1f8-01d9-4022-a267-cb508a69a60e', '3400700708503', 'c1546821-929b-4bab-bafd-25ec9f63f587', 'FATHER', '2026-06-30 09:42:25.183', '2026-06-30 09:42:25.183');
 
 
 --
 -- Data for Name: parents; Type: TABLE DATA; Schema: public; Owner: -
 --
 
-INSERT INTO public.parents (id, name, is_verified, created_at, updated_at, thaid_sub, identity_provider, citizen_id) VALUES ('c3d7a169-2ef5-40a1-b731-43b8170ef2f7', 'ชื่อตัว ชื่อกลาง ชื่อสกุล', true, '2026-06-27 12:30:43.875', '2026-06-27 13:22:21.489', '1149900859119', 'THAID', '1149900859119');
 
 
 --
 -- Data for Name: students; Type: TABLE DATA; Schema: public; Owner: -
 --
 
-INSERT INTO public.students (id, external_student_id, student_code, name, created_at, dormitory, room_number) VALUES ('7e1aa157-6c06-4c54-9fd2-25b5f6008e83', 'T001', '6631501163', 'Parichat Phojan', '2026-05-22 11:05:26.362', 'Saktong3', '127');
-INSERT INTO public.students (id, external_student_id, student_code, name, created_at, dormitory, room_number) VALUES ('412c85e6-b25b-4759-9bee-87995b5d918b', 'T003', '6631501064', 'Nawamol Nuanyai', '2026-05-23 10:58:34.912', 'Saktong3', '712');
-INSERT INTO public.students (id, external_student_id, student_code, name, created_at, dormitory, room_number) VALUES ('051d442b-6927-4a35-9f80-9d94a0c524cc', 'T002', '6631501126', 'Araya Logniyom', '2026-05-20 15:29:27.118', 'Saktong3', '217');
-INSERT INTO public.students (id, external_student_id, student_code, name, created_at, dormitory, room_number) VALUES ('956df20d-3784-4e47-a10d-0dd85bc7c9e7', 'T004', '6631501111', 'Arai Wa', '2026-06-17 08:05:58.443', 'Saktong3', '153');
-INSERT INTO public.students (id, external_student_id, student_code, name, created_at, dormitory, room_number) VALUES ('dac09103-59ed-4839-b110-5a30bcee6ae5', 'T005', '6631501005', 'test5 student', '2026-06-18 01:56:44.67', 'Saktong3', '222');
+INSERT INTO public.students (id, external_student_id, student_code, name, created_at, dormitory, room_number, left_at, status, updated_at) VALUES ('4cf6f324-9736-408c-9315-93fe9a37692d', 'T001', '6631501163', 'Parichat Phojan', '2026-06-30 09:42:25.145', 'F1', '127', NULL, 'ACTIVE', '2026-06-30 09:42:25.145');
+INSERT INTO public.students (id, external_student_id, student_code, name, created_at, dormitory, room_number, left_at, status, updated_at) VALUES ('1542dfaf-961a-45fa-8919-8cee743affdc', 'T002', '6631501126', 'Araya Logniyom', '2026-06-30 09:42:25.158', 'F1', '201', NULL, 'ACTIVE', '2026-06-30 09:42:25.158');
+INSERT INTO public.students (id, external_student_id, student_code, name, created_at, dormitory, room_number, left_at, status, updated_at) VALUES ('9ac11cfd-0e8e-4bcd-a10d-f3f51fead82c', 'T003', '6631501064', 'Nawamol Nuanyai', '2026-06-30 09:42:25.161', 'F2', '305', NULL, 'ACTIVE', '2026-06-30 09:42:25.161');
+INSERT INTO public.students (id, external_student_id, student_code, name, created_at, dormitory, room_number, left_at, status, updated_at) VALUES ('1ecb27a8-9e4b-420e-8c73-a3092564d2c3', 'T004', '6631509004', 'Kittipong Jaidee', '2026-06-30 09:42:25.164', 'F1', '110', '2026-06-30 09:42:25.161', 'GRADUATED', '2026-06-30 09:42:25.164');
+INSERT INTO public.students (id, external_student_id, student_code, name, created_at, dormitory, room_number, left_at, status, updated_at) VALUES ('c1546821-929b-4bab-bafd-25ec9f63f587', 'T005', '6631509005', 'Suda Manalai', '2026-06-30 09:42:25.165', 'F2', '410', '2026-06-30 09:42:25.164', 'MOVED_OUT', '2026-06-30 09:42:25.165');
+INSERT INTO public.students (id, external_student_id, student_code, name, created_at, dormitory, room_number, left_at, status, updated_at) VALUES ('d6760e2e-5eb3-4bc9-9d33-507774b3a7bd', 'T006', '6631501003', 'Phailin Phojan', '2026-06-30 09:42:25.167', 'F1', '128', NULL, 'ACTIVE', '2026-06-30 09:42:25.167');
 
 
 --
@@ -300,11 +315,11 @@ ALTER TABLE ONLY public.devices
 
 
 --
--- Name: parent_student_mapping parent_student_mapping_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: parent_student_registry parent_student_registry_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.parent_student_mapping
-    ADD CONSTRAINT parent_student_mapping_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.parent_student_registry
+    ADD CONSTRAINT parent_student_registry_pkey PRIMARY KEY (id);
 
 
 --
@@ -352,10 +367,17 @@ CREATE UNIQUE INDEX devices_fcm_token_key ON public.devices USING btree (fcm_tok
 
 
 --
--- Name: parent_student_mapping_parent_id_student_id_key; Type: INDEX; Schema: public; Owner: -
+-- Name: parent_student_registry_parent_citizen_id_idx; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX parent_student_mapping_parent_id_student_id_key ON public.parent_student_mapping USING btree (parent_id, student_id);
+CREATE INDEX parent_student_registry_parent_citizen_id_idx ON public.parent_student_registry USING btree (parent_citizen_id);
+
+
+--
+-- Name: parent_student_registry_parent_citizen_id_student_id_key; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX parent_student_registry_parent_citizen_id_student_id_key ON public.parent_student_registry USING btree (parent_citizen_id, student_id);
 
 
 --
@@ -411,19 +433,11 @@ ALTER TABLE ONLY public.devices
 
 
 --
--- Name: parent_student_mapping parent_student_mapping_parent_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: parent_student_registry parent_student_registry_student_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.parent_student_mapping
-    ADD CONSTRAINT parent_student_mapping_parent_id_fkey FOREIGN KEY (parent_id) REFERENCES public.parents(id) ON UPDATE CASCADE ON DELETE CASCADE;
-
-
---
--- Name: parent_student_mapping parent_student_mapping_student_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.parent_student_mapping
-    ADD CONSTRAINT parent_student_mapping_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.students(id) ON UPDATE CASCADE ON DELETE CASCADE;
+ALTER TABLE ONLY public.parent_student_registry
+    ADD CONSTRAINT parent_student_registry_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.students(id) ON UPDATE CASCADE ON DELETE CASCADE;
 
 
 --

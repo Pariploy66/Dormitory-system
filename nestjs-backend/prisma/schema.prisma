@@ -8,44 +8,52 @@ datasource db {
 }
 
 model Parent {
-  id               String                 @id @default(uuid())
-  citizenId        String                 @unique @map("citizen_id")
-  thaidSub         String?                @unique @map("thaid_sub")
+  id               String           @id @default(uuid())
+  citizenId        String           @unique @map("citizen_id")
+  thaidSub         String?          @unique @map("thaid_sub")
   name             String
-  identityProvider IdentityProvider       @default(THAID) @map("identity_provider")
-  isVerified       Boolean                @default(false) @map("is_verified")
-  createdAt        DateTime               @default(now()) @map("created_at")
-  updatedAt        DateTime               @updatedAt @map("updated_at")
+  identityProvider IdentityProvider @default(THAID) @map("identity_provider")
+  isVerified       Boolean          @default(false) @map("is_verified")
+  createdAt        DateTime         @default(now()) @map("created_at")
+  updatedAt        DateTime         @updatedAt @map("updated_at")
   devices          Device[]
-  mappings         ParentStudentMapping[]
   authLogs         AuthLog[]
 
   @@map("parents")
 }
 
 model Student {
-  id                String                 @id @default(uuid())
-  externalStudentId String                 @unique @map("external_student_id")
-  studentCode       String                 @unique @map("student_code")
+  id                String                  @id @default(uuid())
+  externalStudentId String                  @unique @map("external_student_id")
+  studentCode       String                  @unique @map("student_code")
   name              String
-  createdAt         DateTime               @default(now()) @map("created_at")
   dormitory         String?
-  roomNumber        String?                @map("room_number")
+  roomNumber        String?                 @map("room_number")
+  status            StudentStatus           @default(ACTIVE)
+  leftAt            DateTime?               @map("left_at")
+  createdAt         DateTime                @default(now()) @map("created_at")
+  updatedAt         DateTime                @updatedAt @map("updated_at")
   accessLogs        AccessLog[]
-  mappings          ParentStudentMapping[]
+  registryEntries   ParentStudentRegistry[]
 
   @@map("students")
 }
 
-model ParentStudentMapping {
-  id        String  @id @default(uuid())
-  parentId  String  @map("parent_id")
-  studentId String  @map("student_id")
-  parent    Parent  @relation(fields: [parentId], references: [id], onDelete: Cascade)
-  student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+// Registry from the registrar: which parent (by citizen ID) is a guardian of
+// which student, and the relationship. Keyed by citizen_id (NOT a parent FK) so
+// it can be bulk-loaded from the registrar file before the parent ever logs in.
+model ParentStudentRegistry {
+  id              String       @id @default(uuid())
+  parentCitizenId String       @map("parent_citizen_id")
+  studentId       String       @map("student_id")
+  relationship    Relationship @default(GUARDIAN)
+  createdAt       DateTime     @default(now()) @map("created_at")
+  updatedAt       DateTime     @updatedAt @map("updated_at")
+  student         Student      @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
-  @@unique([parentId, studentId])
-  @@map("parent_student_mapping")
+  @@unique([parentCitizenId, studentId])
+  @@index([parentCitizenId])
+  @@map("parent_student_registry")
 }
 
 model AccessLog {
@@ -73,14 +81,17 @@ model Device {
   @@map("devices")
 }
 
+// App sign-in/out audit trail. parent_id is null for DENIED attempts (the
+// citizen ID is not a registered guardian, so no parent record exists).
 model AuthLog {
   id        String    @id @default(uuid())
-  parentId  String    @map("parent_id")
+  parentId  String?   @map("parent_id")
+  citizenId String?   @map("citizen_id")
   event     AuthEvent
   ipAddress String?   @map("ip_address")
   userAgent String?   @map("user_agent")
   createdAt DateTime  @default(now()) @map("created_at")
-  parent    Parent    @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  parent    Parent?   @relation(fields: [parentId], references: [id], onDelete: Cascade)
 
   @@index([parentId, createdAt(sort: Desc)])
   @@map("auth_logs")
@@ -94,9 +105,23 @@ enum IdentityProvider {
 enum AuthEvent {
   LOGIN
   LOGOUT
+  DENIED
 }
 
 enum AccessType {
   IN
   OUT
+}
+
+enum StudentStatus {
+  ACTIVE
+  GRADUATED
+  MOVED_OUT
+}
+
+enum Relationship {
+  FATHER
+  MOTHER
+  GUARDIAN
+  OTHER
 }
