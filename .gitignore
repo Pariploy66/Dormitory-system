@@ -12,6 +12,11 @@
 .env.prod
 
 # ───────────────────────────────────────────────────────────────
+# Postman collection — local only, not shared via git
+# ───────────────────────────────────────────────────────────────
+postman/
+
+# ───────────────────────────────────────────────────────────────
 # Secrets — NEVER commit (Firebase Admin private key, service accounts)
 # ───────────────────────────────────────────────────────────────
 firebase-service-account.json
