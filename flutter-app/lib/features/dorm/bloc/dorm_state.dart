@@ -65,6 +65,24 @@ class DormState extends Equatable {
 
   int get todayOutCount => logsToday.where((l) => l.type == 'OUT').length;
 
+  // ── Check-in only (we count/show arrivals, never exits) ──────
+  /// All of today's check-ins (IN only), newest first.
+  List<AccessLogModel> get todayCheckIns =>
+      logsToday.where((l) => l.type == 'IN').toList();
+
+  /// The most recent check-in today, or null.
+  AccessLogModel? get latestCheckInToday =>
+      todayCheckIns.isNotEmpty ? todayCheckIns.first : null;
+
+  /// Student profile photo (รูปภาพ from Access Control) — taken from the most
+  /// recent log that carries one; null when no log has a photo yet.
+  String? get studentPhotoUrl {
+    for (final l in [...logsToday, ...logs]) {
+      if (l.imageUrl != null && l.imageUrl!.isNotEmpty) return l.imageUrl;
+    }
+    return null;
+  }
+
   DormState copyWith({
     DormStatus? status,
     List<StudentModel>? students,

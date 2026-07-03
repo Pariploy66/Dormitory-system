@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:intl/intl.dart';
 import '../../features/dorm/domain/access_log_model.dart';
 import '../../features/locale/bloc/locale_bloc.dart';
 
-/// Single latest-activity tile used on the Dashboard.
+/// Single check-in tile used on the Dashboard.
+/// Shows the scan photo, date+time (Thai BE), and gate.
 /// Tapping navigates to History tab via [onTap] callback.
 class ActivityTile extends StatelessWidget {
   final AccessLogModel log;
@@ -15,9 +15,8 @@ class ActivityTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final s = context.watch<LocaleBloc>().state.strings;
-    final timeStr = DateFormat('HH:mm').format(log.accessTime);
-    final borderColor =
-        log.isLate ? Colors.orange : (log.isEntry ? Colors.green : Colors.red);
+    final borderColor = log.isLate ? Colors.orange : Colors.green;
+    final photo = log.scanImageUrl ?? log.imageUrl;
 
     return InkWell(
       onTap: onTap,
@@ -37,12 +36,14 @@ class ActivityTile extends StatelessWidget {
         ),
         child: Row(
           children: [
+            _ScanThumb(photoUrl: photo),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '$timeStr ${log.isEntry ? s.entry : s.exit}'
+                    '${log.displayDateTime} ${s.entry}'
                     '${log.isLate ? " (${s.lateStatus})" : ""}',
                     style: const TextStyle(
                         fontSize: 14,
@@ -59,6 +60,37 @@ class ActivityTile extends StatelessWidget {
             const Icon(Icons.chevron_right_rounded,
                 color: Colors.black38, size: 24),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Circular thumbnail of the gate scan photo, with a graceful fallback.
+class _ScanThumb extends StatelessWidget {
+  final String? photoUrl;
+  const _ScanThumb({required this.photoUrl});
+
+  @override
+  Widget build(BuildContext context) {
+    const size = 44.0;
+    if (photoUrl == null || photoUrl!.isEmpty) {
+      return const CircleAvatar(
+        radius: size / 2,
+        backgroundColor: Color(0xFFF0F0F0),
+        child: Icon(Icons.person_rounded, color: Colors.black38, size: 24),
+      );
+    }
+    return ClipOval(
+      child: Image.network(
+        photoUrl!,
+        width: size,
+        height: size,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => const CircleAvatar(
+          radius: size / 2,
+          backgroundColor: Color(0xFFF0F0F0),
+          child: Icon(Icons.person_rounded, color: Colors.black38, size: 24),
         ),
       ),
     );

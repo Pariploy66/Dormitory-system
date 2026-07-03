@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:intl/intl.dart';
 import '../../domain/access_log_model.dart';
 import '../../../locale/bloc/locale_bloc.dart';
 
@@ -28,18 +27,11 @@ class CurrentStatusCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(s.currentStatus,
-                  style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.black87)),
-              const Icon(Icons.more_horiz_rounded,
-                  color: Colors.black38, size: 20),
-            ],
-          ),
+          Text(s.currentStatus,
+              style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.black87)),
           const SizedBox(height: 20),
           if (latestLogToday != null) ...[
             Row(
@@ -62,18 +54,13 @@ class CurrentStatusCard extends StatelessWidget {
                 const SizedBox(width: 12),
                 Container(height: 30, width: 1, color: Colors.black12),
                 const SizedBox(width: 12),
-                Text(
-                  latestLogToday!.isEntry
-                      ? '${s.entry} : ${latestLogToday!.gateName}'
-                      : '${s.exit} : ${latestLogToday!.gateName}',
-                  style: const TextStyle(fontSize: 12, color: Colors.black54),
+                Expanded(
+                  child: Text(
+                    '${s.entry} : ${latestLogToday!.gateName}',
+                    style: const TextStyle(fontSize: 12, color: Colors.black54),
+                  ),
                 ),
               ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              '${s.updateLabel} ${DateFormat('HH:mm').format(latestLogToday!.accessTime)}',
-              style: const TextStyle(fontSize: 12, color: Colors.black38),
             ),
           ] else
             Text(s.noActivityToday,

@@ -28,6 +28,8 @@ async def forward_event(event: ExternalAccessEvent) -> bool:
         accessTime=event.event_time.isoformat(),
         type=event.event_type,
         gateName=event.gate_name,
+        photoUrl=event.photo_url,
+        scanPhotoUrl=event.scan_photo_url,
     )
 
     try:

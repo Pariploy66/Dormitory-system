@@ -32,17 +32,16 @@ class _DashboardPageState extends State<DashboardPage> {
 
   @override
   Widget build(BuildContext context) {
+    // Multi-child parents get a back button to return to the child picker.
+    final multiChild = context.select<DormBloc, bool>(
+      (b) => b.state.students.length >= 2,
+    );
     return Scaffold(
       backgroundColor: const Color(0xFFFDFBF7),
       appBar: MfuCustomAppBar(
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh_rounded,
-                color: Colors.black54, size: 24),
-            onPressed: () =>
-                context.read<DormBloc>().add(const DormRefreshDashboard()),
-          ),
-        ],
+        showBack: multiChild,
+        onBack: () =>
+            context.read<DormBloc>().add(const DormClearSelection()),
       ),
       body: BlocBuilder<DormBloc, DormState>(
         builder: (context, state) {
@@ -75,18 +74,18 @@ class _DashboardPageState extends State<DashboardPage> {
               padding: const EdgeInsets.symmetric(
                   horizontal: 20, vertical: 16),
               children: [
-                StudentInfoCard(student: state.activeStudent!),
+                StudentInfoCard(
+                  student: state.activeStudent!,
+                  photoUrl: state.studentPhotoUrl,
+                ),
                 const SizedBox(height: 16),
                 CurrentStatusCard(
-                    latestLogToday: state.latestLogToday),
+                    latestLogToday: state.latestCheckInToday),
                 const SizedBox(height: 16),
-                TodaySummaryCard(
-                    inCount: state.todayInCount,
-                    outCount: state.todayOutCount),
+                TodaySummaryCard(inCount: state.todayInCount),
                 const SizedBox(height: 24),
                 RecentActivityCard(
-                  latestLog: state.latestLog,
-                  lastUpdated: state.lastUpdated,
+                  checkIns: state.todayCheckIns,
                   onViewHistory: widget.onViewHistory,
                 ),
               ],

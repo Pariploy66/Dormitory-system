@@ -16,8 +16,6 @@ class SettingsPage extends StatelessWidget {
     final s = context.watch<LocaleBloc>().state.strings;
     final isThai =
         context.watch<LocaleBloc>().state.locale.languageCode == 'th';
-    final multiChild =
-        context.select<DormBloc, bool>((b) => b.state.students.length >= 2);
 
     return Scaffold(
       backgroundColor: const Color(0xFFFDFBF7),
@@ -58,21 +56,6 @@ class SettingsPage extends StatelessWidget {
               ),
               child: Column(
                 children: [
-                  if (multiChild) ...[
-                    SettingTile(
-                      icon: Icons.people_outline_rounded,
-                      label: s.switchChild,
-                      subtitle: s.selectChildSub,
-                      onTap: () => context
-                          .read<DormBloc>()
-                          .add(const DormClearSelection()),
-                    ),
-                    const Divider(
-                        height: 1,
-                        indent: 50,
-                        endIndent: 20,
-                        color: Colors.black12),
-                  ],
                   SettingTile(
                     icon: Icons.person_outline_rounded,
                     label: s.account,

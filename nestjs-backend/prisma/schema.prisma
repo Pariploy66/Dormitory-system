@@ -57,13 +57,18 @@ model ParentStudentRegistry {
 }
 
 model AccessLog {
-  id         String     @id @default(uuid())
-  studentId  String     @map("student_id")
-  accessTime DateTime   @map("access_time")
-  type       AccessType
-  gateName   String     @map("gate_name")
-  createdAt  DateTime   @default(now()) @map("created_at")
-  student    Student    @relation(fields: [studentId], references: [id])
+  id           String     @id @default(uuid())
+  studentId    String     @map("student_id")
+  accessTime   DateTime   @map("access_time")
+  type         AccessType
+  gateName     String     @map("gate_name")
+  // Photos from the gate's Access Control system:
+  //   photoUrl     → รูปภาพ (reference/profile photo)
+  //   scanPhotoUrl → รูปภาพสแกน (live face-scan snapshot)
+  photoUrl     String?    @map("photo_url")
+  scanPhotoUrl String?    @map("scan_photo_url")
+  createdAt    DateTime   @default(now()) @map("created_at")
+  student      Student    @relation(fields: [studentId], references: [id])
 
   @@unique([studentId, accessTime, type], name: "unique_access_event")
   @@index([studentId, accessTime(sort: Desc)])

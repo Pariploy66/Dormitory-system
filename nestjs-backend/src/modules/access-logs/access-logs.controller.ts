@@ -9,7 +9,7 @@ import {
   Request,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { IsString, IsIn, IsDateString } from 'class-validator';
+import { IsString, IsIn, IsDateString, IsOptional } from 'class-validator';
 import { AccessLogsService, IngestPayload } from './access-logs.service';
 import { InternalApiKeyGuard } from '../../common/internal-api-key.guard';
 import { AuthorizeGuard } from '../../common/guards/authorize.guard';
@@ -20,6 +20,8 @@ class IngestDto implements IngestPayload {
   @IsDateString() accessTime: string;
   @IsIn(['IN', 'OUT']) type: 'IN' | 'OUT';
   @IsString() gateName: string;
+  @IsOptional() @IsString() photoUrl?: string;
+  @IsOptional() @IsString() scanPhotoUrl?: string;
 }
 
 // ── Pattern: auth guard → @Authorize → service handler (NewSystem standard) ──

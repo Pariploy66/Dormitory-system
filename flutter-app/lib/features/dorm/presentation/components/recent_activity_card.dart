@@ -1,21 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:intl/intl.dart';
 import '../../domain/access_log_model.dart';
 import '../../../locale/bloc/locale_bloc.dart';
-import '../../../../shared/widgets/live_badge.dart';
 import '../../../../shared/widgets/activity_tile.dart';
 
-/// Recent activity section: header row with LiveBadge + latest log tile.
+/// Recent activity section: every check-in for today, newest first.
 class RecentActivityCard extends StatelessWidget {
-  final AccessLogModel? latestLog;
-  final DateTime? lastUpdated;
+  final List<AccessLogModel> checkIns;
   final VoidCallback onViewHistory;
 
   const RecentActivityCard({
     super.key,
-    required this.latestLog,
-    required this.lastUpdated,
+    required this.checkIns,
     required this.onViewHistory,
   });
 
@@ -26,36 +22,24 @@ class RecentActivityCard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Text(s.recentActivity,
-                style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.black87)),
-            const SizedBox(width: 8),
-            const LiveBadge(),
-            const Spacer(),
-            if (lastUpdated != null)
-              Text(
-                '${s.updateLabel} ${DateFormat('HH:mm').format(lastUpdated!)}',
-                style: const TextStyle(fontSize: 11, color: Colors.black38),
-              ),
-          ],
-        ),
+        Text(s.recentActivity,
+            style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+                color: Colors.black87)),
         const SizedBox(height: 12),
-        if (latestLog == null)
+        if (checkIns.isEmpty)
           Padding(
             padding: const EdgeInsets.all(20),
             child: Center(
-              child: Text(s.noData,
+              child: Text(s.noActivityToday,
                   style: const TextStyle(
                       fontSize: 14, color: Colors.black54)),
             ),
           )
         else
-          ActivityTile(log: latestLog!, onTap: onViewHistory),
+          for (final log in checkIns)
+            ActivityTile(log: log, onTap: onViewHistory),
       ],
     );
   }

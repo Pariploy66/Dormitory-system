@@ -62,6 +62,7 @@ class _StudentAccessAppState extends State<StudentAccessApp> {
             final router = buildRouter(_authBloc);
             return MaterialApp.router(
               title: 'MFU Dormitory',
+              debugShowCheckedModeBanner: false,
               theme: MfuTheme.theme,
               routerConfig: router,
               locale: localeState.locale,

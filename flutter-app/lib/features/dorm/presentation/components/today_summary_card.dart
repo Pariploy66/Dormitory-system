@@ -2,12 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../locale/bloc/locale_bloc.dart';
 
-/// Red gradient bar showing today's total IN / OUT counts.
+/// Red gradient bar showing today's total check-in count.
 class TodaySummaryCard extends StatelessWidget {
   final int inCount;
-  final int outCount;
-  const TodaySummaryCard(
-      {super.key, required this.inCount, required this.outCount});
+  const TodaySummaryCard({super.key, required this.inCount});
 
   @override
   Widget build(BuildContext context) {
@@ -41,16 +39,6 @@ class TodaySummaryCard extends StatelessWidget {
             const Icon(Icons.login_rounded, size: 16, color: Colors.white70),
             const SizedBox(width: 4),
             Text('$inCount ${s.entry}',
-                style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white)),
-          ]),
-          const SizedBox(width: 16),
-          Row(children: [
-            const Icon(Icons.logout_rounded, size: 16, color: Colors.white70),
-            const SizedBox(width: 4),
-            Text('$outCount ${s.exit}',
                 style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,

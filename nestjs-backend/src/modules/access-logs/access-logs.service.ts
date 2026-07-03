@@ -21,6 +21,10 @@ export interface IngestPayload {
   accessTime: string;
   type: 'IN' | 'OUT';
   gateName: string;
+  /** รูปภาพ — reference/profile photo from Access Control (optional). */
+  photoUrl?: string;
+  /** รูปภาพสแกน — live face-scan snapshot from Access Control (optional). */
+  scanPhotoUrl?: string;
 }
 
 @Injectable()
@@ -71,8 +75,14 @@ export class AccessLogsService {
         accessTime,
         type: payload.type,
         gateName: payload.gateName,
+        photoUrl: payload.photoUrl ?? null,
+        scanPhotoUrl: payload.scanPhotoUrl ?? null,
       },
-      update: {},  // no-op on duplicate → deduplication
+      update: {
+        // Backfill photos if a later duplicate carries them (idempotent).
+        photoUrl: payload.photoUrl ?? undefined,
+        scanPhotoUrl: payload.scanPhotoUrl ?? undefined,
+      },
     });
 
     await this.notifications.notifyParentsOfStudent(student, log);
@@ -172,11 +182,23 @@ export class AccessLogsService {
       where: { studentId, accessTime: { gte: since } },
       orderBy: { accessTime: 'desc' },
       take: 500,
-      select: { id: true, accessTime: true, type: true, gateName: true },
+      select: {
+        id: true,
+        accessTime: true,
+        type: true,
+        gateName: true,
+        photoUrl: true,
+        scanPhotoUrl: true,
+      },
     });
 
     return logs.map((log) => ({
-      ...log,
+      id: log.id,
+      accessTime: log.accessTime,
+      type: log.type,
+      gateName: log.gateName,
+      imageUrl: log.photoUrl,
+      scanImageUrl: log.scanPhotoUrl,
       status: this.computeStatus(log.accessTime, log.type),
     }));
   }

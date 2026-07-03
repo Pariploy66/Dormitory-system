@@ -15,6 +15,11 @@ class ExternalAccessEvent(BaseModel):
     event_time: datetime
     event_type: Literal["IN", "OUT"]
     gate_name: str
+    # Access Control also returns two photos per event (optional):
+    #   photo_url      → รูปภาพ (reference/profile photo)
+    #   scan_photo_url → รูปภาพสแกน (live face-scan snapshot)
+    photo_url: str | None = None
+    scan_photo_url: str | None = None
 
     @field_validator("event_time", mode="before")
     @classmethod
@@ -59,3 +64,5 @@ class IngestPayload(BaseModel):
     accessTime: str          # ISO-8601 string
     type: Literal["IN", "OUT"]
     gateName: str
+    photoUrl: str | None = None
+    scanPhotoUrl: str | None = None

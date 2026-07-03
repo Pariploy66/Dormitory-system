@@ -135,7 +135,7 @@ class AppStrings {
 
   static const en = AppStrings(
     loginTitle: 'MFU Dormitory',
-    loginButton: 'Login with Thai ID',
+    loginButton: 'Login with ThaID',
     registerTitle: 'Register',
     registerButton: 'Register',
     email: 'Email',
@@ -154,7 +154,7 @@ class AppStrings {
     logoutTitle: 'Logout',
     logoutConfirm: 'Are you sure you want to logout?',
     cancel: 'Cancel',
-    entry: 'Entry',
+    entry: 'Check-in',
     exit: 'Exit',
     allStatus: 'All Status',
     today: 'Today',
@@ -188,8 +188,7 @@ class AppStrings {
     serverError: 'Server error. Please try again.',
     validationError:
         'Please check your information and try again.',
-    loginSubtitle:
-        'Real-time monitoring of your child\'s dorm activity',
+    loginSubtitle: 'Check dorm entry in Real Time',
     universityName: 'Mae Fah Luang University',
     appDescription: 'Dormitory Management System',
     accountSecurity: 'Account & Security',
@@ -200,7 +199,7 @@ class AppStrings {
     forParentsOnly:
         'For parents only · secure access system\n© Mae Fah Luang University',
     noAccess:
-        'Access denied. This account is not a guardian of any student currently living in the dorm.',
+        'Only parents of students residing in the dormitory are allowed.',
     selectChild: 'Select Child',
     selectChildSub: 'Choose a child to view their records',
     switchChild: 'Switch Child',
@@ -208,7 +207,7 @@ class AppStrings {
 
   static const th = AppStrings(
     loginTitle: 'หอพัก มฟล.',
-    loginButton: 'เข้าสู่ระบบด้วย Thai ID',
+    loginButton: 'เข้าสู่ระบบด้วย ThaID',
     registerTitle: 'สมัครสมาชิก',
     registerButton: 'สมัครสมาชิก',
     email: 'อีเมล',
@@ -227,7 +226,7 @@ class AppStrings {
     logoutTitle: 'ออกจากระบบ',
     logoutConfirm: 'คุณต้องการออกจากระบบใช่หรือไม่?',
     cancel: 'ยกเลิก',
-    entry: 'เข้า',
+    entry: 'เช็คอิน',
     exit: 'ออก',
     allStatus: 'ทุกสถานะ',
     today: 'วันนี้',
@@ -260,7 +259,7 @@ class AppStrings {
         'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้ กรุณาตรวจสอบการเชื่อมต่อ',
     serverError: 'เกิดข้อผิดพลาดที่เซิร์ฟเวอร์ กรุณาลองใหม่',
     validationError: 'กรุณาตรวจสอบข้อมูลที่กรอก',
-    loginSubtitle: 'ติดตามกิจกรรมหอพักบุตรหลานแบบเรียลไทม์',
+    loginSubtitle: 'ตรวจเช็คการเข้าหอแบบ Real Time',
     universityName: 'มหาวิทยาลัยแม่ฟ้าหลวง',
     appDescription: 'ระบบจัดการหอพัก',
     accountSecurity: 'บัญชีและความปลอดภัย',
@@ -271,7 +270,7 @@ class AppStrings {
     forParentsOnly:
         'สำหรับผู้ปกครองเท่านั้น · ระบบเข้าถึงที่ปลอดภัย\n© มหาวิทยาลัยแม่ฟ้าหลวง',
     noAccess:
-        'ไม่มีสิทธิ์เข้าถึง บัญชีนี้ไม่ใช่ผู้ปกครองของนักศึกษาที่พักในหอ',
+        'เฉพาะผู้ปกครองของนักศึกษาที่พักในหอพักเท่านั้น',
     selectChild: 'เลือกบุตรหลาน',
     selectChildSub: 'เลือกบุตรหลานที่ต้องการดูข้อมูล',
     switchChild: 'เปลี่ยนบุตรหลาน',

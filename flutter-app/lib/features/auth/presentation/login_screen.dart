@@ -128,7 +128,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               'Mae Fah Luang University',
                               style: TextStyle(
                                 fontSize: 12,
-                                color: Colors.black54,
+                                color: Colors.black45,
                                 letterSpacing: 0.3,
                               ),
                             ),
@@ -153,7 +153,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               s.loginSubtitle,
                               style: const TextStyle(
                                 fontSize: 12,
-                                color: Colors.black38,
+                                color: Colors.black45,
                               ),
                               textAlign: TextAlign.center,
                             ),
@@ -166,12 +166,14 @@ class _LoginScreenState extends State<LoginScreen> {
                               if (state.status == AuthStatus.failure &&
                                   state.error != null) {
                                 return Padding(
-                                  padding: const EdgeInsets.only(bottom: 12),
+                                  padding: const EdgeInsets.only(bottom: 16),
                                   child: Text(
                                     _errorMessage(state.error!),
                                     style: const TextStyle(
                                       color: MfuTheme.primary,
-                                      fontSize: 12,
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w700,
+                                      height: 1.35,
                                     ),
                                     textAlign: TextAlign.center,
                                   ),
@@ -228,8 +230,8 @@ class _LoginScreenState extends State<LoginScreen> {
                             child: Text(
                               s.forParentsOnly,
                               style: const TextStyle(
-                                fontSize: 10,
-                                color: Colors.black38,
+                                fontSize: 12,
+                                color: Colors.black45,
                               ),
                               textAlign: TextAlign.center,
                             ),
@@ -257,49 +259,23 @@ class _LangToggle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.black26),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          GestureDetector(
-            onTap: () => context
-                .read<LocaleBloc>()
-                .add(const LocaleChanged(Locale('th'))),
-            child: Text(
-              'TH',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: isTh ? FontWeight.w700 : FontWeight.w400,
-                color: isTh ? Colors.black87 : Colors.black38,
-              ),
-            ),
-          ),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 4),
-            child: Text(
-              '/',
-              style: TextStyle(fontSize: 12, color: Colors.black26),
-            ),
-          ),
-          GestureDetector(
-            onTap: () => context
-                .read<LocaleBloc>()
-                .add(const LocaleChanged(Locale('en'))),
-            child: Text(
-              'EN',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: !isTh ? FontWeight.w700 : FontWeight.w400,
-                color: !isTh ? Colors.black87 : Colors.black38,
-              ),
-            ),
-          ),
-        ],
+    // Globe icon that toggles between Thai and English.
+    return InkWell(
+      borderRadius: BorderRadius.circular(24),
+      onTap: () => context
+          .read<LocaleBloc>()
+          .add(LocaleChanged(Locale(isTh ? 'en' : 'th'))),
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.black26),
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: const Icon(
+          Icons.language_rounded,
+          size: 22,
+          color: Colors.black54,
+        ),
       ),
     );
   }

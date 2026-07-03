@@ -58,6 +58,10 @@ export class NotificationsService implements OnModuleInit {
   ) {
     if (!this.firebaseApp) return;
 
+    // We only notify parents on check-in (arrival). Exits are never pushed,
+    // mirroring the app which counts/shows check-ins only.
+    if (log.type !== 'IN') return;
+
     // Find guardians (by citizen ID) registered for this student via the
     // registry, then collect the FCM tokens of any that have logged in.
     const entries = await this.prisma.parentStudentRegistry.findMany({
@@ -76,7 +80,6 @@ export class NotificationsService implements OnModuleInit {
     );
     if (!tokens.length) return;
 
-    const direction = log.type === 'IN' ? 'เข้า' : 'ออก';
     const timeStr = log.accessTime.toLocaleTimeString('th-TH', {
       hour: '2-digit',
       minute: '2-digit',
@@ -85,8 +88,8 @@ export class NotificationsService implements OnModuleInit {
     const message: admin.messaging.MulticastMessage = {
       tokens,
       notification: {
-        title: `${student.name} ${direction}หอพัก`,
-        body: `ประตู: ${log.gateName} · เวลา ${timeStr}`,
+        title: 'MFU Dormitory',
+        body: `${student.name} entered the dormitory at ${timeStr}`,
       },
       data: {
         studentId: student.id,

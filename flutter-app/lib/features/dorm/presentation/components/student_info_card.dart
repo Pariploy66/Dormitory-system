@@ -1,21 +1,21 @@
 import 'package:flutter/material.dart';
 import '../../domain/student_model.dart';
 
-/// Profile card showing student name, code, and dorm location.
+/// Profile card showing student photo, name, code, and dorm location.
 class StudentInfoCard extends StatelessWidget {
   final StudentModel student;
-  const StudentInfoCard({super.key, required this.student});
+
+  /// Profile photo (รูปภาพ) from Access Control; falls back to a person icon.
+  final String? photoUrl;
+
+  const StudentInfoCard({super.key, required this.student, this.photoUrl});
 
   @override
   Widget build(BuildContext context) {
     return _Card(
       child: Row(
         children: [
-          const CircleAvatar(
-            radius: 28,
-            backgroundColor: Colors.black87,
-            child: Icon(Icons.person_rounded, color: Colors.white, size: 36),
-          ),
+          _Avatar(photoUrl: photoUrl),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
@@ -38,6 +38,30 @@ class StudentInfoCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _Avatar extends StatelessWidget {
+  final String? photoUrl;
+  const _Avatar({required this.photoUrl});
+
+  @override
+  Widget build(BuildContext context) {
+    const fallback = CircleAvatar(
+      radius: 28,
+      backgroundColor: Colors.black87,
+      child: Icon(Icons.person_rounded, color: Colors.white, size: 36),
+    );
+    if (photoUrl == null || photoUrl!.isEmpty) return fallback;
+    return ClipOval(
+      child: Image.network(
+        photoUrl!,
+        width: 56,
+        height: 56,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => fallback,
       ),
     );
   }

@@ -13,21 +13,9 @@ import '../../../core/theme/mfu_theme.dart';
 class ChildSelectionScreen extends StatelessWidget {
   const ChildSelectionScreen({super.key});
 
-  String _relationshipLabel(String rel, bool isTh) {
-    switch (rel) {
-      case 'FATHER':
-        return isTh ? 'พ่อ' : 'Father';
-      case 'MOTHER':
-        return isTh ? 'แม่' : 'Mother';
-      default:
-        return isTh ? 'ผู้ปกครอง' : 'Guardian';
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final s = context.watch<LocaleBloc>().state.strings;
-    final isTh = context.watch<LocaleBloc>().state.locale.languageCode == 'th';
     final students = context.watch<DormBloc>().state.students;
 
     return Scaffold(
@@ -64,7 +52,6 @@ class ChildSelectionScreen extends StatelessWidget {
                     name: st.name,
                     code: st.studentCode,
                     location: st.locationLabel,
-                    relationship: _relationshipLabel(st.relationship, isTh),
                     onTap: () =>
                         context.read<DormBloc>().add(DormSelectStudent(st.id)),
                   );
@@ -82,14 +69,12 @@ class _ChildCard extends StatelessWidget {
   final String name;
   final String code;
   final String location;
-  final String relationship;
   final VoidCallback onTap;
 
   const _ChildCard({
     required this.name,
     required this.code,
     required this.location,
-    required this.relationship,
     required this.onTap,
   });
 
@@ -132,22 +117,6 @@ class _ChildCard extends StatelessWidget {
                   ],
                 ),
               ),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: MfuTheme.primary.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  relationship,
-                  style: const TextStyle(
-                      fontSize: 11,
-                      color: MfuTheme.primary,
-                      fontWeight: FontWeight.w600),
-                ),
-              ),
-              const SizedBox(width: 6),
               const Icon(Icons.chevron_right, color: Colors.black26),
             ],
           ),

@@ -117,9 +117,7 @@ class HistoryTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final s = context.watch<LocaleBloc>().state.strings;
-    final timeStr = DateFormat('HH:mm').format(log.accessTime);
-    final bottomColor =
-        log.isEntry ? Colors.green : const Color(0xFFD61A22);
+    final photo = log.scanImageUrl ?? log.imageUrl;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -136,19 +134,19 @@ class HistoryTile extends StatelessWidget {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(12),
         child: Container(
-          decoration: BoxDecoration(
+          decoration: const BoxDecoration(
             border: Border(
-              bottom: BorderSide(color: bottomColor, width: 3),
-              top: const BorderSide(color: Colors.black12, width: 0.5),
-              left: const BorderSide(color: Colors.black12, width: 0.5),
-              right: const BorderSide(color: Colors.black12, width: 0.5),
+              bottom: BorderSide(color: Colors.green, width: 3),
+              top: BorderSide(color: Colors.black12, width: 0.5),
+              left: BorderSide(color: Colors.black12, width: 0.5),
+              right: BorderSide(color: Colors.black12, width: 0.5),
             ),
           ),
           child: ListTile(
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             title: Text(
-              '$timeStr ${log.isEntry ? s.entry : s.exit}',
+              '${log.displayDateTime} ${s.entry}',
               style: const TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w800,
@@ -163,52 +161,79 @@ class HistoryTile extends StatelessWidget {
                   Text(log.gateName,
                       style: const TextStyle(
                           fontSize: 12, color: Colors.black54)),
-                  if (log.isEntry) ...[
-                    const SizedBox(height: 4),
-                    Text(s.faceScanLabel,
-                        style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.green)),
-                    const SizedBox(height: 4),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 7, vertical: 2),
-                      decoration: BoxDecoration(
+                  const SizedBox(height: 4),
+                  Text(s.faceScanLabel,
+                      style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.green)),
+                  const SizedBox(height: 4),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 7, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: log.isLate
+                          ? Colors.orange.shade50
+                          : Colors.green.shade50,
+                      borderRadius: BorderRadius.circular(4),
+                      border: Border.all(
                         color: log.isLate
-                            ? Colors.orange.shade50
-                            : Colors.green.shade50,
-                        borderRadius: BorderRadius.circular(4),
-                        border: Border.all(
-                          color: log.isLate
-                              ? Colors.orange.shade300
-                              : Colors.green.shade300,
-                          width: 0.8,
-                        ),
-                      ),
-                      child: Text(
-                        log.isLate ? s.lateStatus : s.onTime,
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                          color: log.isLate
-                              ? Colors.orange.shade700
-                              : Colors.green.shade700,
-                        ),
+                            ? Colors.orange.shade300
+                            : Colors.green.shade300,
+                        width: 0.8,
                       ),
                     ),
-                  ],
+                    child: Text(
+                      log.isLate ? s.lateStatus : s.onTime,
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: log.isLate
+                            ? Colors.orange.shade700
+                            : Colors.green.shade700,
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
-            trailing: const CircleAvatar(
-              radius: 18,
-              backgroundColor: Colors.black87,
-              child: Icon(Icons.person_rounded,
-                  size: 24, color: Colors.white),
-            ),
+            trailing: _ScanThumb(photoUrl: photo),
           ),
         ),
+      ),
+    );
+  }
+}
+
+// ── Scan photo thumbnail ──────────────────────────────────────────────────────
+
+/// Square thumbnail of the gate scan photo (รูปภาพสแกน), with a fallback icon.
+class _ScanThumb extends StatelessWidget {
+  final String? photoUrl;
+  const _ScanThumb({required this.photoUrl});
+
+  static const double _size = 72;
+
+  @override
+  Widget build(BuildContext context) {
+    final fallback = Container(
+      width: _size,
+      height: _size,
+      decoration: BoxDecoration(
+        color: Colors.black87,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: const Icon(Icons.person_rounded, size: 36, color: Colors.white),
+    );
+    if (photoUrl == null || photoUrl!.isEmpty) return fallback;
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(10),
+      child: Image.network(
+        photoUrl!,
+        width: _size,
+        height: _size,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => fallback,
       ),
     );
   }

@@ -74,38 +74,6 @@ class HistoryPage extends StatelessWidget {
     );
   }
 
-  void _showTypeSheet(
-      BuildContext ctx, AppStrings s, String currentType) {
-    showModalBottomSheet(
-      context: ctx,
-      shape: const RoundedRectangleBorder(
-          borderRadius:
-              BorderRadius.vertical(top: Radius.circular(16))),
-      builder: (_) => Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          (DormState.filterTypeAll, s.allStatus),
-          (DormState.filterTypeEntry, s.entry),
-          (DormState.filterTypeExit, s.exit),
-        ]
-            .map((pair) => ListTile(
-                  title: Text(pair.$2),
-                  trailing: currentType == pair.$1
-                      ? const Icon(Icons.check_rounded,
-                          color: MfuTheme.primary)
-                      : null,
-                  onTap: () {
-                    ctx
-                        .read<DormBloc>()
-                        .add(DormSetFilterType(pair.$1));
-                    Navigator.pop(ctx);
-                  },
-                ))
-            .toList(),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final s = context.watch<LocaleBloc>().state.strings;
@@ -123,13 +91,11 @@ class HistoryPage extends StatelessWidget {
         final cutoff = DateTime(now.year, now.month, now.day)
             .subtract(Duration(days: state.filterDays - 1));
 
+        // Check-in only — we never show exits.
         final filtered = sourceLogs.where((l) {
           final inRange =
               isTodayView || !l.accessTime.isBefore(cutoff);
-          final matchT = state.filterType == DormState.filterTypeAll ||
-              (state.filterType == DormState.filterTypeEntry && l.isEntry) ||
-              (state.filterType == DormState.filterTypeExit && l.isExit);
-          return inRange && matchT;
+          return inRange && l.isEntry;
         }).toList();
 
         final sections = buildDaySections(
@@ -146,41 +112,15 @@ class HistoryPage extends StatelessWidget {
           return s.last7Days;
         }
 
-        String typeLabel() {
-          switch (state.filterType) {
-            case DormState.filterTypeEntry:
-              return s.entry;
-            case DormState.filterTypeExit:
-              return s.exit;
-            default:
-              return s.allStatus;
-          }
-        }
-
         return Scaffold(
           backgroundColor: const Color(0xFFFDFBF7),
-          appBar: MfuCustomAppBar(
-            actions: [
-              if (studentId.isNotEmpty)
-                IconButton(
-                  icon: const Icon(Icons.refresh_rounded,
-                      color: Colors.black54, size: 24),
-                  onPressed: () => context
-                      .read<DormBloc>()
-                      .add(const DormRefreshHistory()),
-                ),
-            ],
-          ),
+          appBar: const MfuCustomAppBar(),
           body: Column(
             children: [
               HistoryFilterBar(
                 periodLabel: periodLabel(),
-                filterType: typeLabel(),
-                lastUpdated: state.lastUpdated,
                 onPeriodTap: () =>
                     _showPeriodSheet(context, s, state.filterDays),
-                onTypeTap: () =>
-                    _showTypeSheet(context, s, state.filterType),
               ),
               Expanded(
                 child: studentId.isEmpty

@@ -6,7 +6,18 @@ import '../../features/locale/bloc/locale_bloc.dart';
 /// Shared across Dashboard, History, and Settings screens.
 class MfuCustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final List<Widget>? actions;
-  const MfuCustomAppBar({super.key, this.actions});
+
+  /// When true the MFU logo is replaced by a back button (used by multi-child
+  /// parents to return to the child-selection screen). [onBack] is invoked on tap.
+  final bool showBack;
+  final VoidCallback? onBack;
+
+  const MfuCustomAppBar({
+    super.key,
+    this.actions,
+    this.showBack = false,
+    this.onBack,
+  });
 
   @override
   Size get preferredSize => const Size.fromHeight(85);
@@ -36,15 +47,24 @@ class MfuCustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Image.asset(
-            'assets/images/mfu_logo.png',
-            height: 50,
-            width: 44,
-            fit: BoxFit.contain,
-            errorBuilder: (ctx, err, stack) =>
-                const Icon(Icons.image_not_supported,
-                    size: 40, color: Colors.grey),
-          ),
+          if (showBack)
+            IconButton(
+              onPressed: onBack,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+              icon: const Icon(Icons.arrow_back_rounded,
+                  size: 28, color: Color(0xFFC00000)),
+            )
+          else
+            Image.asset(
+              'assets/images/mfu_logo.png',
+              height: 50,
+              width: 44,
+              fit: BoxFit.contain,
+              errorBuilder: (ctx, err, stack) =>
+                  const Icon(Icons.image_not_supported,
+                      size: 40, color: Colors.grey),
+            ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
