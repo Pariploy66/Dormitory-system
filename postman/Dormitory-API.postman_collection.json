@@ -1,0 +1,189 @@
+{
+  "info": {
+    "name": "Dormitory API",
+    "description": "Test collection for the Dormitory backend. Set collection variables baseUrl / internalKey / jwt in the Variables tab. Use Postman Desktop Agent to reach localhost.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000" },
+    { "key": "internalKey", "value": "change-me-internal-secret-key" },
+    { "key": "jwt", "value": "" },
+    { "key": "studentId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "GET ThaID login-url (public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/thaid/login-url",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "thaid", "login-url"]
+            },
+            "description": "Returns the ThaID authorization URL to open in a browser/webview."
+          }
+        },
+        {
+          "name": "POST logout (needs JWT)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwt}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "logout"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Internal (X-Internal-API-Key)",
+      "item": [
+        {
+          "name": "POST Scan IN",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-Internal-API-Key", "value": "{{internalKey}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"externalStudentId\": \"T001\",\n  \"type\": \"IN\",\n  \"accessTime\": \"2026-07-03T08:30:00.000Z\",\n  \"gateName\": \"F1 Main Gate\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/internal/access-logs",
+              "host": ["{{baseUrl}}"],
+              "path": ["internal", "access-logs"]
+            }
+          }
+        },
+        {
+          "name": "POST Scan OUT",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-Internal-API-Key", "value": "{{internalKey}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"externalStudentId\": \"T001\",\n  \"type\": \"OUT\",\n  \"accessTime\": \"2026-07-03T17:45:00.000Z\",\n  \"gateName\": \"F1 Main Gate\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/internal/access-logs",
+              "host": ["{{baseUrl}}"],
+              "path": ["internal", "access-logs"]
+            }
+          }
+        },
+        {
+          "name": "POST Upsert student",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-Internal-API-Key", "value": "{{internalKey}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"externalStudentId\": \"T001\",\n  \"studentCode\": \"6631501163\",\n  \"name\": \"Parichat Phojan\",\n  \"dormitory\": \"F1\",\n  \"roomNumber\": \"127\",\n  \"status\": \"ACTIVE\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/internal/students/upsert",
+              "host": ["{{baseUrl}}"],
+              "path": ["internal", "students", "upsert"]
+            }
+          }
+        },
+        {
+          "name": "POST Link guardian",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-Internal-API-Key", "value": "{{internalKey}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"parentCitizenId\": \"1149900859119\",\n  \"studentCode\": \"6631501163\",\n  \"relationship\": \"FATHER\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/internal/students/guardian",
+              "host": ["{{baseUrl}}"],
+              "path": ["internal", "students", "guardian"]
+            }
+          }
+        },
+        {
+          "name": "POST Registry sync (bulk — seeds everything)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-Internal-API-Key", "value": "{{internalKey}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"students\": [\n    { \"externalStudentId\": \"T001\", \"studentCode\": \"6631501163\", \"name\": \"Parichat Phojan\", \"dormitory\": \"F1\", \"roomNumber\": \"127\", \"status\": \"ACTIVE\" },\n    { \"externalStudentId\": \"T002\", \"studentCode\": \"6631501126\", \"name\": \"Araya Logniyom\", \"dormitory\": \"F1\", \"roomNumber\": \"201\", \"status\": \"ACTIVE\" },\n    { \"externalStudentId\": \"T003\", \"studentCode\": \"6631501064\", \"name\": \"Nawamol Nuanyai\", \"dormitory\": \"F2\", \"roomNumber\": \"305\", \"status\": \"ACTIVE\" },\n    { \"externalStudentId\": \"T004\", \"studentCode\": \"6631509004\", \"name\": \"Kittipong Jaidee\", \"dormitory\": \"F1\", \"roomNumber\": \"110\", \"status\": \"GRADUATED\" },\n    { \"externalStudentId\": \"T005\", \"studentCode\": \"6631509005\", \"name\": \"Suda Manalai\", \"dormitory\": \"F2\", \"roomNumber\": \"410\", \"status\": \"MOVED_OUT\" },\n    { \"externalStudentId\": \"T006\", \"studentCode\": \"6631501003\", \"name\": \"Phailin Phojan\", \"dormitory\": \"F1\", \"roomNumber\": \"128\", \"status\": \"ACTIVE\" }\n  ],\n  \"guardians\": [\n    { \"parentCitizenId\": \"1149900859119\", \"studentCode\": \"6631501163\", \"relationship\": \"FATHER\" },\n    { \"parentCitizenId\": \"1149900859119\", \"studentCode\": \"6631501003\", \"relationship\": \"FATHER\" },\n    { \"parentCitizenId\": \"1100200300400\", \"studentCode\": \"6631501163\", \"relationship\": \"MOTHER\" },\n    { \"parentCitizenId\": \"3301201232653\", \"studentCode\": \"6631501126\", \"relationship\": \"MOTHER\" },\n    { \"parentCitizenId\": \"3640400263229\", \"studentCode\": \"6631501064\", \"relationship\": \"FATHER\" },\n    { \"parentCitizenId\": \"3101401511876\", \"studentCode\": \"6631509004\", \"relationship\": \"GUARDIAN\" },\n    { \"parentCitizenId\": \"3400700708503\", \"studentCode\": \"6631509005\", \"relationship\": \"FATHER\" }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/internal/registry/sync",
+              "host": ["{{baseUrl}}"],
+              "path": ["internal", "registry", "sync"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Parent (Bearer JWT)",
+      "item": [
+        {
+          "name": "GET my profile",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{jwt}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/me/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["me", "profile"]
+            }
+          }
+        },
+        {
+          "name": "GET my students",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{jwt}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/me/students",
+              "host": ["{{baseUrl}}"],
+              "path": ["me", "students"]
+            }
+          }
+        },
+        {
+          "name": "GET student logs (set studentId var)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{jwt}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/me/students/{{studentId}}/logs?days=7",
+              "host": ["{{baseUrl}}"],
+              "path": ["me", "students", "{{studentId}}", "logs"],
+              "query": [{ "key": "days", "value": "7" }]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
