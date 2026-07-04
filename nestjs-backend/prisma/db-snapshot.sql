@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict Pf6Rrb8yMjbdSi4ilEP74NvwgH18QMqL24TOrxrmxplntCaYCy0XjtwM2oSGLM5
+\restrict 4pHzrLaW6QhwGgwDU459MdZ7qehtCuJHHBoaViP3cR3uCPNLape3agZYDQdVKIk
 
 -- Dumped from database version 18.3
 -- Dumped by pg_dump version 18.3
@@ -189,7 +189,11 @@ CREATE TABLE public.students (
 -- Data for Name: _prisma_migrations; Type: TABLE DATA; Schema: public; Owner: -
 --
 
-INSERT INTO public._prisma_migrations (id, checksum, finished_at, migration_name, logs, rolled_back_at, started_at, applied_steps_count) VALUES ('7d471b4f-1363-4d1e-a99a-b764ab80b8eb', '8d44bac69aa7bc0a3f5743f045dc9af6bea5d064129c6b023899fc0744bcf874', '2026-07-04 06:06:12.560517-07', '20260704000000_init', '', NULL, '2026-07-04 06:06:12.560517-07', 0);
+INSERT INTO public._prisma_migrations (id, checksum, finished_at, migration_name, logs, rolled_back_at, started_at, applied_steps_count) VALUES ('2f5736a7-2f52-49ee-a444-72c62b09db67', '1ecad857993dade27aecf175a695d982fec17152527c1b70bbb8b6131684d58d', '2026-07-04 06:11:14.779938-07', '20260418050346_init', '', NULL, '2026-07-04 06:11:14.779938-07', 0);
+INSERT INTO public._prisma_migrations (id, checksum, finished_at, migration_name, logs, rolled_back_at, started_at, applied_steps_count) VALUES ('df7ec974-d9e4-4beb-8cf4-dc6747c4f245', '859e4bbf59fb4dcd48c002bff54907f3988a9073d2d5c6220e02b3240cb07746', '2026-07-04 06:11:17.194295-07', '20260627141456_thaid_only_auth', '', NULL, '2026-07-04 06:11:17.194295-07', 0);
+INSERT INTO public._prisma_migrations (id, checksum, finished_at, migration_name, logs, rolled_back_at, started_at, applied_steps_count) VALUES ('0b829b23-0e93-493f-b30a-65be3ae89f1c', 'e257aa783015c43abb0811522a919411dc815f178a7eeb4f5fddf1719fb8d2c2', '2026-07-04 06:11:19.463971-07', '20260627142600_add_auth_logs', '', NULL, '2026-07-04 06:11:19.463971-07', 0);
+INSERT INTO public._prisma_migrations (id, checksum, finished_at, migration_name, logs, rolled_back_at, started_at, applied_steps_count) VALUES ('4a7763bb-8647-4d4a-a892-31e6050e3f18', 'a87ce652e00eb43756ba83af4f77e4e518cf4d0315ab0ce7034557a0d557b304', '2026-07-04 06:11:21.761218-07', '20260630163618_registry_status_relationship', '', NULL, '2026-07-04 06:11:21.761218-07', 0);
+INSERT INTO public._prisma_migrations (id, checksum, finished_at, migration_name, logs, rolled_back_at, started_at, applied_steps_count) VALUES ('fa9b0fcf-8cfe-439d-84dd-432bfb732211', 'daba54c0a48d6cfaec2ee88e605149577418d3e290acc3d5020375cced757024', '2026-07-04 06:11:24.00004-07', '20260703000000_access_log_photos', '', NULL, '2026-07-04 06:11:24.00004-07', 0);
 
 
 --
@@ -455,5 +459,5 @@ ALTER TABLE ONLY public.parent_student_registry
 -- PostgreSQL database dump complete
 --
 
-\unrestrict Pf6Rrb8yMjbdSi4ilEP74NvwgH18QMqL24TOrxrmxplntCaYCy0XjtwM2oSGLM5
+\unrestrict 4pHzrLaW6QhwGgwDU459MdZ7qehtCuJHHBoaViP3cR3uCPNLape3agZYDQdVKIk
 
