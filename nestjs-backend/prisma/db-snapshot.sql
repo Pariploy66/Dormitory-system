@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 4pHzrLaW6QhwGgwDU459MdZ7qehtCuJHHBoaViP3cR3uCPNLape3agZYDQdVKIk
+\restrict YVXYTmSdzSSntuXEV0wq2aOfd7CY7v5eAlLpTPMtgcwHb6zWzYtxFuxfpJZ26n3
 
 -- Dumped from database version 18.3
 -- Dumped by pg_dump version 18.3
@@ -205,6 +205,7 @@ INSERT INTO public.access_logs (id, student_id, access_time, type, gate_name, cr
 INSERT INTO public.access_logs (id, student_id, access_time, type, gate_name, created_at, photo_url, scan_photo_url) VALUES ('d2d8ed3d-f8e7-4441-a5fa-1deadcc80e3a', '4cf6f324-9736-408c-9315-93fe9a37692d', '2026-07-04 01:15:00', 'IN', 'Main Entrance', '2026-07-03 17:56:03.609', NULL, NULL);
 INSERT INTO public.access_logs (id, student_id, access_time, type, gate_name, created_at, photo_url, scan_photo_url) VALUES ('b690306b-6b7c-4fd9-a1f2-c669a6c230c7', '4cf6f324-9736-408c-9315-93fe9a37692d', '2026-07-04 02:45:00', 'IN', 'Main Entrance', '2026-07-03 17:56:10.203', NULL, NULL);
 INSERT INTO public.access_logs (id, student_id, access_time, type, gate_name, created_at, photo_url, scan_photo_url) VALUES ('4f722357-4fc4-418a-91ba-a1c86a558c15', '4cf6f324-9736-408c-9315-93fe9a37692d', '2026-07-01 02:45:00', 'IN', 'Main Entrance', '2026-07-03 17:56:16.051', NULL, NULL);
+INSERT INTO public.access_logs (id, student_id, access_time, type, gate_name, created_at, photo_url, scan_photo_url) VALUES ('dd0a3c94-56b9-405c-a9cb-37ce3f9c1bed', '4cf6f324-9736-408c-9315-93fe9a37692d', '2026-07-05 02:15:00', 'IN', 'Main Gate', '2026-07-05 05:48:38.229', '/uploads/access-logs/T001_1783217700000_ref.jpg', '/uploads/access-logs/T001_1783217700000_scan.jpg');
 INSERT INTO public.access_logs (id, student_id, access_time, type, gate_name, created_at, photo_url, scan_photo_url) VALUES ('b62c4de7-7e65-4d03-9d3d-d9d52f43c0e9', '4cf6f324-9736-408c-9315-93fe9a37692d', '2026-07-04 00:25:00', 'IN', 'Main Entrance', '2026-07-03 17:25:43.047', 'https://loremflickr.com/150/150/pig?lock=0', 'https://loremflickr.com/150/150/pig,face?lock=1');
 INSERT INTO public.access_logs (id, student_id, access_time, type, gate_name, created_at, photo_url, scan_photo_url) VALUES ('7b5d3ca7-60f0-430b-937a-5a8bff689c24', '9ac11cfd-0e8e-4bcd-a10d-f3f51fead82c', '2026-06-30 16:59:00', 'IN', 'Main Entrance', '2026-06-30 15:11:33.89', 'https://loremflickr.com/150/150/dog?lock=2', 'https://loremflickr.com/150/150/dog,face?lock=3');
 INSERT INTO public.access_logs (id, student_id, access_time, type, gate_name, created_at, photo_url, scan_photo_url) VALUES ('d6ad2709-5b4f-4fdd-b11e-74022dc94f4e', '9ac11cfd-0e8e-4bcd-a10d-f3f51fead82c', '2026-06-30 16:35:00', 'IN', 'Main Entrance', '2026-06-30 14:36:57.955', 'https://loremflickr.com/150/150/rooster?lock=4', 'https://loremflickr.com/150/150/rooster,face?lock=5');
@@ -254,13 +255,15 @@ INSERT INTO public.auth_logs (id, parent_id, event, ip_address, user_agent, crea
 INSERT INTO public.auth_logs (id, parent_id, event, ip_address, user_agent, created_at, citizen_id) VALUES ('a0f148cc-a8df-46bc-a002-8b7b999595cd', NULL, 'DENIED', '::ffff:127.0.0.1', 'Dart/3.11 (dart:io)', '2026-07-03 17:45:46.625', '3400700708503');
 INSERT INTO public.auth_logs (id, parent_id, event, ip_address, user_agent, created_at, citizen_id) VALUES ('46a05916-4ca5-4d6a-8b64-23bb7ff15d90', NULL, 'DENIED', '::ffff:127.0.0.1', 'Dart/3.11 (dart:io)', '2026-07-03 17:55:13.081', '3400700708503');
 INSERT INTO public.auth_logs (id, parent_id, event, ip_address, user_agent, created_at, citizen_id) VALUES ('eb1796ea-f51c-40f7-bbc4-8212b73de1ef', '0b689281-ea71-4a2f-8734-d1aea51a0e73', 'LOGIN', '::ffff:127.0.0.1', 'Dart/3.11 (dart:io)', '2026-07-03 17:55:33.591', '1149900859119');
+INSERT INTO public.auth_logs (id, parent_id, event, ip_address, user_agent, created_at, citizen_id) VALUES ('356eaaba-11ec-43fc-af48-35071abf8639', '0b689281-ea71-4a2f-8734-d1aea51a0e73', 'LOGOUT', '::ffff:127.0.0.1', 'Dart/3.11 (dart:io)', '2026-07-05 05:57:12.7', NULL);
+INSERT INTO public.auth_logs (id, parent_id, event, ip_address, user_agent, created_at, citizen_id) VALUES ('93ad7964-75da-4aee-b168-a0d320732a37', '0b689281-ea71-4a2f-8734-d1aea51a0e73', 'LOGIN', '::ffff:127.0.0.1', 'Dart/3.11 (dart:io)', '2026-07-05 06:00:46.755', '1149900859119');
 
 
 --
 -- Data for Name: devices; Type: TABLE DATA; Schema: public; Owner: -
 --
 
-INSERT INTO public.devices (id, parent_id, fcm_token, created_at, updated_at) VALUES ('ebab07c0-1290-43a5-9130-279a8d09f308', '0b689281-ea71-4a2f-8734-d1aea51a0e73', 'epPlQ_O_TKWsdiEaXBSMG8:APA91bFU2qF2ihuleHmjkPmIX4BWwD36obrJmrQn1rOj9mfFwPZzisLz0CStFeMkzwEuBCCxSxv_Ikql7kgdaasSF-_RPtKnIyG3quhHgbJ3TRAtBF76k8s', '2026-06-30 14:33:33.071', '2026-07-03 17:55:34.438');
+INSERT INTO public.devices (id, parent_id, fcm_token, created_at, updated_at) VALUES ('ebab07c0-1290-43a5-9130-279a8d09f308', '0b689281-ea71-4a2f-8734-d1aea51a0e73', 'epPlQ_O_TKWsdiEaXBSMG8:APA91bFU2qF2ihuleHmjkPmIX4BWwD36obrJmrQn1rOj9mfFwPZzisLz0CStFeMkzwEuBCCxSxv_Ikql7kgdaasSF-_RPtKnIyG3quhHgbJ3TRAtBF76k8s', '2026-06-30 14:33:33.071', '2026-07-05 06:00:48.331');
 
 
 --
@@ -282,7 +285,7 @@ INSERT INTO public.parent_student_registry (id, parent_citizen_id, student_id, r
 
 INSERT INTO public.parents (id, name, is_verified, created_at, updated_at, thaid_sub, identity_provider, citizen_id) VALUES ('0769db6b-3fe7-4286-93c7-067d364259b9', 'ชื่อตัว ชื่อกลาง ชื่อสกุล', true, '2026-06-30 16:49:20.078', '2026-07-03 12:48:52', '3640400263229', 'THAID', '3640400263229');
 INSERT INTO public.parents (id, name, is_verified, created_at, updated_at, thaid_sub, identity_provider, citizen_id) VALUES ('8bb210f9-9a7d-45e2-a8ad-171e22ef6fa0', 'ชื่อตัว ชื่อกลาง ชื่อสกุล', true, '2026-07-03 12:49:40.732', '2026-07-03 12:49:40.732', '3301201232653', 'THAID', '3301201232653');
-INSERT INTO public.parents (id, name, is_verified, created_at, updated_at, thaid_sub, identity_provider, citizen_id) VALUES ('0b689281-ea71-4a2f-8734-d1aea51a0e73', 'ชื่อตัว ชื่อกลาง ชื่อสกุล', true, '2026-06-30 14:30:54.823', '2026-07-03 17:55:33.572', '1149900859119', 'THAID', '1149900859119');
+INSERT INTO public.parents (id, name, is_verified, created_at, updated_at, thaid_sub, identity_provider, citizen_id) VALUES ('0b689281-ea71-4a2f-8734-d1aea51a0e73', 'ชื่อตัว ชื่อกลาง ชื่อสกุล', true, '2026-06-30 14:30:54.823', '2026-07-05 06:00:46.703', '1149900859119', 'THAID', '1149900859119');
 
 
 --
@@ -459,5 +462,5 @@ ALTER TABLE ONLY public.parent_student_registry
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 4pHzrLaW6QhwGgwDU459MdZ7qehtCuJHHBoaViP3cR3uCPNLape3agZYDQdVKIk
+\unrestrict YVXYTmSdzSSntuXEV0wq2aOfd7CY7v5eAlLpTPMtgcwHb6zWzYtxFuxfpJZ26n3
 
