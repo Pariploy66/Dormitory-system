@@ -1,12 +1,21 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
+import { NestExpressApplication } from '@nestjs/platform-express';
+import { join } from 'path';
 import { AppModule } from './app.module';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { IoAdapter } from '@nestjs/platform-socket.io';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+
+  // Scan photos arrive as base64 JSON from the face scanner — raise the body
+  // limit (default 100kb is far too small for JPEG payloads).
+  app.useBodyParser('json', { limit: '10mb' });
+
+  // Serve stored gate photos (uploads/access-logs/*.jpg) to the mobile app.
+  app.useStaticAssets(join(process.cwd(), 'uploads'), { prefix: '/uploads/' });
 
   // ── Global pipes ───────────────────────────────────────────────────────────
   app.useGlobalPipes(

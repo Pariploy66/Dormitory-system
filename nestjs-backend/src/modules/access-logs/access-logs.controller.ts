@@ -22,6 +22,10 @@ class IngestDto implements IngestPayload {
   @IsString() gateName: string;
   @IsOptional() @IsString() photoUrl?: string;
   @IsOptional() @IsString() scanPhotoUrl?: string;
+  // Raw JPEG/PNG as base64 (face scanner) — backend stores the file and
+  // fills photoUrl/scanPhotoUrl itself. Data-URI prefix allowed.
+  @IsOptional() @IsString() photoBase64?: string;
+  @IsOptional() @IsString() scanPhotoBase64?: string;
 }
 
 // ── Pattern: auth guard → @Authorize → service handler (NewSystem standard) ──
@@ -66,6 +70,9 @@ export class AccessLogsController {
       req.user.sub,
       studentId,
       days ? parseInt(days, 10) : 7,
+      // Base URL for turning stored /uploads/... paths into absolute links
+      // the mobile app can load from wherever it reached this server.
+      `${req.protocol}://${req.get('host')}`,
     );
   }
 }

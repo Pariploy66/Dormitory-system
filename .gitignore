@@ -24,6 +24,11 @@ firebase-service-account.json
 *serviceAccountKey*.json
 
 # ───────────────────────────────────────────────────────────────
+# Uploaded gate photos (created at runtime by the face scanner)
+# ───────────────────────────────────────────────────────────────
+nestjs-backend/uploads/
+
+# ───────────────────────────────────────────────────────────────
 # Node / NestJS (nestjs-backend)
 # ───────────────────────────────────────────────────────────────
 node_modules/

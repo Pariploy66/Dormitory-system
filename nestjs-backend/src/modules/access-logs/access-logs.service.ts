@@ -2,7 +2,10 @@ import {
   Injectable,
   ForbiddenException,
   NotFoundException,
+  Logger,
 } from '@nestjs/common';
+import { mkdirSync, writeFileSync } from 'fs';
+import { join } from 'path';
 import { PrismaService } from '../../common/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { EventsGateway } from '../events/events.gateway';
@@ -25,15 +28,44 @@ export interface IngestPayload {
   photoUrl?: string;
   /** รูปภาพสแกน — live face-scan snapshot from Access Control (optional). */
   scanPhotoUrl?: string;
+  /** Same photos as raw base64 (face scanner sends these; we store the files). */
+  photoBase64?: string;
+  scanPhotoBase64?: string;
 }
 
 @Injectable()
 export class AccessLogsService {
+  private readonly logger = new Logger(AccessLogsService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly notifications: NotificationsService,
     private readonly events: EventsGateway,
   ) {}
+
+  /**
+   * Persist a base64 photo under uploads/access-logs/ and return its relative
+   * URL (/uploads/access-logs/<name>). Returns null on any failure — a broken
+   * photo must never block log ingestion.
+   */
+  private savePhoto(base64: string, filename: string): string | null {
+    try {
+      const dir = join(process.cwd(), 'uploads', 'access-logs');
+      mkdirSync(dir, { recursive: true });
+      const data = base64.replace(/^data:image\/\w+;base64,/, '');
+      writeFileSync(join(dir, filename), Buffer.from(data, 'base64'));
+      return `/uploads/access-logs/${filename}`;
+    } catch (e) {
+      this.logger.warn(`Failed to save photo ${filename}: ${e}`);
+      return null;
+    }
+  }
+
+  /** Prefix stored relative /uploads paths with the server base URL. */
+  private toAbsolute(url: string | null, baseUrl?: string): string | null {
+    if (!url) return null;
+    return baseUrl && url.startsWith('/') ? `${baseUrl}${url}` : url;
+  }
 
   // ── NewSystem handler: onCreate (POST /internal/access-logs) ───────────────
   /**
@@ -62,6 +94,26 @@ export class AccessLogsService {
       .replace(/[Zz]$|[+-]\d{2}:\d{2}$/, '');  // strip any timezone designator
     const accessTime = new Date(thaiStr + '+07:00');
 
+    // Photos: either ready-made URLs (FastAPI path) or raw base64 from the
+    // face scanner — in that case store the file locally and keep its URL.
+    let photoUrl = payload.photoUrl ?? null;
+    let scanPhotoUrl = payload.scanPhotoUrl ?? null;
+    const stamp = accessTime.getTime();
+    if (payload.photoBase64) {
+      photoUrl =
+        this.savePhoto(
+          payload.photoBase64,
+          `${payload.externalStudentId}_${stamp}_ref.jpg`,
+        ) ?? photoUrl;
+    }
+    if (payload.scanPhotoBase64) {
+      scanPhotoUrl =
+        this.savePhoto(
+          payload.scanPhotoBase64,
+          `${payload.externalStudentId}_${stamp}_scan.jpg`,
+        ) ?? scanPhotoUrl;
+    }
+
     const log = await this.prisma.accessLog.upsert({
       where: {
         unique_access_event: {
@@ -75,13 +127,13 @@ export class AccessLogsService {
         accessTime,
         type: payload.type,
         gateName: payload.gateName,
-        photoUrl: payload.photoUrl ?? null,
-        scanPhotoUrl: payload.scanPhotoUrl ?? null,
+        photoUrl,
+        scanPhotoUrl,
       },
       update: {
         // Backfill photos if a later duplicate carries them (idempotent).
-        photoUrl: payload.photoUrl ?? undefined,
-        scanPhotoUrl: payload.scanPhotoUrl ?? undefined,
+        photoUrl: photoUrl ?? undefined,
+        scanPhotoUrl: scanPhotoUrl ?? undefined,
       },
     });
 
@@ -144,7 +196,12 @@ export class AccessLogsService {
    *   - "late"   → IN entry between 22:30 and 05:59 Thai time (crosses midnight)
    *   - "ontime" → all other IN entries and all OUT entries
    */
-  async onQueryLogs(parentId: string, studentId: string, days = 7) {
+  async onQueryLogs(
+    parentId: string,
+    studentId: string,
+    days = 7,
+    baseUrl?: string,
+  ) {
     // Security: verify (via registry) that this parent is a guardian of this
     // student AND the student is still ACTIVE (in dorm).
     const parent = await this.prisma.parent.findUnique({
@@ -197,8 +254,8 @@ export class AccessLogsService {
       accessTime: log.accessTime,
       type: log.type,
       gateName: log.gateName,
-      imageUrl: log.photoUrl,
-      scanImageUrl: log.scanPhotoUrl,
+      imageUrl: this.toAbsolute(log.photoUrl, baseUrl),
+      scanImageUrl: this.toAbsolute(log.scanPhotoUrl, baseUrl),
       status: this.computeStatus(log.accessTime, log.type),
     }));
   }
