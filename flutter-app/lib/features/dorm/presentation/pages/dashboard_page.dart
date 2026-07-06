@@ -76,7 +76,9 @@ class _DashboardPageState extends State<DashboardPage> {
               children: [
                 StudentInfoCard(
                   student: state.activeStudent!,
-                  photoUrl: state.studentPhotoUrl,
+                  // Registrar photo first; fall back to the latest gate photo.
+                  photoUrl: state.activeStudent!.photoUrl ??
+                      state.studentPhotoUrl,
                 ),
                 const SizedBox(height: 16),
                 CurrentStatusCard(

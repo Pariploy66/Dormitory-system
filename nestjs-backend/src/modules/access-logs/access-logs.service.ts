@@ -178,6 +178,7 @@ export class AccessLogsService {
             id: true,
             name: true,
             studentCode: true,
+            photoUrl: true,
             dormitory: true,
             roomNumber: true,
           },

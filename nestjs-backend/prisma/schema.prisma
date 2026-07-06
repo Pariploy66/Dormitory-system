@@ -27,6 +27,8 @@ model Student {
   externalStudentId String                  @unique @map("external_student_id")
   studentCode       String                  @unique @map("student_code")
   name              String
+  // Official profile photo from the registrar (ฝ่ายทะเบียน)
+  photoUrl          String?                 @map("photo_url")
   dormitory         String?
   roomNumber        String?                 @map("room_number")
   status            StudentStatus           @default(ACTIVE)

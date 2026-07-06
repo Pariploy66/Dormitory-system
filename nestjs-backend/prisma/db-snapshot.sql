@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict YVXYTmSdzSSntuXEV0wq2aOfd7CY7v5eAlLpTPMtgcwHb6zWzYtxFuxfpJZ26n3
+\restrict h7sEXCZBopKZa3lG2agpy0NDjRHVwhjcX5TUIRi540TwRGawwIA5xXJiSzAHcY3
 
 -- Dumped from database version 18.3
 -- Dumped by pg_dump version 18.3
@@ -181,7 +181,8 @@ CREATE TABLE public.students (
     room_number text,
     left_at timestamp(3) without time zone,
     status public."StudentStatus" DEFAULT 'ACTIVE'::public."StudentStatus" NOT NULL,
-    updated_at timestamp(3) without time zone NOT NULL
+    updated_at timestamp(3) without time zone NOT NULL,
+    photo_url text
 );
 
 
@@ -194,6 +195,7 @@ INSERT INTO public._prisma_migrations (id, checksum, finished_at, migration_name
 INSERT INTO public._prisma_migrations (id, checksum, finished_at, migration_name, logs, rolled_back_at, started_at, applied_steps_count) VALUES ('0b829b23-0e93-493f-b30a-65be3ae89f1c', 'e257aa783015c43abb0811522a919411dc815f178a7eeb4f5fddf1719fb8d2c2', '2026-07-04 06:11:19.463971-07', '20260627142600_add_auth_logs', '', NULL, '2026-07-04 06:11:19.463971-07', 0);
 INSERT INTO public._prisma_migrations (id, checksum, finished_at, migration_name, logs, rolled_back_at, started_at, applied_steps_count) VALUES ('4a7763bb-8647-4d4a-a892-31e6050e3f18', 'a87ce652e00eb43756ba83af4f77e4e518cf4d0315ab0ce7034557a0d557b304', '2026-07-04 06:11:21.761218-07', '20260630163618_registry_status_relationship', '', NULL, '2026-07-04 06:11:21.761218-07', 0);
 INSERT INTO public._prisma_migrations (id, checksum, finished_at, migration_name, logs, rolled_back_at, started_at, applied_steps_count) VALUES ('fa9b0fcf-8cfe-439d-84dd-432bfb732211', 'daba54c0a48d6cfaec2ee88e605149577418d3e290acc3d5020375cced757024', '2026-07-04 06:11:24.00004-07', '20260703000000_access_log_photos', '', NULL, '2026-07-04 06:11:24.00004-07', 0);
+INSERT INTO public._prisma_migrations (id, checksum, finished_at, migration_name, logs, rolled_back_at, started_at, applied_steps_count) VALUES ('8e44bcc1-618d-40b1-a7bf-2cfed27a1624', '036c260915500794387d7421c2d444a1fa46f65235e5fd4361ff7b0617c84560', '2026-07-06 07:16:54.420349-07', '20260705000000_student_photo', NULL, NULL, '2026-07-06 07:16:54.397172-07', 1);
 
 
 --
@@ -206,6 +208,7 @@ INSERT INTO public.access_logs (id, student_id, access_time, type, gate_name, cr
 INSERT INTO public.access_logs (id, student_id, access_time, type, gate_name, created_at, photo_url, scan_photo_url) VALUES ('b690306b-6b7c-4fd9-a1f2-c669a6c230c7', '4cf6f324-9736-408c-9315-93fe9a37692d', '2026-07-04 02:45:00', 'IN', 'Main Entrance', '2026-07-03 17:56:10.203', NULL, NULL);
 INSERT INTO public.access_logs (id, student_id, access_time, type, gate_name, created_at, photo_url, scan_photo_url) VALUES ('4f722357-4fc4-418a-91ba-a1c86a558c15', '4cf6f324-9736-408c-9315-93fe9a37692d', '2026-07-01 02:45:00', 'IN', 'Main Entrance', '2026-07-03 17:56:16.051', NULL, NULL);
 INSERT INTO public.access_logs (id, student_id, access_time, type, gate_name, created_at, photo_url, scan_photo_url) VALUES ('dd0a3c94-56b9-405c-a9cb-37ce3f9c1bed', '4cf6f324-9736-408c-9315-93fe9a37692d', '2026-07-05 02:15:00', 'IN', 'Main Gate', '2026-07-05 05:48:38.229', '/uploads/access-logs/T001_1783217700000_ref.jpg', '/uploads/access-logs/T001_1783217700000_scan.jpg');
+INSERT INTO public.access_logs (id, student_id, access_time, type, gate_name, created_at, photo_url, scan_photo_url) VALUES ('1774786d-6821-479d-b99a-46d9e3079daa', '4cf6f324-9736-408c-9315-93fe9a37692d', '2026-07-06 07:35:00', 'IN', 'Main Gate', '2026-07-06 14:42:00.548', 'https://loremflickr.com/150/150/dog?lock=99', 'https://loremflickr.com/150/150/dog,face?lock=100');
 INSERT INTO public.access_logs (id, student_id, access_time, type, gate_name, created_at, photo_url, scan_photo_url) VALUES ('b62c4de7-7e65-4d03-9d3d-d9d52f43c0e9', '4cf6f324-9736-408c-9315-93fe9a37692d', '2026-07-04 00:25:00', 'IN', 'Main Entrance', '2026-07-03 17:25:43.047', 'https://loremflickr.com/150/150/pig?lock=0', 'https://loremflickr.com/150/150/pig,face?lock=1');
 INSERT INTO public.access_logs (id, student_id, access_time, type, gate_name, created_at, photo_url, scan_photo_url) VALUES ('7b5d3ca7-60f0-430b-937a-5a8bff689c24', '9ac11cfd-0e8e-4bcd-a10d-f3f51fead82c', '2026-06-30 16:59:00', 'IN', 'Main Entrance', '2026-06-30 15:11:33.89', 'https://loremflickr.com/150/150/dog?lock=2', 'https://loremflickr.com/150/150/dog,face?lock=3');
 INSERT INTO public.access_logs (id, student_id, access_time, type, gate_name, created_at, photo_url, scan_photo_url) VALUES ('d6ad2709-5b4f-4fdd-b11e-74022dc94f4e', '9ac11cfd-0e8e-4bcd-a10d-f3f51fead82c', '2026-06-30 16:35:00', 'IN', 'Main Entrance', '2026-06-30 14:36:57.955', 'https://loremflickr.com/150/150/rooster?lock=4', 'https://loremflickr.com/150/150/rooster,face?lock=5');
@@ -263,20 +266,19 @@ INSERT INTO public.auth_logs (id, parent_id, event, ip_address, user_agent, crea
 -- Data for Name: devices; Type: TABLE DATA; Schema: public; Owner: -
 --
 
-INSERT INTO public.devices (id, parent_id, fcm_token, created_at, updated_at) VALUES ('ebab07c0-1290-43a5-9130-279a8d09f308', '0b689281-ea71-4a2f-8734-d1aea51a0e73', 'epPlQ_O_TKWsdiEaXBSMG8:APA91bFU2qF2ihuleHmjkPmIX4BWwD36obrJmrQn1rOj9mfFwPZzisLz0CStFeMkzwEuBCCxSxv_Ikql7kgdaasSF-_RPtKnIyG3quhHgbJ3TRAtBF76k8s', '2026-06-30 14:33:33.071', '2026-07-05 06:00:48.331');
+INSERT INTO public.devices (id, parent_id, fcm_token, created_at, updated_at) VALUES ('ebab07c0-1290-43a5-9130-279a8d09f308', '0b689281-ea71-4a2f-8734-d1aea51a0e73', 'epPlQ_O_TKWsdiEaXBSMG8:APA91bFU2qF2ihuleHmjkPmIX4BWwD36obrJmrQn1rOj9mfFwPZzisLz0CStFeMkzwEuBCCxSxv_Ikql7kgdaasSF-_RPtKnIyG3quhHgbJ3TRAtBF76k8s', '2026-06-30 14:33:33.071', '2026-07-06 14:43:32.395');
 
 
 --
 -- Data for Name: parent_student_registry; Type: TABLE DATA; Schema: public; Owner: -
 --
 
-INSERT INTO public.parent_student_registry (id, parent_citizen_id, student_id, relationship, created_at, updated_at) VALUES ('afaad28e-5e0f-44bd-9cd1-899391c75578', '1149900859119', '4cf6f324-9736-408c-9315-93fe9a37692d', 'FATHER', '2026-06-30 09:42:25.169', '2026-06-30 14:26:43.089');
-INSERT INTO public.parent_student_registry (id, parent_citizen_id, student_id, relationship, created_at, updated_at) VALUES ('0c30b760-8337-4e46-a2bf-3c65567d4291', '1149900859119', 'd6760e2e-5eb3-4bc9-9d33-507774b3a7bd', 'FATHER', '2026-06-30 09:42:25.175', '2026-06-30 14:26:43.093');
-INSERT INTO public.parent_student_registry (id, parent_citizen_id, student_id, relationship, created_at, updated_at) VALUES ('53b09dde-abb3-44b7-9594-c74df6549c4e', '1100200300400', '4cf6f324-9736-408c-9315-93fe9a37692d', 'MOTHER', '2026-06-30 09:42:25.176', '2026-06-30 14:26:43.096');
-INSERT INTO public.parent_student_registry (id, parent_citizen_id, student_id, relationship, created_at, updated_at) VALUES ('21487962-c535-4d2b-950f-79aad052756f', '3301201232653', '1542dfaf-961a-45fa-8919-8cee743affdc', 'MOTHER', '2026-06-30 09:42:25.178', '2026-06-30 14:26:43.099');
-INSERT INTO public.parent_student_registry (id, parent_citizen_id, student_id, relationship, created_at, updated_at) VALUES ('93980407-311f-4520-84cf-e330cc091add', '3640400263229', '9ac11cfd-0e8e-4bcd-a10d-f3f51fead82c', 'FATHER', '2026-06-30 09:42:25.179', '2026-06-30 14:26:43.101');
-INSERT INTO public.parent_student_registry (id, parent_citizen_id, student_id, relationship, created_at, updated_at) VALUES ('85fa7e25-8b4e-45f1-9f29-d452d3cd02de', '3101401511876', '1ecb27a8-9e4b-420e-8c73-a3092564d2c3', 'GUARDIAN', '2026-06-30 09:42:25.181', '2026-06-30 14:26:43.104');
-INSERT INTO public.parent_student_registry (id, parent_citizen_id, student_id, relationship, created_at, updated_at) VALUES ('6c07b1f8-01d9-4022-a267-cb508a69a60e', '3400700708503', 'c1546821-929b-4bab-bafd-25ec9f63f587', 'FATHER', '2026-06-30 09:42:25.183', '2026-06-30 14:26:43.106');
+INSERT INTO public.parent_student_registry (id, parent_citizen_id, student_id, relationship, created_at, updated_at) VALUES ('21487962-c535-4d2b-950f-79aad052756f', '3301201232653', '1542dfaf-961a-45fa-8919-8cee743affdc', 'MOTHER', '2026-06-30 09:42:25.178', '2026-07-06 14:54:48.301');
+INSERT INTO public.parent_student_registry (id, parent_citizen_id, student_id, relationship, created_at, updated_at) VALUES ('93980407-311f-4520-84cf-e330cc091add', '3640400263229', '9ac11cfd-0e8e-4bcd-a10d-f3f51fead82c', 'FATHER', '2026-06-30 09:42:25.179', '2026-07-06 14:54:48.303');
+INSERT INTO public.parent_student_registry (id, parent_citizen_id, student_id, relationship, created_at, updated_at) VALUES ('85fa7e25-8b4e-45f1-9f29-d452d3cd02de', '3101401511876', '1ecb27a8-9e4b-420e-8c73-a3092564d2c3', 'GUARDIAN', '2026-06-30 09:42:25.181', '2026-07-06 14:54:48.307');
+INSERT INTO public.parent_student_registry (id, parent_citizen_id, student_id, relationship, created_at, updated_at) VALUES ('6c07b1f8-01d9-4022-a267-cb508a69a60e', '3400700708503', 'c1546821-929b-4bab-bafd-25ec9f63f587', 'FATHER', '2026-06-30 09:42:25.183', '2026-07-06 14:54:48.309');
+INSERT INTO public.parent_student_registry (id, parent_citizen_id, student_id, relationship, created_at, updated_at) VALUES ('afaad28e-5e0f-44bd-9cd1-899391c75578', '1149900859119', '4cf6f324-9736-408c-9315-93fe9a37692d', 'FATHER', '2026-06-30 09:42:25.169', '2026-07-06 14:59:48.683');
+INSERT INTO public.parent_student_registry (id, parent_citizen_id, student_id, relationship, created_at, updated_at) VALUES ('0c30b760-8337-4e46-a2bf-3c65567d4291', '1149900859119', 'd6760e2e-5eb3-4bc9-9d33-507774b3a7bd', 'FATHER', '2026-06-30 09:42:25.175', '2026-07-06 14:59:48.691');
 
 
 --
@@ -292,12 +294,13 @@ INSERT INTO public.parents (id, name, is_verified, created_at, updated_at, thaid
 -- Data for Name: students; Type: TABLE DATA; Schema: public; Owner: -
 --
 
-INSERT INTO public.students (id, external_student_id, student_code, name, created_at, dormitory, room_number, left_at, status, updated_at) VALUES ('4cf6f324-9736-408c-9315-93fe9a37692d', 'T001', '6631501163', 'Parichat Phojan', '2026-06-30 09:42:25.145', 'F1', '127', NULL, 'ACTIVE', '2026-06-30 14:26:43.027');
-INSERT INTO public.students (id, external_student_id, student_code, name, created_at, dormitory, room_number, left_at, status, updated_at) VALUES ('1542dfaf-961a-45fa-8919-8cee743affdc', 'T002', '6631501126', 'Araya Logniyom', '2026-06-30 09:42:25.158', 'F1', '201', NULL, 'ACTIVE', '2026-06-30 14:26:43.074');
-INSERT INTO public.students (id, external_student_id, student_code, name, created_at, dormitory, room_number, left_at, status, updated_at) VALUES ('9ac11cfd-0e8e-4bcd-a10d-f3f51fead82c', 'T003', '6631501064', 'Nawamol Nuanyai', '2026-06-30 09:42:25.161', 'F2', '305', NULL, 'ACTIVE', '2026-06-30 14:26:43.076');
-INSERT INTO public.students (id, external_student_id, student_code, name, created_at, dormitory, room_number, left_at, status, updated_at) VALUES ('1ecb27a8-9e4b-420e-8c73-a3092564d2c3', 'T004', '6631509004', 'Kittipong Jaidee', '2026-06-30 09:42:25.164', 'F1', '110', '2026-06-30 14:26:43.076', 'GRADUATED', '2026-06-30 14:26:43.078');
-INSERT INTO public.students (id, external_student_id, student_code, name, created_at, dormitory, room_number, left_at, status, updated_at) VALUES ('c1546821-929b-4bab-bafd-25ec9f63f587', 'T005', '6631509005', 'Suda Manalai', '2026-06-30 09:42:25.165', 'F2', '410', '2026-06-30 14:26:43.078', 'MOVED_OUT', '2026-06-30 14:26:43.08');
-INSERT INTO public.students (id, external_student_id, student_code, name, created_at, dormitory, room_number, left_at, status, updated_at) VALUES ('d6760e2e-5eb3-4bc9-9d33-507774b3a7bd', 'T006', '6631501003', 'Phailin Phojan', '2026-06-30 09:42:25.167', 'F1', '128', NULL, 'ACTIVE', '2026-06-30 14:26:43.081');
+INSERT INTO public.students (id, external_student_id, student_code, name, created_at, dormitory, room_number, left_at, status, updated_at, photo_url) VALUES ('3438b394-d99b-45a2-b1c4-b5b4e834c310', 'T007', '6631501200', 'Somchai Jaidee', '2026-07-06 14:34:47.105', 'F1', '215', NULL, 'ACTIVE', '2026-07-06 14:35:20.906', 'https://api.dicebear.com/9.x/adventurer/png?size=150&seed=6631501200');
+INSERT INTO public.students (id, external_student_id, student_code, name, created_at, dormitory, room_number, left_at, status, updated_at, photo_url) VALUES ('1542dfaf-961a-45fa-8919-8cee743affdc', 'T002', '6631501126', 'Araya Logniyom', '2026-06-30 09:42:25.158', 'F1', '201', NULL, 'ACTIVE', '2026-07-06 14:54:48.287', 'https://api.dicebear.com/9.x/adventurer/png?size=150&seed=6631501126');
+INSERT INTO public.students (id, external_student_id, student_code, name, created_at, dormitory, room_number, left_at, status, updated_at, photo_url) VALUES ('9ac11cfd-0e8e-4bcd-a10d-f3f51fead82c', 'T003', '6631501064', 'Nawamol Nuanyai', '2026-06-30 09:42:25.161', 'F2', '305', NULL, 'ACTIVE', '2026-07-06 14:54:48.289', 'https://api.dicebear.com/9.x/adventurer/png?size=150&seed=6631501064');
+INSERT INTO public.students (id, external_student_id, student_code, name, created_at, dormitory, room_number, left_at, status, updated_at, photo_url) VALUES ('1ecb27a8-9e4b-420e-8c73-a3092564d2c3', 'T004', '6631509004', 'Kittipong Jaidee', '2026-06-30 09:42:25.164', 'F1', '110', '2026-07-06 14:54:48.289', 'GRADUATED', '2026-07-06 14:54:48.291', 'https://api.dicebear.com/9.x/adventurer/png?size=150&seed=6631509004');
+INSERT INTO public.students (id, external_student_id, student_code, name, created_at, dormitory, room_number, left_at, status, updated_at, photo_url) VALUES ('c1546821-929b-4bab-bafd-25ec9f63f587', 'T005', '6631509005', 'Suda Manalai', '2026-06-30 09:42:25.165', 'F2', '410', '2026-07-06 14:54:48.291', 'MOVED_OUT', '2026-07-06 14:54:48.292', 'https://api.dicebear.com/9.x/adventurer/png?size=150&seed=6631509005');
+INSERT INTO public.students (id, external_student_id, student_code, name, created_at, dormitory, room_number, left_at, status, updated_at, photo_url) VALUES ('4cf6f324-9736-408c-9315-93fe9a37692d', 'T001', '6631501163', 'Parichat Phojan', '2026-06-30 09:42:25.145', 'F1', '127', NULL, 'ACTIVE', '2026-07-06 14:59:48.666', 'https://api.dicebear.com/9.x/adventurer/png?size=150&seed=6631501163');
+INSERT INTO public.students (id, external_student_id, student_code, name, created_at, dormitory, room_number, left_at, status, updated_at, photo_url) VALUES ('d6760e2e-5eb3-4bc9-9d33-507774b3a7bd', 'T006', '6631501003', 'Phailin Phojan', '2026-06-30 09:42:25.167', 'F1', '128', NULL, 'ACTIVE', '2026-07-06 14:59:48.671', 'https://api.dicebear.com/9.x/adventurer/png?size=150&seed=6631501003');
 
 
 --
@@ -462,5 +465,5 @@ ALTER TABLE ONLY public.parent_student_registry
 -- PostgreSQL database dump complete
 --
 
-\unrestrict YVXYTmSdzSSntuXEV0wq2aOfd7CY7v5eAlLpTPMtgcwHb6zWzYtxFuxfpJZ26n3
+\unrestrict h7sEXCZBopKZa3lG2agpy0NDjRHVwhjcX5TUIRi540TwRGawwIA5xXJiSzAHcY3
 

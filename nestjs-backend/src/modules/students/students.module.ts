@@ -25,6 +25,8 @@ export class UpsertStudentDto {
   @IsString() externalStudentId: string;
   @IsString() studentCode: string;
   @IsString() name: string;
+  // รูปโปรไฟล์ทางการจากฝ่ายทะเบียน (URL)
+  @IsOptional() @IsString() photoUrl?: string;
   @IsOptional() @IsString() dormitory?: string;
   @IsOptional() @IsString() roomNumber?: string;
   @IsOptional() @IsString() room_number?: string; // snake_case from Postman/FastAPI
@@ -63,6 +65,7 @@ export class StudentsService {
         externalStudentId: dto.externalStudentId,
         studentCode: dto.studentCode,
         name: dto.name,
+        photoUrl: dto.photoUrl,
         dormitory: dto.dormitory,
         roomNumber: room,
         status,
@@ -71,6 +74,8 @@ export class StudentsService {
       update: {
         name: dto.name,
         studentCode: dto.studentCode,
+        // keep the existing photo unless the registrar sends a new one
+        photoUrl: dto.photoUrl ?? undefined,
         dormitory: dto.dormitory,
         roomNumber: room,
         status,
