@@ -92,6 +92,7 @@ The complete map of this project: every module, table, endpoint, and the full da
 | `scripts/` | `make-registrar.js` (สร้างไฟล์ทะเบียน mockup), `import-engage.js` (ล้าง+ลงข้อมูลจริง), `import-registry.js` (Excel→sync) | data pipeline scripts |
 | `data/` | `mockup_engage.xlsx` (DORM 117 / Attendance IN 67), `registrar_students.xlsx` | source Excel files |
 | `uploads/access-logs/` | รูปสแกนที่เครื่องสแกนส่งมา (เสิร์ฟผ่าน `/uploads/...`) | stored gate photos |
+| `Dockerfile` (backend + fastapi), root `docker-compose.yml` | รันทั้ง stack คำสั่งเดียว (postgres18 + nestjs + fastapi); Postgres auto-load snapshot | one-command containerised stack |
 
 ### 4.2 `fastapi-integration/` (ตัวเชื่อมระบบภายนอก)
 

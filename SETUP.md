@@ -61,7 +61,22 @@ Then set:
 > The team lead sends the real secret values separately (chat) — they are never
 > committed. Everything else you need is already in this repo.
 
-## 4. Run
+## Alternative: run everything with Docker
+
+Instead of installing Node/Python/Postgres, use Docker Desktop:
+
+```bash
+cp .env.docker.example .env.docker   # fill in secrets (git-ignored)
+docker compose up --build            # postgres:5432 · nestjs:3000 · fastapi:8001
+```
+
+Postgres auto-loads `nestjs-backend/prisma/db-snapshot.sql` on first run and
+NestJS runs `prisma migrate deploy` on start. The Flutter app still runs on your
+host — point it at `http://10.0.2.2:3000`. `docker compose down` stops it (add
+`-v` to also wipe the database volume). Drop `firebase-service-account.json` in
+`nestjs-backend/` for FCM (optional; bind-mounted read-only).
+
+## 4. Run (local, without Docker)
 
 ```bash
 # 1) NestJS backend (reads .env automatically)

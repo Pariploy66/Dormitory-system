@@ -12,6 +12,8 @@ Three services + one demo scanner make up a dormitory check-in monitoring system
 | `nestjs-backend/` | Main API: ThaID auth, registry authorization, access logs, FCM, Socket.IO | NestJS 10 + Prisma + PostgreSQL 18 | 3000 |
 | `fastapi-integration/` | Poller bridging the external Access Control API into NestJS | FastAPI, Python 3.11 | 8001 |
 | `flutter-app/` | Parent mobile app (Android/iOS; ThaID webview is mobile-only) | Flutter 3 + flutter_bloc | — |
+
+`docker-compose.yml` at the root runs postgres + nestjs + fastapi together (each backend service has a `Dockerfile`). Postgres 18 needs the volume mounted at `/var/lib/postgresql` (NOT `/data`). Secrets come from `.env.docker` (git-ignored); `.env.docker.example` is the template.
 | `D:\face-access-control` (separate folder, NOT in this repo) | Demo face scanner posting to `/internal/access-logs` | Python + OpenCV + face_recognition | — |
 
 Architecture map with every module/table/endpoint: **PROJECTMAP.md**.
@@ -33,6 +35,12 @@ flutter run                           # needs Android emulator/device
 
 # FastAPI (run from fastapi-integration/)
 python main.py
+
+# Docker — whole backend stack (run from repo root)
+cp .env.docker.example .env.docker    # fill secrets (git-ignored)
+docker compose up --build             # postgres:5432 + nestjs:3000 + fastapi:8001
+docker compose config                 # validate compose without a daemon
+docker compose down                   # stop (down -v also wipes the DB volume)
 
 # Data seeding (from nestjs-backend/)
 node scripts/make-registrar.js        # generate data/registrar_students.xlsx (deterministic)

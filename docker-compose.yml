@@ -1,0 +1,77 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# MFU Dormitory — full backend stack in one command:  docker compose up --build
+#
+#   postgres  :5432   PostgreSQL 18 (data persisted in the pgdata volume)
+#   nestjs    :3000   Main API (runs `prisma migrate deploy` on start)
+#   fastapi   :8001   External Access Control poller
+#
+# The Flutter app runs OUTSIDE Docker (it's a mobile app). Point it at the
+# host with:  flutter run --dart-define=API_BASE_URL=http://10.0.2.2:3000
+#
+# Secrets are NOT in this file. Copy .env.docker.example -> .env.docker and fill
+# it in (git-ignored). For FCM push, also drop firebase-service-account.json in
+# nestjs-backend/ (git-ignored) — it is bind-mounted read-only below.
+# ─────────────────────────────────────────────────────────────────────────────
+services:
+  postgres:
+    image: postgres:18
+    container_name: dorm-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-student}
+    ports:
+      - "5432:5432"
+    volumes:
+      # Postgres 18+ expects the mount at /var/lib/postgresql (data goes in a
+      # versioned subdirectory) — not /var/lib/postgresql/data like older tags.
+      - pgdata:/var/lib/postgresql
+      # Auto-load the shared snapshot on FIRST run (empty volume only)
+      - ./nestjs-backend/prisma/db-snapshot.sql:/docker-entrypoint-initdb.d/01-snapshot.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-student}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  nestjs:
+    build: ./nestjs-backend
+    container_name: dorm-nestjs
+    restart: unless-stopped
+    env_file:
+      - .env.docker
+    environment:
+      # Override host so the app reaches Postgres by service name, not localhost
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-student}?schema=public
+      PORT: 3000
+      NODE_ENV: production
+    ports:
+      - "3000:3000"
+    volumes:
+      # Persist uploaded gate photos across restarts
+      - uploads:/app/uploads
+      # FCM key (optional) — app still runs without it
+      - ./nestjs-backend/firebase-service-account.json:/app/firebase-service-account.json:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  fastapi:
+    build: ./fastapi-integration
+    container_name: dorm-fastapi
+    restart: unless-stopped
+    env_file:
+      - .env.docker
+    environment:
+      # Reach NestJS by service name inside the compose network
+      NESTJS_BASE_URL: http://nestjs:3000
+      PORT: 8001
+    ports:
+      - "8001:8001"
+    depends_on:
+      - nestjs
+
+volumes:
+  pgdata:
+  uploads:

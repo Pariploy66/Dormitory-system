@@ -71,6 +71,19 @@ python main.py               # → http://localhost:8001
 - ผู้ปกครองทดสอบ 6 เลขบัตร (ThaID sandbox) ผูกกับนักศึกษาที่มีประวัติจริง
 - สร้างข้อมูลใหม่ได้เอง: `node scripts/make-registrar.js && node scripts/import-engage.js` (ใน nestjs-backend)
 
+### รันด้วย Docker (ทางเลือก — ทั้ง backend คำสั่งเดียว)
+
+ไม่ต้องลง Node/Python/Postgres เอง มีแค่ Docker Desktop:
+
+```bash
+cp .env.docker.example .env.docker   # เติมค่าลับ (ThaID ฯลฯ) — gitignored
+docker compose up --build            # postgres:5432 + nestjs:3000 + fastapi:8001
+```
+
+- Postgres โหลด `db-snapshot.sql` (117 คน) อัตโนมัติในรอบแรก และรัน `prisma migrate deploy` ให้เอง
+- ต่อแอปมือถือ: `flutter run --dart-define=API_BASE_URL=http://10.0.2.2:3000`
+- ปิด: `docker compose down` (เก็บข้อมูล) / `docker compose down -v` (ล้างข้อมูลด้วย)
+
 ---
 
 ## English
@@ -100,6 +113,17 @@ Parents sign in with **ThaID** (Thai national digital ID) → the backend checks
 ### Quick start
 
 Same steps as the Thai section above: get secrets from the team privately (`.env`, Firebase key), restore `nestjs-backend/prisma/db-snapshot.sql` into a `student` database, then run NestJS → Flutter (→ FastAPI optionally).
+
+### Run with Docker (optional — whole backend in one command)
+
+No need to install Node/Python/Postgres locally — just Docker Desktop:
+
+```bash
+cp .env.docker.example .env.docker   # fill in secrets (ThaID, etc.) — git-ignored
+docker compose up --build            # postgres:5432 + nestjs:3000 + fastapi:8001
+```
+
+Postgres auto-loads `db-snapshot.sql` (117 students) on first run and NestJS runs `prisma migrate deploy` itself. Point the app at `http://10.0.2.2:3000`. Stop with `docker compose down` (keeps data) or `down -v` (wipes data).
 
 ### Repository layout
 
