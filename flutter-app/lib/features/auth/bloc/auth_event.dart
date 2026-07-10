@@ -23,3 +23,8 @@ class AuthThaidLoginRequested extends AuthEvent {
 class AuthLogoutRequested extends AuthEvent {
   const AuthLogoutRequested();
 }
+
+/// Local authentication (biometric/PIN) passed — unlock the app.
+class AuthUnlocked extends AuthEvent {
+  const AuthUnlocked();
+}

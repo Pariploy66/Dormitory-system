@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/student_model.dart';
+import '../../../locale/bloc/locale_bloc.dart';
 
 /// Profile card showing student photo, name, code, and dorm location.
 class StudentInfoCard extends StatelessWidget {
@@ -12,6 +14,8 @@ class StudentInfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isTh =
+        context.watch<LocaleBloc>().state.locale.languageCode == 'th';
     return _Card(
       child: Row(
         children: [
@@ -21,7 +25,7 @@ class StudentInfoCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(student.name,
+                Text(student.displayName(isTh),
                     style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w800,
@@ -30,8 +34,8 @@ class StudentInfoCard extends StatelessWidget {
                 Text(student.studentCode,
                     style: const TextStyle(
                         fontSize: 12, color: Colors.black54)),
-                if (student.locationLabel.isNotEmpty)
-                  Text(student.locationLabel,
+                if (student.locationLabel(isTh).isNotEmpty)
+                  Text(student.locationLabel(isTh),
                       style: const TextStyle(
                           fontSize: 12, color: Colors.black54)),
               ],

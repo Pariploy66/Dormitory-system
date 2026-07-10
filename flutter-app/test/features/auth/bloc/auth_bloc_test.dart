@@ -52,7 +52,7 @@ void main() {
 
     group('AuthThaidLoginRequested', () {
       blocTest<AuthBloc, AuthState>(
-        'emits [loading, authenticated] on successful ThaID login',
+        'emits [loading, authenticated+unlocked] on successful ThaID login',
         build: () {
           when(() => mockApi.thaidLogin(any())).thenAnswer((_) async {});
           return AuthBloc(mockApi);
@@ -60,7 +60,8 @@ void main() {
         act: (bloc) => bloc.add(const AuthThaidLoginRequested('auth-code')),
         expect: () => const [
           AuthState(status: AuthStatus.loading),
-          AuthState(status: AuthStatus.authenticated),
+          // Fresh ThaID login is already verified → no biometric lock.
+          AuthState(status: AuthStatus.authenticated, unlocked: true),
         ],
       );
 
@@ -89,6 +90,20 @@ void main() {
         expect: () => const [
           AuthState(status: AuthStatus.loading),
           AuthState(status: AuthStatus.failure, error: 'NETWORK_ERROR'),
+        ],
+      );
+    });
+
+    // ── AuthUnlocked (biometric app lock) ───────────────────────────────────
+
+    group('AuthUnlocked', () {
+      blocTest<AuthBloc, AuthState>(
+        'sets unlocked=true after local authentication passes',
+        build: () => AuthBloc(mockApi),
+        seed: () => const AuthState(status: AuthStatus.authenticated),
+        act: (bloc) => bloc.add(const AuthUnlocked()),
+        expect: () => const [
+          AuthState(status: AuthStatus.authenticated, unlocked: true),
         ],
       );
     });

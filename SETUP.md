@@ -9,10 +9,14 @@ secrets** — those you copy locally and never commit.
 git clone https://github.com/Pariploy66/Dormitory-system.git
 cd Dormitory-system
 
-cd nestjs-backend && npm install && cd ..
+cd nestjs-backend && npm install --legacy-peer-deps && npx prisma generate && cd ..
 cd flutter-app && flutter pub get && cd ..
 cd fastapi-integration && pip install -r requirements.txt && cd ..
 ```
+
+> `--legacy-peer-deps` is required (Nest 10/11 peer-dependency mix). Re-run
+> `npx prisma generate` every time you pull a change to `prisma/schema.prisma`
+> (stop the dev server first on Windows — the engine DLL gets file-locked).
 
 ## 2. Database — restore the shared snapshot
 

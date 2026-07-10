@@ -16,6 +16,7 @@ class ChildSelectionScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final s = context.watch<LocaleBloc>().state.strings;
+    final isTh = context.watch<LocaleBloc>().state.locale.languageCode == 'th';
     final students = context.watch<DormBloc>().state.students;
 
     return Scaffold(
@@ -49,9 +50,9 @@ class ChildSelectionScreen extends StatelessWidget {
                 itemBuilder: (context, i) {
                   final st = students[i];
                   return _ChildCard(
-                    name: st.name,
+                    name: st.displayName(isTh),
                     code: st.studentCode,
-                    location: st.locationLabel,
+                    location: st.locationLabel(isTh),
                     onTap: () =>
                         context.read<DormBloc>().add(DormSelectStudent(st.id)),
                   );

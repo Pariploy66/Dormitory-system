@@ -15,6 +15,7 @@ class ActivityTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final s = context.watch<LocaleBloc>().state.strings;
+    final isTh = context.watch<LocaleBloc>().state.locale.languageCode == 'th';
     final borderColor = log.isLate ? Colors.orange : Colors.green;
     final photo = log.scanImageUrl ?? log.imageUrl;
 
@@ -51,7 +52,7 @@ class ActivityTile extends StatelessWidget {
                         color: Colors.black87),
                   ),
                   const SizedBox(height: 4),
-                  Text(log.gateName,
+                  Text(log.displayGate(isTh),
                       style: const TextStyle(
                           fontSize: 12, color: Colors.black54)),
                 ],

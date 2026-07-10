@@ -1,6 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../constants.dart';
+import 'cert_pinning_stub.dart'
+    if (dart.library.io) 'cert_pinning_io.dart';
 
 /// Centralized Dio wrapper — company pattern from mobile-flutter/core/api/api_client.dart
 /// Reads JWT from FlutterSecureStorage on every request (no stale-token risk).
@@ -17,6 +19,9 @@ class ApiClient {
       sendTimeout: const Duration(seconds: 15),
       headers: {'Content-Type': 'application/json'},
     ));
+    // Certificate pinning — active only when fingerprints are embedded at
+    // build time (production HTTPS); no-op in dev (plain HTTP) and on web.
+    applyCertificatePinning(_dio, AppConstants.pinnedCertSha256);
     _dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) async {
         final token = await _storage.read(key: AppConstants.jwtStorageKey);

@@ -8,7 +8,8 @@ class AccessLogModel extends Equatable {
   final String id;
   final String type; // 'IN' | 'OUT'
   final DateTime accessTime;
-  final String gateName;
+  final String gateName; // Thai e.g. "หอพักลำดวน 3"
+  final String gateNameEn; // '' if none
   final bool isLate;
 
   /// Photo captured at the gate (Access Control returns รูปภาพ / รูปภาพสแกน).
@@ -20,6 +21,7 @@ class AccessLogModel extends Equatable {
     required this.type,
     required this.accessTime,
     required this.gateName,
+    this.gateNameEn = '',
     required this.isLate,
     this.imageUrl,
     this.scanImageUrl,
@@ -27,6 +29,10 @@ class AccessLogModel extends Equatable {
 
   bool get isEntry => type == 'IN';
   bool get isExit => type == 'OUT';
+
+  /// Gate label for the active locale — Thai stays Thai, English stays English.
+  String displayGate(bool isTh) =>
+      isTh ? gateName : (gateNameEn.isNotEmpty ? gateNameEn : gateName);
 
   /// Date + time in Thai Buddhist calendar with a 2-digit year, e.g. `3/7/69 14:38`.
   String get displayDateTime {
@@ -43,6 +49,7 @@ class AccessLogModel extends Equatable {
         type: json['type'] as String? ?? 'IN',
         accessTime: DateTime.parse(json['accessTime'] as String).toLocal(),
         gateName: json['gateName'] as String? ?? '',
+        gateNameEn: json['gateNameEn'] as String? ?? '',
         // Backend sends 'status': 'late'|'ontime' — map to bool
         isLate: (json['status'] as String? ?? 'ontime') == 'late',
         imageUrl: (json['imageUrl'] ?? json['photoUrl']) as String?,
@@ -51,5 +58,5 @@ class AccessLogModel extends Equatable {
 
   @override
   List<Object?> get props =>
-      [id, type, accessTime, gateName, isLate, imageUrl, scanImageUrl];
+      [id, type, accessTime, gateName, gateNameEn, isLate, imageUrl, scanImageUrl];
 }

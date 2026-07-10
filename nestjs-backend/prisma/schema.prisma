@@ -26,10 +26,12 @@ model Student {
   id                String                  @id @default(uuid())
   externalStudentId String                  @unique @map("external_student_id")
   studentCode       String                  @unique @map("student_code")
-  name              String
+  name              String // Thai name (ฝ่ายทะเบียน)
+  nameEn            String?                 @map("name_en") // English name
   // Official profile photo from the registrar (ฝ่ายทะเบียน)
   photoUrl          String?                 @map("photo_url")
-  dormitory         String?
+  dormitory         String? // Thai building name e.g. "ลำดวน 3"
+  dormitoryEn       String?                 @map("dormitory_en") // e.g. "Lamduan 3"
   roomNumber        String?                 @map("room_number")
   status            StudentStatus           @default(ACTIVE)
   leftAt            DateTime?               @map("left_at")
@@ -63,7 +65,8 @@ model AccessLog {
   studentId    String     @map("student_id")
   accessTime   DateTime   @map("access_time")
   type         AccessType
-  gateName     String     @map("gate_name")
+  gateName     String     @map("gate_name") // Thai e.g. "หอพักลำดวน 3"
+  gateNameEn   String?    @map("gate_name_en") // e.g. "Lamduan 3 Dormitory"
   // Photos from the gate's Access Control system:
   //   photoUrl     → รูปภาพ (reference/profile photo)
   //   scanPhotoUrl → รูปภาพสแกน (live face-scan snapshot)

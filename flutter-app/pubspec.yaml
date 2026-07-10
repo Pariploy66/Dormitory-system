@@ -32,8 +32,14 @@ dependencies:
   # ThaID sign-in (in-app webview to capture the authorization code)
   webview_flutter: ^4.7.0
 
-  # Storage (JWT token persistence)
+  # Storage (JWT token persistence — Android Keystore / iOS Keychain backed)
   flutter_secure_storage: ^9.0.0
+
+  # Biometric app lock (fingerprint/face/PIN)
+  local_auth: ^2.2.0
+
+  # Certificate pinning (SHA-256 fingerprint check)
+  crypto: ^3.0.3
 
   # Real-time (Socket.IO — NewSystem pattern)
   socket_io_client: ^2.0.3+1

@@ -117,6 +117,7 @@ class HistoryTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final s = context.watch<LocaleBloc>().state.strings;
+    final isTh = context.watch<LocaleBloc>().state.locale.languageCode == 'th';
     final photo = log.scanImageUrl ?? log.imageUrl;
 
     return Container(
@@ -158,7 +159,7 @@ class HistoryTile extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(log.gateName,
+                  Text(log.displayGate(isTh),
                       style: const TextStyle(
                           fontSize: 12, color: Colors.black54)),
                   const SizedBox(height: 4),

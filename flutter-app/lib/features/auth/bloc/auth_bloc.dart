@@ -13,15 +13,18 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthCheckRequested>(_onCheck);
     on<AuthThaidLoginRequested>(_onThaidLogin);
     on<AuthLogoutRequested>(_onLogout);
+    on<AuthUnlocked>((event, emit) => emit(state.copyWith(unlocked: true)));
   }
 
   Future<void> _onCheck(
       AuthCheckRequested event, Emitter<AuthState> emit) async {
     emit(state.copyWith(status: AuthStatus.loading));
     final loggedIn = await _api.isLoggedIn();
+    // Restored session → locked until biometric/PIN passes (UnlockScreen).
     emit(state.copyWith(
         status:
-            loggedIn ? AuthStatus.authenticated : AuthStatus.unauthenticated));
+            loggedIn ? AuthStatus.authenticated : AuthStatus.unauthenticated,
+        unlocked: false));
   }
 
   Future<void> _onThaidLogin(
@@ -29,7 +32,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(state.copyWith(status: AuthStatus.loading));
     try {
       await _api.thaidLogin(event.code);
-      emit(state.copyWith(status: AuthStatus.authenticated));
+      // Fresh ThaID login is already a strong verification — no second lock.
+      emit(state.copyWith(status: AuthStatus.authenticated, unlocked: true));
     } catch (e) {
       emit(state.copyWith(
           status: AuthStatus.failure,

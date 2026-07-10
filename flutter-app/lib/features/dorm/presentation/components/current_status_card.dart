@@ -11,6 +11,7 @@ class CurrentStatusCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final s = context.watch<LocaleBloc>().state.strings;
+    final isTh = context.watch<LocaleBloc>().state.locale.languageCode == 'th';
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -56,7 +57,7 @@ class CurrentStatusCard extends StatelessWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    '${s.entry} : ${latestLogToday!.gateName}',
+                    '${s.entry} : ${latestLogToday!.displayGate(isTh)}',
                     style: const TextStyle(fontSize: 12, color: Colors.black54),
                   ),
                 ),

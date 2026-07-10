@@ -65,6 +65,10 @@ class AppStrings {
   final String selectChild;
   final String selectChildSub;
   final String switchChild;
+  final String unlockTitle;
+  final String unlockSubtitle;
+  final String unlockButton;
+  final String unlockUseThaid;
 
   const AppStrings({
     required this.loginTitle,
@@ -131,6 +135,10 @@ class AppStrings {
     required this.selectChild,
     required this.selectChildSub,
     required this.switchChild,
+    required this.unlockTitle,
+    required this.unlockSubtitle,
+    required this.unlockButton,
+    required this.unlockUseThaid,
   });
 
   static const en = AppStrings(
@@ -203,6 +211,11 @@ class AppStrings {
     selectChild: 'Select Child',
     selectChildSub: 'Choose a child to view their records',
     switchChild: 'Switch Child',
+    unlockTitle: 'Verify your identity',
+    unlockSubtitle:
+        'Use your fingerprint, face, or device PIN to unlock the app',
+    unlockButton: 'Unlock',
+    unlockUseThaid: 'Login with ThaID instead',
   );
 
   static const th = AppStrings(
@@ -274,5 +287,9 @@ class AppStrings {
     selectChild: 'เลือกบุตรหลาน',
     selectChildSub: 'เลือกบุตรหลานที่ต้องการดูข้อมูล',
     switchChild: 'เปลี่ยนบุตรหลาน',
+    unlockTitle: 'ยืนยันตัวตนเพื่อเข้าใช้งาน',
+    unlockSubtitle: 'สแกนนิ้ว สแกนหน้า หรือใช้รหัสเครื่อง เพื่อปลดล็อกแอป',
+    unlockButton: 'ปลดล็อก',
+    unlockUseThaid: 'เข้าสู่ระบบด้วย ThaID แทน',
   );
 }
