@@ -30,6 +30,9 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const request  = ctx.getRequest<Request>();
 
     let status  = HttpStatus.INTERNAL_SERVER_ERROR;
+    // Client-safe message. For known HttpExceptions we surface the intended
+    // message; for anything unexpected we return a generic string and keep the
+    // real error server-side only (never leak internals/stack to the client).
     let message = 'Internal server error';
 
     if (exception instanceof HttpException) {
@@ -46,13 +49,23 @@ export class HttpExceptionFilter implements ExceptionFilter {
         }
       }
     } else if (exception instanceof Error) {
-      message = exception.message;
-      this.logger.error(`Unhandled: ${exception.message}`, exception.stack);
+      // Do NOT copy exception.message into the response — it may carry secrets,
+      // env names, or DB details. Log the full error, return a generic message.
+      this.logger.error(
+        `Unhandled ${request.method} ${request.url}: ${exception.message}`,
+        exception.stack,
+      );
+    } else {
+      this.logger.error(
+        `Unknown throw ${request.method} ${request.url}: ${String(exception)}`,
+      );
     }
 
     const code = this.toCode(status);
 
-    if (status >= 500) {
+    // 5xx already logged above (unknown throws). Log client-error HttpExceptions
+    // at a lower level for observability without noise.
+    if (status >= 500 && exception instanceof HttpException) {
       this.logger.error(
         `${request.method} ${request.url} → ${status}: ${message}`,
       );

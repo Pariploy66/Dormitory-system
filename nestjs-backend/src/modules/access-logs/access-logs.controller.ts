@@ -9,6 +9,7 @@ import {
   Request,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { SkipThrottle } from '@nestjs/throttler';
 import { IsString, IsIn, IsDateString, IsOptional } from 'class-validator';
 import { AccessLogsService, IngestPayload } from './access-logs.service';
 import { InternalApiKeyGuard } from '../../common/internal-api-key.guard';
@@ -33,8 +34,11 @@ class IngestDto implements IngestPayload {
 export class AccessLogsController {
   constructor(private readonly service: AccessLogsService) {}
 
-  // POST /internal/access-logs — internal only (FastAPI)
-  // No JWT — uses X-Internal-API-Key header instead
+  // POST /internal/access-logs — internal only (FastAPI / face scanner)
+  // No JWT — uses X-Internal-API-Key header instead. Exempt from the global
+  // rate limit: this is trusted machine-to-machine ingest that can legitimately
+  // burst (scan batches), and it is already gated by the internal API key.
+  @SkipThrottle()
   @UseGuards(InternalApiKeyGuard)
   @Post('internal/access-logs')
   onCreate(@Body() dto: IngestDto) {

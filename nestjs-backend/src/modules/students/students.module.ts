@@ -6,6 +6,7 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
+import { SkipThrottle } from '@nestjs/throttler';
 import { Type } from 'class-transformer';
 import {
   IsArray,
@@ -127,6 +128,9 @@ export class StudentsService {
 }
 
 // ─── Controllers ─────────────────────────────────────────────
+// Internal machine-to-machine endpoints (registrar sync) — key-protected and
+// may burst during a bulk import, so exempt from the global rate limit.
+@SkipThrottle()
 @Controller('internal/students')
 @UseGuards(InternalApiKeyGuard)
 export class StudentsController {
@@ -143,6 +147,7 @@ export class StudentsController {
   }
 }
 
+@SkipThrottle()
 @Controller('internal/registry')
 @UseGuards(InternalApiKeyGuard)
 export class RegistryController {

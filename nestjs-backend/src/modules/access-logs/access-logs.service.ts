@@ -7,6 +7,13 @@ import {
 import { mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { PrismaService } from '../../common/prisma.service';
+import {
+  normalizeThaiTime,
+  computeAccessStatus,
+  parseTimeToMinutes,
+  DEFAULT_CURFEW_START_MIN,
+  DEFAULT_CURFEW_END_MIN,
+} from '../../common/curfew.util';
 import { NotificationsService } from '../notifications/notifications.service';
 import { EventsGateway } from '../events/events.gateway';
 
@@ -36,6 +43,17 @@ export interface IngestPayload {
 @Injectable()
 export class AccessLogsService {
   private readonly logger = new Logger(AccessLogsService.name);
+
+  // Curfew window read from config (CURFEW_START / CURFEW_END as "HH:MM"),
+  // falling back to 22:30–06:00 Thai time. No hardcoded business rule.
+  private readonly curfewStartMin = parseTimeToMinutes(
+    process.env.CURFEW_START,
+    DEFAULT_CURFEW_START_MIN,
+  );
+  private readonly curfewEndMin = parseTimeToMinutes(
+    process.env.CURFEW_END,
+    DEFAULT_CURFEW_END_MIN,
+  );
 
   constructor(
     private readonly prisma: PrismaService,
@@ -78,21 +96,10 @@ export class AccessLogsService {
     });
     if (!student) return { skipped: true, reason: 'student not found' };
 
-    // ── Timezone normalisation ─────────────────────────────────────────────
-    // This system is entirely Thailand-based: the on-site hardware, FastAPI
-    // integration, and manual Postman tests all report times in Thai local
-    // time (ICT, UTC+7).  We therefore ALWAYS interpret the incoming datetime
-    // as Thai time, regardless of whatever timezone designator the caller
-    // appended (Z, +00:00, +07:00, or nothing).
-    //
-    // Algorithm:
-    //   1. Strip fractional seconds  → "2026-05-06T17:35:00.000Z" → "...17:35:00Z"
-    //   2. Strip timezone designator → "2026-05-06T17:35:00"
-    //   3. Attach +07:00             → "2026-05-06T17:35:00+07:00"
-    const thaiStr = payload.accessTime
-      .replace(/\.\d+/, '')                     // strip fractional seconds
-      .replace(/[Zz]$|[+-]\d{2}:\d{2}$/, '');  // strip any timezone designator
-    const accessTime = new Date(thaiStr + '+07:00');
+    // Always interpret the incoming datetime as Thai local time (see
+    // normalizeThaiTime — the on-site hardware/FastAPI report ICT with an
+    // inconsistent or missing timezone designator).
+    const accessTime = normalizeThaiTime(payload.accessTime);
 
     // Photos: either ready-made URLs (FastAPI path) or raw base64 from the
     // face scanner — in that case store the file locally and keep its URL.
@@ -261,32 +268,15 @@ export class AccessLogsService {
       gateNameEn: log.gateNameEn,
       imageUrl: this.toAbsolute(log.photoUrl, baseUrl),
       scanImageUrl: this.toAbsolute(log.scanPhotoUrl, baseUrl),
-      status: this.computeStatus(log.accessTime, log.type),
+      status: computeAccessStatus(
+        log.accessTime,
+        log.type,
+        this.curfewStartMin,
+        this.curfewEndMin,
+      ),
     }));
   }
 
-  // ── Private ────────────────────────────────────────────────────────────────
-  /**
-   * Determine whether an IN entry falls inside the curfew window.
-   *
-   * Curfew: 22:30 → 05:59 Thai time (ICT, UTC+7) — crosses midnight.
-   *   Thai minutes-since-midnight = (UTC_hh × 60 + UTC_mm + 420) mod 1440
-   *
-   *   Late  when: thaiMin >= 1350  (22:30–23:59)
-   *            OR thaiMin <   360  (00:00–05:59)
-   */
-  private computeStatus(
-    accessTime: Date,
-    type: 'IN' | 'OUT',
-  ): 'late' | 'ontime' {
-    if (type !== 'IN') return 'ontime';
-
-    const utcMin  = accessTime.getUTCHours() * 60 + accessTime.getUTCMinutes();
-    const thaiMin = (utcMin + 7 * 60) % (24 * 60);
-
-    const CURFEW_START = 22 * 60 + 30; // 1350 min
-    const CURFEW_END   =  6 * 60;      //  360 min
-
-    return thaiMin >= CURFEW_START || thaiMin < CURFEW_END ? 'late' : 'ontime';
-  }
+  // Curfew status is computed by the pure helper computeAccessStatus
+  // (see common/curfew.util.ts) — kept there so it is unit-testable and reusable.
 }
