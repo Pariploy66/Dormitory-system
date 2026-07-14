@@ -9,6 +9,7 @@ import { StudentsModule } from './modules/students/students.module';
 import { AccessLogsModule } from './modules/access-logs/access-logs.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { EventsModule } from './modules/events/events.module';
+import { HealthModule } from './modules/health/health.module';
 
 // Rate-limit window/limit are env-driven (no hardcoded values). Defaults keep
 // the previous behaviour: 30 requests / 60s per client.
@@ -29,6 +30,7 @@ const RATE_LIMIT = Number(process.env.RATE_LIMIT_MAX ?? 30);
     AccessLogsModule,
     NotificationsModule,
     EventsModule,
+    HealthModule,
   ],
   providers: [
     // Register ThrottlerGuard globally so the configured rate limit is actually

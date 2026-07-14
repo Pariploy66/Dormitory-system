@@ -160,6 +160,8 @@ auth_logs ─► parents(nullable)         (ทะเบียนผู้ปก
 | GET | `/me/profile` | JWT | ข้อมูลผู้ปกครอง |
 | GET | `/me/students` | JWT | ลูกที่ ACTIVE (ชื่อ 2 ภาษา + รูปทะเบียน + relationship) |
 | GET | `/me/students/:id/logs?days=N` | JWT | log + `status` late/ontime + URL รูปแบบ absolute |
+| GET | `/health` | public | liveness — `{status, uptimeSeconds}` (monitoring/Docker) |
+| GET | `/health/ready` | public | readiness — เช็ค DB, 503 ถ้า DB ล่ม |
 
 ### Internal (`X-Internal-API-Key`)
 

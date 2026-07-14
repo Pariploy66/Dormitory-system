@@ -56,6 +56,17 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    # Readiness probe (DB reachable). Uses Node — the slim image has no curl.
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "require('http').get('http://localhost:3000/health/ready',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   fastapi:
     build: ./fastapi-integration
@@ -70,7 +81,8 @@ services:
     ports:
       - "8001:8001"
     depends_on:
-      - nestjs
+      nestjs:
+        condition: service_healthy
 
 volumes:
   pgdata:

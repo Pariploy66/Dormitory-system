@@ -25,6 +25,8 @@ Architecture map with every module/table/endpoint: **PROJECTMAP.md**.
 npm install --legacy-peer-deps        # plain `npm install` fails (Nest 10/11 peer mix)
 npm run start:dev                     # dev server :3000 (watch mode)
 npx tsc --noEmit -p tsconfig.json     # type gate
+npm test                              # unit tests (jest, pure logic — no DB)
+npm run test:e2e                      # integration tests (needs a seeded DB running)
 npx prisma generate                   # ALWAYS after schema.prisma changes (stop dev server first — Windows file lock)
 npx prisma migrate deploy             # apply migrations
 
