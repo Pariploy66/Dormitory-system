@@ -80,9 +80,13 @@ export class NotificationsService implements OnModuleInit {
     );
     if (!tokens.length) return;
 
+    // Format in Thai time explicitly — without timeZone this uses the server's
+    // local zone, which is UTC inside Docker/most hosts and would show a time
+    // 7 hours off. Pin to Asia/Bangkok so the notification always reads Thai time.
     const timeStr = log.accessTime.toLocaleTimeString('th-TH', {
       hour: '2-digit',
       minute: '2-digit',
+      timeZone: 'Asia/Bangkok',
     });
 
     const message: admin.messaging.MulticastMessage = {
